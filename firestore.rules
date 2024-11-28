@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(resourceData) {
+      return isSignedIn() && resourceData.reporterId == request.auth.uid;
+    }
+    
+    // Rules for items collection
+    match /items/{itemId} {
+      // Anyone signed in can read items
+      allow read: if isSignedIn();
+      
+      // Anyone signed in can create items
+      allow create: if isSignedIn() && 
+                      request.resource.data.reporterId == request.auth.uid;
+      
+      // Allow updates if:
+      // 1. User is the owner OR
+      // 2. Only updating the status field to 'claimed' and item is 'open'
+      allow update: if isOwner(resource.data) ||
+                      (isSignedIn() && 
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'claimedBy']) &&
+                       request.resource.data.status == 'claimed' &&
+                       resource.data.status == 'open');
+      
+      // Only the owner can delete their items
+      allow delete: if isOwner(resource.data);
+    }
+    
+    // Rules for users collection
+    match /users/{userId} {
+      // Users can read and write only their own data
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
