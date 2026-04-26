@@ -81,7 +81,8 @@ exports.register = async (req, res) => {
 
     let profilePicture = '';
     if (req.file) {
-      profilePicture = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+      // Cloudinary URL is in req.file.path
+      profilePicture = req.file.path;
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -209,9 +210,9 @@ exports.updateProfile = async (req, res) => {
     if (enrollmentNumber) user.enrollmentNumber = enrollmentNumber;
     if (phone !== undefined) user.phone = phone;
 
-    // Update profile picture if a new file was uploaded
+    // Update profile picture if a new file was uploaded (Cloudinary URL)
     if (req.file) {
-      user.profilePicture = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+      user.profilePicture = req.file.path;
     }
 
     await user.save();

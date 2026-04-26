@@ -17,8 +17,8 @@ exports.createItem = async (req, res) => {
       return res.status(400).json({ message: 'Image is required' });
     }
 
-    // Construct the public URL for the uploaded image
-    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    // With CloudinaryStorage, req.file.path contains the public Cloudinary URL
+    const imageUrl = req.file.path;
     
     const newItem = new Item({
       type, title, description, location, date, image: imageUrl, reporter,
