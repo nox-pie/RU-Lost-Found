@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#fcf1e8] min-h-screen text-gray-800 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-light text-white px-6 py-2.5 rounded-full 
+           transition-all duration-300 ease-in-out transform hover:scale-105 
+           focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 
+           shadow-md hover:shadow-lg font-medium;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary hover:bg-secondary-light text-white px-6 py-2.5 rounded-full 
+           transition-all duration-300 ease-in-out transform hover:scale-105 
+           focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-opacity-50 
+           shadow-md hover:shadow-lg font-medium;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl overflow-hidden 
+           transition-all ease-in-out transform hover:-translate-y-1.5;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.06);
+    transition-duration: 400ms;
+  }
+
+  .card:hover {
+    box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.12);
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 
+           focus:ring-primary focus:border-transparent transition-all duration-200;
+  }
+
+  .filter-btn {
+    @apply px-6 py-2.5 rounded-full text-base transition-all duration-300 ease-in-out 
+           transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-50 
+           shadow-sm hover:shadow-md font-medium;
+  }
+}
+
+/* Scroll-triggered animations via Intersection Observer */
+.scroll-animate {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.scroll-animate.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered animation delays for grid children */
+.stagger-1 { transition-delay: 0.05s; }
+.stagger-2 { transition-delay: 0.1s; }
+.stagger-3 { transition-delay: 0.15s; }
+.stagger-4 { transition-delay: 0.2s; }
+.stagger-5 { transition-delay: 0.25s; }
+.stagger-6 { transition-delay: 0.3s; }
+.stagger-7 { transition-delay: 0.35s; }
+.stagger-8 { transition-delay: 0.4s; }
+.stagger-9 { transition-delay: 0.45s; }
+
+/* Glassmorphism header */
+.header-glass {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: rgba(230, 57, 70, 0.85);
+}
+
+.header-solid {
+  background: linear-gradient(to right, #E63946, #D32F2F);
+}
+
+/* Smooth scrollbar */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Floating Action Button glow */
+.fab-glow {
+  box-shadow: 0 4px 15px rgba(230, 57, 70, 0.4);
+  transition: all 0.3s ease;
+}
+
+.fab-glow:hover {
+  box-shadow: 0 6px 25px rgba(230, 57, 70, 0.6);
+  transform: scale(1.1);
+}
