@@ -13,6 +13,7 @@ import { Plus } from 'lucide-react';
 
 export default function Dashboard() {
   const [items, setItems] = useState<Item[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showReportForm, setShowReportForm] = useState(false);
   const [filter, setFilter] = useState<'all' | 'lost' | 'found' | 'claimed'>('all');
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
@@ -54,11 +55,14 @@ export default function Dashboard() {
 
   const loadItems = async () => {
     try {
+      setIsLoading(true);
       const updatedItems = await fetchItems();
       const allItems = [...dummyItems, ...updatedItems];
       setItems(allItems);
     } catch (error) {
       console.error('Failed to load items:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -182,7 +186,13 @@ export default function Dashboard() {
         </div>
 
         {/* Items Grid */}
-        {filteredItems.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center mt-16 scroll-animate">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+            <h3 className="text-lg font-medium text-gray-700">Waking up the server...</h3>
+            <p className="text-sm text-gray-500 mt-1">This takes about 30 seconds on the free tier.</p>
+          </div>
+        ) : filteredItems.length === 0 ? (
           <div className="text-center text-gray-400 mt-16 scroll-animate">
             <p className="text-lg sm:text-xl font-display">No items found</p>
             <p className="mt-3 text-sm sm:text-base">
