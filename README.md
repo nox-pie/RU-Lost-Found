@@ -117,7 +117,7 @@ The application will be accessible at `http://localhost:5173`.
 To ensure a production-ready, lightning-fast experience on free-tier hosting, several specific architectural optimizations were implemented:
 
 * **Cloudinary Media Pipeline:** Bypassed ephemeral serverless storage limitations by integrating `multer-storage-cloudinary`. All user uploads are streamed directly to Cloudinary's global CDN, ensuring permanent image persistence.
-* **Separation of Concerns:** Deployed the static React/Vite frontend to **Vercel** for edge-network delivery, while the stateful Node/Express API is hosted on **Render**.
+* **Separation of Concerns:** Deployed the static React/Vite frontend to [**Vercel**](https://ru-lost-found.vercel.app/) for edge-network delivery, while the stateful Node/Express API is hosted on [**Render**](https://ru-lost-found.onrender.com).
 * **Zero-Latency Cold Starts (The Cron Hack):** Free-tier Render backends typically sleep after 15 minutes of inactivity, causing 30+ second delays for the next user. This was solved by engineering a dedicated, database-free `/api/ping` endpoint. An external service ([cron-job.org](https://cron-job.org/)) pings this endpoint every 10 minutes, keeping the server perpetually awake without consuming MongoDB read quotas.
 * **Graceful Degradation:** Implemented a custom animated loading state in `Dashboard.tsx` that informs users ("Waking up the server...") in the rare event a cold start does occur.
 
