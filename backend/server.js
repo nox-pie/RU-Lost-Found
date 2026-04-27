@@ -20,6 +20,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/contact', contactRoutes);
 
+// Ping route to keep Render server awake
+app.get('/api/ping', (req, res) => {
+  res.status(200).json({ status: 'awake', timestamp: new Date() });
+});
+
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
