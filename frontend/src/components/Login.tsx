@@ -390,13 +390,6 @@ export default function Login() {
                     className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                     placeholder="Password"
                   />
-                  {mode === 'login' && (
-                    <div className="mt-2 flex justify-end">
-                      <button type="button" onClick={() => switchMode('forgot-password')} className="text-sm font-medium text-primary hover:text-primary-light">
-                        Forgot Password?
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -445,6 +438,14 @@ export default function Login() {
               )}
             </div>
 
+            {mode === 'login' && (
+              <div className="flex justify-end">
+                <button type="button" onClick={() => switchMode('forgot-password')} className="text-sm font-medium text-primary hover:text-primary-light transition-colors">
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
             {/* Submit button — only shown for login or for verified signup */}
             {(mode === 'login' || (mode === 'signup' && emailVerified)) && (
               <div>
@@ -457,17 +458,19 @@ export default function Login() {
         )}
 
         {(mode === 'login' || mode === 'signup') && (
-          <div className="text-center">
-            <div className="relative my-4 flex items-center justify-center">
-              <div className="flex-grow border-t border-gray-300"></div>
-              <span className="px-3 text-sm text-gray-500 bg-transparent">
-                {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
-              </span>
-              <div className="flex-grow border-t border-gray-300"></div>
+          <div className="mt-6">
+            <div className="text-center">
+              <div className="relative my-4 flex items-center justify-center">
+                <div className="flex-grow border-t border-gray-300"></div>
+                <span className="px-3 text-sm text-gray-500 bg-transparent">
+                  {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
+                </span>
+                <div className="flex-grow border-t border-gray-300"></div>
+              </div>
+              <button onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')} className="text-primary hover:text-primary-light font-medium transition-colors">
+                {mode === 'login' ? 'Sign Up' : 'Sign In'}
+              </button>
             </div>
-            <button onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')} className="text-primary hover:text-primary-light font-medium transition-colors">
-              {mode === 'login' ? 'Sign Up' : 'Sign In'}
-            </button>
           </div>
         )}
       </div>
