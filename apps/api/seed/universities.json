@@ -1,0 +1,15 @@
+[
+  {
+    "name": "Rishihood University",
+    "slug": "rishihood",
+    "emailDomains": ["rishihood.edu.in"],
+    "schools": [
+      "Newton School of Technology",
+      "School of Entrepreneurship",
+      "School of Psychology & Education",
+      "School of Creativity",
+      "School of Healthcare",
+      "School of Public Leadership"
+    ]
+  }
+]
