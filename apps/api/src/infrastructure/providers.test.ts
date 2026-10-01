@@ -29,6 +29,8 @@ describe('development providers', () => {
     await rm(dir, { recursive: true, force: true });
 
     expect(subjects).toEqual(['First', 'Second']);
+    // Written under a temporary name and renamed: no partial or leftover files.
+    expect(files.every((file) => file.endsWith('.json'))).toBe(true);
   });
 
   it('ConsoleEmailSender logs the email instead of sending it', async () => {

@@ -11,7 +11,10 @@ test('an admin removes a reported post and suspends its poster', async ({ browse
   const admin = await (await browser.newContext()).newPage();
   const postersEmail = uniqueEmail('spammer');
   const adminsEmail = uniqueEmail('priya');
-  const title = `Phones for sale ${Date.now().toString(36)}`;
+  const runId = Date.now().toString(36);
+  const title = `Phones for sale ${runId}`;
+  // Unique per run, so repeated runs on the same database don't see each other's entries.
+  const reason = `Posting adverts ${runId}`;
 
   await test.step('three people sign up; one is appointed admin', async () => {
     await signUp(poster, { email: postersEmail, first: 'Sam', last: 'Spammer' });
@@ -72,7 +75,7 @@ test('an admin removes a reported post and suspends its poster', async ({ browse
     const row = admin.getByRole('listitem').filter({ hasText: postersEmail });
     await row.getByRole('button', { name: 'Suspend' }).click();
     const dialog = admin.getByRole('dialog', { name: 'Suspend Sam Spammer?' });
-    await dialog.getByLabel('Reason').fill('Posting adverts');
+    await dialog.getByLabel('Reason').fill(reason);
     await dialog.getByRole('button', { name: 'Suspend' }).click();
     await expect(row.getByText('Suspended')).toBeVisible();
 
@@ -88,8 +91,8 @@ test('an admin removes a reported post and suspends its poster', async ({ browse
     const log = admin.getByRole('list').filter({ hasText: 'Created an account' });
     await expect(async () => {
       await admin.reload();
-      await expect(log.getByText('Reason: Posting adverts')).toBeVisible({ timeout: 2_000 });
+      await expect(log.getByText(`Reason: ${reason}`)).toBeVisible({ timeout: 2_000 });
     }).toPass({ timeout: 20_000 });
-    await expect(log.getByText('Decided on a report')).toBeVisible();
+    await expect(log.getByText('Decided on a report').first()).toBeVisible();
   });
 });

@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { EmailMessage, EmailSender } from '../../core/email/EmailSender';
 
@@ -14,7 +14,13 @@ export class FileEmailSender implements EmailSender {
   async send(message: EmailMessage): Promise<void> {
     await mkdir(this.directory, { recursive: true });
     this.sequence += 1;
-    const name = `${Date.now()}-${String(this.sequence).padStart(4, '0')}.json`;
-    await writeFile(path.join(this.directory, name), JSON.stringify(message, null, 2));
+    const file = path.join(
+      this.directory,
+      `${Date.now()}-${String(this.sequence).padStart(4, '0')}.json`,
+    );
+    // Write under a temporary name, then rename (atomic): a reader polling the folder never
+    // sees a half-written file.
+    await writeFile(`${file}.tmp`, JSON.stringify(message, null, 2));
+    await rename(`${file}.tmp`, file);
   }
 }

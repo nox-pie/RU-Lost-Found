@@ -21,7 +21,9 @@ interface StoredEmail {
 function emailsTo(address: string): StoredEmail[] {
   let files: string[] = [];
   try {
-    files = readdirSync(EMAIL_DIR).sort();
+    files = readdirSync(EMAIL_DIR)
+      .filter((file) => file.endsWith('.json'))
+      .sort();
   } catch {
     return [];
   }
