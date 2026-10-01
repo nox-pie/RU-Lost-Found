@@ -6,6 +6,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Major versions change APIs (e.g. Tailwind 4, React 19, pino-http 11) and need a planned
+    # migration, not an automatic bump: they are upgraded by hand.
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     groups:
       production:
         dependency-type: production
