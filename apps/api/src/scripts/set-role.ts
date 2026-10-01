@@ -6,6 +6,7 @@ import { createLogger } from '../core/logger/logger';
 import { MongoDatabase } from '../infrastructure/database/MongoDatabase';
 import { MongoOutbox } from '../infrastructure/outbox/MongoOutbox';
 import { MongoUserRepository } from '../modules/users/infrastructure/MongoUserRepository';
+import { redactUrlCredentials } from '../core/security/redact';
 
 /**
  * Appoints the first admin of a deployment (after that, admins manage roles in the app):
@@ -38,6 +39,8 @@ async function setRole(email: string | undefined, role: string | undefined): Pro
 }
 
 setRole(process.argv[2], process.argv[3]).catch((err: unknown) => {
-  process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`);
+  process.stderr.write(
+    `${redactUrlCredentials(err instanceof Error ? err.message : String(err))}\n`,
+  );
   process.exit(1);
 });

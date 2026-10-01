@@ -5,6 +5,7 @@ import { loadEnv, type Env } from './config/env';
 import { buildContainer } from './container';
 import { createLogger, type Logger } from './core/logger/logger';
 import type { ErrorReporter } from './core/observability/ErrorReporter';
+import { redactUrlCredentials } from './core/security/redact';
 import { RedisKeyValueStore } from './infrastructure/cache/RedisKeyValueStore';
 import { MongoDatabase } from './infrastructure/database/MongoDatabase';
 import { createErrorReporter } from './infrastructure/observability/createErrorReporter';
@@ -97,7 +98,7 @@ async function start(env: Env, logger: Logger, errorReporter: ErrorReporter): Pr
 
 main().catch((err: unknown) => {
   process.stderr.write(
-    `Failed to start API: ${err instanceof Error ? err.message : String(err)}\n`,
+    `Failed to start API: ${redactUrlCredentials(err instanceof Error ? err.message : String(err))}\n`,
   );
   process.exit(1);
 });

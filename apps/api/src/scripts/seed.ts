@@ -9,6 +9,7 @@ import { MongoDatabase } from '../infrastructure/database/MongoDatabase';
 import { ObjectIdGenerator } from '../infrastructure/database/objectIds';
 import { University } from '../modules/universities/domain/University';
 import { MongoUniversityRepository } from '../modules/universities/infrastructure/MongoUniversityRepository';
+import { redactUrlCredentials } from '../core/security/redact';
 
 /**
  * The universities a deployment starts with live in a JSON file, not in code, so another
@@ -75,6 +76,8 @@ async function seed(): Promise<void> {
 }
 
 seed().catch((err: unknown) => {
-  process.stderr.write(`Seeding failed: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.stderr.write(
+    `Seeding failed: ${redactUrlCredentials(err instanceof Error ? err.message : String(err))}\n`,
+  );
   process.exit(1);
 });

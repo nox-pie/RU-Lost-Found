@@ -74,7 +74,15 @@ const envSchema = z
     BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
 
     /** Redis for codes and rate limits. Without it they are kept in memory (single instance only). */
-    REDIS_URL: optionalString,
+    REDIS_URL: optionalString.pipe(
+      z
+        .string()
+        .regex(
+          /^rediss?:\/\/\S+$/,
+          'must start with rediss:// (or redis://) and contain nothing else; check for quotes or a copied code snippet',
+        )
+        .optional(),
+    ),
 
     /** Brevo transactional email. Without it emails are printed to the log (development only). */
     BREVO_API_KEY: optionalString,

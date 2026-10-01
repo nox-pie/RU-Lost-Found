@@ -5,6 +5,7 @@ import { createLogger } from './core/logger/logger';
 import { RedisKeyValueStore } from './infrastructure/cache/RedisKeyValueStore';
 import { MongoDatabase } from './infrastructure/database/MongoDatabase';
 import { createErrorReporter } from './infrastructure/observability/createErrorReporter';
+import { redactUrlCredentials } from './core/security/redact';
 
 /**
  * Runs only the background worker (no HTTP server). Used when the API and the worker are deployed
@@ -36,7 +37,7 @@ async function main(): Promise<void> {
 
 main().catch((err: unknown) => {
   process.stderr.write(
-    `Failed to start worker: ${err instanceof Error ? err.message : String(err)}\n`,
+    `Failed to start worker: ${redactUrlCredentials(err instanceof Error ? err.message : String(err))}\n`,
   );
   process.exit(1);
 });

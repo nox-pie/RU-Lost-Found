@@ -67,6 +67,16 @@ describe('loadEnv', () => {
     );
   });
 
+  it('accepts only a plain redis:// or rediss:// URL, and never echoes it in the error', () => {
+    const quoted = '"rediss://default:s3cr3t@host.upstash.io:6379"';
+
+    expect(() => loadEnv({ ...valid, REDIS_URL: quoted })).toThrow(/REDIS_URL/);
+    expect(() => loadEnv({ ...valid, REDIS_URL: quoted })).not.toThrow(/s3cr3t/);
+    expect(loadEnv({ ...valid, REDIS_URL: 'rediss://default:pw@host:6379' }).REDIS_URL).toBe(
+      'rediss://default:pw@host:6379',
+    );
+  });
+
   it('accepts a Sentry DSN only as a URL', () => {
     expect(loadEnv({ ...valid, SENTRY_DSN: '' }).SENTRY_DSN).toBeUndefined();
     expect(() => loadEnv({ ...valid, SENTRY_DSN: 'not a url' })).toThrow(/SENTRY_DSN/);

@@ -6,6 +6,7 @@ import { MongoItemRepository } from '../modules/items/infrastructure/MongoItemRe
 import { MongoUniversityRepository } from '../modules/universities/infrastructure/MongoUniversityRepository';
 import { MongoUserRepository } from '../modules/users/infrastructure/MongoUserRepository';
 import { LegacyMigration } from './legacy/LegacyMigration';
+import { redactUrlCredentials } from '../core/security/redact';
 
 /**
  * Moves the first version's accounts and items into this database.
@@ -50,6 +51,8 @@ async function migrate(args: string[]): Promise<void> {
 }
 
 migrate(process.argv.slice(2)).catch((err: unknown) => {
-  process.stderr.write(`Migration failed: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.stderr.write(
+    `Migration failed: ${redactUrlCredentials(err instanceof Error ? err.message : String(err))}\n`,
+  );
   process.exit(1);
 });

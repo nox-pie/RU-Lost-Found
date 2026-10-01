@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node';
 import type { ErrorContext, ErrorReporter } from '../../core/observability/ErrorReporter';
+import { redactUrlCredentials } from '../../core/security/redact';
 
 export interface SentryConfig {
   dsn: string;
@@ -36,6 +37,10 @@ export class SentryErrorReporter implements ErrorReporter {
           for (const header of SENSITIVE_HEADERS) delete event.request.headers?.[header];
         }
         if (event.user) event.user = { id: event.user.id };
+        for (const exception of event.exception?.values ?? []) {
+          if (exception.value) exception.value = redactUrlCredentials(exception.value);
+        }
+        if (event.message) event.message = redactUrlCredentials(event.message);
         return event;
       },
     });
