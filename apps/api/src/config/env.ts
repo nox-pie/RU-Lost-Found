@@ -119,7 +119,8 @@ const envSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['TRUST_PROXY_HOPS'],
-        message: 'must be set in production (e.g. 2 behind Vercel rewrites + Render)',
+        message:
+          'must be set in production (4 behind Vercel + Render; check with GET /api/v1/health/client)',
       });
     }
     if (!env.BREVO_API_KEY) {

@@ -16,10 +16,10 @@ services:
         value: production
       - key: LOG_LEVEL
         value: info
-      # Vercel's rewrite + Render's load balancer. Check after the first deploy: the IPs in the
-      # audit log (admin → Activity) must be visitors' addresses, not Render's or Vercel's.
+      # Measured with /api/v1/health/client: visitor → Vercel → Cloudflare → Render's load
+      # balancer → app. Re-check after any hosting change (docs/deployment.md).
       - key: TRUST_PROXY_HOPS
-        value: '2'
+        value: '4'
       - key: APP_URL
         value: https://ru-lost-found.vercel.app
       - key: CORS_ORIGINS
