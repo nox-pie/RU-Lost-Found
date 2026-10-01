@@ -1,0 +1,18 @@
+# Only what the images need: sources and manifests. Never secrets or local state.
+**/node_modules
+**/dist
+**/coverage
+**/.env
+**/.env.*
+!**/.env.example
+**/.uploads
+**/.emails
+apps/web/test-results
+apps/web/playwright-report
+apps/web/e2e
+backend
+frontend
+docs
+.git
+.github
+*.md

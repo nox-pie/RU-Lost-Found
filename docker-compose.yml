@@ -1,0 +1,63 @@
+# The whole product on one machine: database, cache, API (with its worker) and web app.
+#   docker compose up --build        → http://localhost:8080
+# Emails are written to the API log (no email provider), images to a local volume.
+# This is for trying the product out locally; production runs on Vercel + Render (docs/deployment.md).
+
+services:
+  mongo:
+    image: mongo:7
+    # A one-member replica set: the API uses transactions, which need one.
+    command: ['--replSet', 'rs0', '--bind_ip_all']
+    volumes: [mongo-data:/data/db]
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }).ok }"
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      retries: 10
+
+  # Creates the university once (safe to run again), then exits.
+  seed:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    command: ['node', 'dist/scripts/seed.js']
+    environment: &api-env
+      NODE_ENV: development
+      LOG_LEVEL: info
+      MONGODB_URI: mongodb://mongo:27017/ru-lost-found-v2?replicaSet=rs0
+      REDIS_URL: redis://redis:6379
+      APP_SECRET: ${APP_SECRET:-local-docker-secret-change-me-0123456789}
+      APP_URL: http://localhost:8080
+      CORS_ORIGINS: http://localhost:8080
+      # nginx in the web container is the one proxy in front of the API.
+      TRUST_PROXY_HOPS: '1'
+    depends_on:
+      mongo: { condition: service_healthy }
+
+  api:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    environment: *api-env
+    volumes: [uploads:/app/apps/api/.uploads]
+    depends_on:
+      seed: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  web:
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    ports: ['8080:80']
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  mongo-data:
+  uploads:

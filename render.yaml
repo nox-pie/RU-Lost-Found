@@ -1,0 +1,49 @@
+# Render Blueprint for the API (https://render.com/docs/blueprint-spec).
+# A new service, next to the first version's: the web app is switched over by changing the
+# /api rewrite in apps/web/vercel.json, and switched back the same way. See docs/deployment.md.
+services:
+  - type: web
+    name: ru-lost-found-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    plan: free
+    region: singapore
+    healthCheckPath: /api/v1/health/live
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      # Vercel's rewrite + Render's load balancer. Check after the first deploy: the IPs in the
+      # audit log (admin → Activity) must be visitors' addresses, not Render's or Vercel's.
+      - key: TRUST_PROXY_HOPS
+        value: '2'
+      - key: APP_URL
+        value: https://ru-lost-found.vercel.app
+      - key: CORS_ORIGINS
+        value: https://ru-lost-found.vercel.app
+      - key: WORKER_ENABLED
+        value: 'true'
+      - key: BCRYPT_ROUNDS
+        value: '12'
+      - key: APP_SECRET
+        generateValue: true
+      # Secrets: set in the Render dashboard, never in this file.
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM_ADDRESS
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
