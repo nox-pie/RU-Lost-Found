@@ -1,0 +1,22 @@
+# Extra services for the load test, on top of ../docker-compose.yml:
+#   docker compose -f docker-compose.yml -f load/compose.load.yml up -d --build
+#   docker compose -f docker-compose.yml -f load/compose.load.yml run --rm k6
+services:
+  mongo:
+    # Lets load/seed-load-data.mts write test data from the host.
+    ports: ['127.0.0.1:27018:27017']
+
+  k6:
+    image: grafana/k6:latest
+    profiles: [load]
+    # Paths are relative to the project directory (the repository root).
+    volumes:
+      - ./load:/load:ro
+      - ./load/results:/results
+      - ./apps/web/e2e/fixtures:/fixtures:ro
+    # Stress run: docker compose … run --rm -e PEAK=1000 k6
+    environment:
+      PEAK: ${PEAK:-200}
+    command: ['run', '--summary-export', '/results/summary.json', '/load/load-test.js']
+    depends_on:
+      api: { condition: service_healthy }
