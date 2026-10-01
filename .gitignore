@@ -1,5 +1,35 @@
+# Dependencies
 node_modules/
+
+# Build output
+dist/
+coverage/
+*.tsbuildinfo
+
+# Environment
 .env
+.env.*
+!.env.example
+
+# Legacy backend uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# OS / editor
 .DS_Store
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local image uploads (development without Cloudinary)
+apps/api/.uploads/
+apps/api/.emails/
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/e2e/.emails/
+apps/web/e2e/.runtime.json
+
+# Load test output
+load/results/

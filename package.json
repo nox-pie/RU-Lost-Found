@@ -1,0 +1,30 @@
+{
+  "name": "ru-lost-found",
+  "private": true,
+  "description": "Lost & Found platform for universities",
+  "author": "Prashant Kumar",
+  "license": "UNLICENSED",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:api": "npm run dev -w @ru-lost-found/api",
+    "dev:web": "npm run dev -w @ru-lost-found/web",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write \"apps/api/**/*.{ts,json}\" \"apps/web/{src,e2e}/**/*.{ts,tsx}\" \"packages/**/*.{ts,json}\" \"docs/**/*.md\"",
+    "format:check": "prettier --check \"apps/api/**/*.{ts,json}\" \"apps/web/{src,e2e}/**/*.{ts,tsx}\" \"packages/**/*.{ts,json}\"",
+    "test:coverage": "npm run test:coverage --workspaces --if-present",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage",
+    "e2e": "npm run e2e -w @ru-lost-found/web"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}
