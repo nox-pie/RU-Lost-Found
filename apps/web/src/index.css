@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply min-h-screen bg-surface text-gray-800 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+}
+
+/* Header: solid brand colour at the top, frosted glass once the page scrolls. */
+.header-solid {
+  background: linear-gradient(
+    to right,
+    theme('colors.primary.DEFAULT'),
+    theme('colors.primary.dark')
+  );
+}
+
+.header-glass {
+  background: theme('colors.primary.DEFAULT / 88%');
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
