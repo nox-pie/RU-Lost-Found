@@ -2,6 +2,7 @@ import request, { type Response } from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { T0, daysAfter, minutesAfter } from '../../testing/builders';
 import { seedUniversity, useTestApp } from '../../testing/testApp';
+import { MongoUniversityRepository } from '../universities/infrastructure/MongoUniversityRepository';
 import { MongoUserRepository } from '../users/infrastructure/MongoUserRepository';
 import { OTP_MAX_ATTEMPTS } from './OtpService';
 import { REFRESH_COOKIE } from './auth.controller';
@@ -96,6 +97,27 @@ describe('sign-up', () => {
 
     expect(res.status).toBe(400);
     expect(t.email.sent).toHaveLength(0);
+  });
+
+  it('accepts any verified address when the university is open to any email', async () => {
+    const universities = new MongoUniversityRepository(t.connection);
+    const rishihood = await universities.findBySlug('rishihood');
+    rishihood!.updateSettings(
+      {
+        name: rishihood!.name,
+        emailDomains: [...rishihood!.emailDomains, '*'],
+        schools: [...rishihood!.schools],
+      },
+      t.clock.now(),
+    );
+    await universities.update(rishihood!);
+
+    const { res } = await signUp('recruiter@gmail.com');
+
+    expect(res.body.user).toMatchObject({
+      email: 'recruiter@gmail.com',
+      universityId: rishihood!.id,
+    });
   });
 
   it('answers the same for an existing account, but emails a notice instead of a code', async () => {

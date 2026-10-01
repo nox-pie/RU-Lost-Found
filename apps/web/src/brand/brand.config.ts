@@ -26,6 +26,11 @@ export interface Brand {
   organisation: { name: string; location: string };
   /** One line under the product name in the footer. */
   tagline: string;
+  /**
+   * Which email to use, shown on the sign-in and sign-up pages. Keep it in line with the API's
+   * seed/universities.json: "*" in emailDomains means any address may sign up.
+   */
+  emailHint: string;
   /** Where people can reach the team running this deployment. */
   contactEmail: string;
   /** "Created with ♥ by …" in the footer; null hides the line. */
@@ -59,6 +64,7 @@ export const brand: Brand = {
   organisation: { name: 'Rishihood University', location: 'Sonipat, Haryana' },
   tagline:
     'Helping the Rishihood University community reconnect with their belongings, one item at a time.',
+  emailHint: 'Students: use your university email. Visitors can try it with any email.',
   contactEmail: 'prashant.k23csai@nst.rishihood.edu.in',
   credit: 'Prashant Kumar',
   images: {

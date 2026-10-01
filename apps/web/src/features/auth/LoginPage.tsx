@@ -33,10 +33,7 @@ export default function LoginPage() {
   });
 
   return (
-    <AuthLayout
-      title={`Sign in to ${brand.productName}`}
-      subtitle="Use your university email address."
-    >
+    <AuthLayout title={`Sign in to ${brand.productName}`} subtitle={brand.emailHint}>
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <Input
           label="Email"

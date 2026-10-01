@@ -44,7 +44,7 @@ Render's free plan has no shell, so these run from a laptop against the producti
 cd apps/api
 export MONGODB_URI='mongodb+srv://…/ru-lost-found-v2' APP_SECRET='any-32-characters-long-value-here'
 
-npm run seed                                               # the university (seed/universities.json)
+npm run seed                                               # the university (seed/universities.json); rerun after editing it
 
 export LEGACY_MONGODB_URI='mongodb+srv://…/<old database>'
 npm run migrate-legacy                                     # dry run: prints what would happen

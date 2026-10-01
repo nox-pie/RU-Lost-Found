@@ -87,7 +87,8 @@ test('a found item gets back to its owner through a verified handover', async ({
 });
 
 test('signing in again restores the session, and signing out ends it @mobile', async ({ page }) => {
-  const email = uniqueEmail('kabir');
+  // A visitor's own address (e.g. a recruiter trying the demo): the portal accepts any email.
+  const email = uniqueEmail('visitor', 'gmail.com');
   await signUp(page, { email, first: 'Kabir', last: 'Rao' });
 
   await page.reload();

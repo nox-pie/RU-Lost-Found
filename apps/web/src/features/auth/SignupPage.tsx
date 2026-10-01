@@ -33,7 +33,9 @@ export default function SignupPage() {
         </span>
       }
     >
-      {step === 1 && <EmailStep flow={flow} hint="We'll send a code to check it's really yours." />}
+      {step === 1 && (
+        <EmailStep flow={flow} hint={`${brand.emailHint} We'll send a code to check it's yours.`} />
+      )}
       {step === 2 && <CodeStep flow={flow} />}
       {step === 3 && flow.verified && (
         <DetailsStep

@@ -50,6 +50,17 @@ describe('MongoUniversityRepository', () => {
     expect((await universities.findBySlug(university.slug))?.id).toBe(university.id);
   });
 
+  it('prefers the university that owns an email domain over one open to any email', async () => {
+    const open = aUniversity({ emailDomains: ['*'] });
+    const rishihood = aUniversity({ emailDomains: ['rishihood.edu.in'] });
+    await universities.create(open);
+    await universities.create(rishihood);
+
+    expect((await universities.findByEmail('asha@nst.rishihood.edu.in'))?.id).toBe(rishihood.id);
+    expect((await universities.findByEmail('recruiter@gmail.com'))?.id).toBe(open.id);
+    expect(await universities.findByEmail('not-an-email')).toBeNull();
+  });
+
   it('rejects a duplicate slug', async () => {
     await universities.create(aUniversity({ slug: 'rishihood' }));
 

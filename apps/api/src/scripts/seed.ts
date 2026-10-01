@@ -12,7 +12,10 @@ import { MongoUniversityRepository } from '../modules/universities/infrastructur
 
 /**
  * The universities a deployment starts with live in a JSON file, not in code, so another
- * organisation sets up its own deployment by editing data only.
+ * organisation sets up its own deployment by editing data only. Running it again applies
+ * changes to the file (name, email domains, schools) to the existing universities.
+ *
+ * `"emailDomains": ["*"]` lets anyone sign up with any (verified) email address.
  *
  *   npm run seed                          # seed/universities.json
  *   npm run seed -- path/to/other.json
@@ -39,7 +42,7 @@ function readSeedFile(file: string) {
   return parsed.data;
 }
 
-/** Creates the starting data if it is missing. Safe to run any number of times. */
+/** Creates the universities, or updates them to match the file. Safe to run any number of times. */
 async function seed(): Promise<void> {
   const file = path.resolve(process.argv[2] ?? DEFAULT_FILE);
   const universitiesToSeed = readSeedFile(file);
@@ -53,8 +56,14 @@ async function seed(): Promise<void> {
   try {
     await universities.ensureIndexes();
     for (const data of universitiesToSeed) {
-      if (await universities.findBySlug(data.slug)) {
-        logger.info({ slug: data.slug }, 'University already exists, skipping');
+      const existing = await universities.findBySlug(data.slug);
+      if (existing) {
+        if (existing.updateSettings(data, clock.now())) {
+          await universities.update(existing);
+          logger.info({ slug: data.slug }, 'Updated university');
+        } else {
+          logger.info({ slug: data.slug }, 'University is up to date');
+        }
         continue;
       }
       await universities.create(University.create({ id: ids.next(), ...data, now: clock.now() }));

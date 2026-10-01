@@ -11,7 +11,7 @@ import {
   toObjectId,
 } from '../../../infrastructure/database/objectIds';
 import { collectionOptions, defineSchema } from '../../../infrastructure/database/schemas';
-import { University, type UniversityStatus } from '../domain/University';
+import { ANY_EMAIL_DOMAIN, University, type UniversityStatus } from '../domain/University';
 import type { UniversityRepository } from '../domain/UniversityRepository';
 
 interface UniversityDocument extends VersionedDocument {
@@ -68,10 +68,15 @@ export class MongoUniversityRepository
     return this.findOne({ slug: slug.toLowerCase() });
   }
 
+  /** A university that owns the address's domain wins over one that accepts any email. */
   async findByEmail(email: string): Promise<University | null> {
     const candidates = candidateDomains(email);
     if (candidates.length === 0) return null;
-    return this.findOne({ emailDomains: { $in: candidates }, status: 'ACTIVE' });
+    const matches = await this.findMany({
+      emailDomains: { $in: [...candidates, ANY_EMAIL_DOMAIN] },
+      status: 'ACTIVE',
+    });
+    return matches.find((u) => u.ownsEmailDomain(email)) ?? matches[0] ?? null;
   }
 
   protected override duplicateKeyMessage(): string {

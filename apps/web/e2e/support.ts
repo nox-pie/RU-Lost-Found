@@ -52,15 +52,15 @@ export async function codeEmailedTo(address: string, previousCount = 0): Promise
  * A unique address per test run and device project, so runs never collide on the same account
  * (the API would rightly refuse a second sign-up or rate-limit a repeated code request).
  */
-export function uniqueEmail(name: string): string {
-  return `${name}.${test.info().project.name}.${Date.now().toString(36)}@rishihood.edu.in`;
+export function uniqueEmail(name: string, domain = 'rishihood.edu.in'): string {
+  return `${name}.${test.info().project.name}.${Date.now().toString(36)}@${domain}`;
 }
 
 /** Creates an account through the real three-step sign-up form. */
 export async function signUp(page: Page, person: { email: string; first: string; last: string }) {
   await page.goto('/signup');
   const emailsBefore = emailsTo(person.email).length;
-  await page.getByLabel('University email').fill(person.email);
+  await page.getByLabel('Email', { exact: true }).fill(person.email);
   await page.getByRole('button', { name: 'Send code' }).click();
   await page.getByLabel('6-digit code').fill(await codeEmailedTo(person.email, emailsBefore));
   await page.getByRole('button', { name: 'Verify' }).click();

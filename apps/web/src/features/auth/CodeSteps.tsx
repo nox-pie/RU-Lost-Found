@@ -16,7 +16,7 @@ export function EmailStep({ flow, hint }: { flow: Flow; hint: string }) {
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
       <Input
-        label="University email"
+        label="Email"
         type="email"
         autoComplete="email"
         value={email}

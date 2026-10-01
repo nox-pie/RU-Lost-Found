@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml/badge.svg)](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
-![Tests](https://img.shields.io/badge/tests-331%20API%20%2B%204%20end--to--end-success)
+![Tests](https://img.shields.io/badge/tests-335%20API%20%2B%204%20end--to--end-success)
 ![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)
 
 The lost & found portal of **Rishihood University**: students report what they lost or found, prove an item is theirs, and get it back through a verified handover, without sharing phone numbers with strangers.
@@ -29,7 +29,7 @@ Claims that never get handed over expire, other claims on the item close automat
 
 ## Features
 
-**For students:** sign-up limited to university email addresses (verified by an emailed code) · search and filters · photo upload from phone or desktop · verification questions · in-app and email notifications · claim timeline · profile and picture · works on 360 px phones and up.
+**For students:** sign-up verified by an emailed code (open to any email so visitors can try it; can be limited to university addresses by configuration) · search and filters · photo upload from phone or desktop · verification questions · in-app and email notifications · claim timeline · profile and picture · works on 360 px phones and up.
 
 **For staff:** security-desk handover confirmation · admin dashboard (posts in play, return rate, average time to return, 8-week trend) · reports queue for flagged posts (remove with a reason, or keep) · people management (roles, suspension with immediate sign-out) · activity log in plain language.
 
@@ -64,7 +64,7 @@ Design patterns and why each is there, security decisions, the data model and th
 
 | | |
 |---|---|
-| **Tests** | 331 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 4 Playwright journeys in a real browser on desktop and a phone, including the full handover and the moderation flow |
+| **Tests** | 335 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 4 Playwright journeys in a real browser on desktop and a phone, including the full handover and the moderation flow |
 | **Load** | 200 simultaneous users on one instance: 95% of reads under 9 ms, writes under 36 ms, zero errors. Up to 1,000 simultaneous users (360 requests/s) without a single failed request. [Details](docs/load-test.md) |
 | **Security** | Independent review with every finding fixed; strict content security policy; no personal data in logs or error reports. [Details](docs/architecture/backend.md#9-authentication-and-security) |
 | **CI** | Typecheck, lint, formatting, tests with coverage, builds, end-to-end tests and Docker image builds on every push |
@@ -96,7 +96,7 @@ npm ci
 docker run -d --name rlf-mongo -p 27017:27017 mongo:7 --replSet rs0
 docker exec rlf-mongo mongosh --quiet --eval "rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: '127.0.0.1:27017' }] })"
 cp apps/api/.env.example apps/api/.env     # works as is for local development
-npm run seed -w @ru-lost-found/api         # creates the university
+npm run seed -w @ru-lost-found/api         # creates (or updates) the university
 npm run dev:api                            # http://localhost:5001 (sign-up codes appear in this log)
 npm run dev:web                            # http://localhost:5173
 npm run set-role -w @ru-lost-found/api -- you@rishihood.edu.in UNIVERSITY_ADMIN   # after signing up

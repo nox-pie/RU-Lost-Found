@@ -2,7 +2,7 @@
   {
     "name": "Rishihood University",
     "slug": "rishihood",
-    "emailDomains": ["rishihood.edu.in"],
+    "emailDomains": ["rishihood.edu.in", "*"],
     "schools": [
       "Newton School of Technology",
       "School of Entrepreneurship",
