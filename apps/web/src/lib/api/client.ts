@@ -6,7 +6,7 @@ const BASE = '/api/v1';
 export class ApiError extends Error {
   constructor(
     readonly status: number,
-    readonly code: ErrorCode | 'NETWORK_ERROR',
+    readonly code: ErrorCode | 'NETWORK_ERROR' | 'SERVICE_UNAVAILABLE',
     message: string,
     readonly details: ErrorDetail[] = [],
   ) {
@@ -30,6 +30,57 @@ let accessToken: string | null = null;
 let refreshInFlight: Promise<AuthResponse | null> | null = null;
 const expiredListeners = new Set<() => void>();
 
+/**
+ * The free hosting tier stops the API after a quiet period; the first requests then fail at the
+ * hosting layer (502/503/504 with an HTML page, not our JSON) for up to a minute while it starts.
+ */
+const WAKE_TIMEOUT_MS = 90_000;
+const WAKE_POLL_MS = 3_000;
+let wakingUp: Promise<boolean> | null = null;
+const wakeListeners = new Set<(waking: boolean) => void>();
+
+function isHostingError(res: Response): boolean {
+  return (
+    [502, 503, 504].includes(res.status) &&
+    !res.headers.get('content-type')?.includes('application/json')
+  );
+}
+
+/** Notified when the app starts and stops waiting for a sleeping server (to show a notice). */
+export function onServerWaking(listener: (waking: boolean) => void): () => void {
+  wakeListeners.add(listener);
+  return () => wakeListeners.delete(listener);
+}
+
+/** Waits until the API answers its health check again. All callers share one wait. */
+function waitUntilAwake(): Promise<boolean> {
+  wakingUp ??= (async () => {
+    wakeListeners.forEach((listener) => listener(true));
+    const deadline = Date.now() + WAKE_TIMEOUT_MS;
+    try {
+      while (Date.now() < deadline) {
+        try {
+          const res = await fetch(`${BASE}/health/live`, { cache: 'no-store' });
+          if (res.ok) return true;
+        } catch {
+          // still starting
+        }
+        await new Promise((resolve) => setTimeout(resolve, WAKE_POLL_MS));
+      }
+      return false;
+    } finally {
+      wakeListeners.forEach((listener) => listener(false));
+      wakingUp = null;
+    }
+  })();
+  return wakingUp;
+}
+
+/** Starts waking the API as soon as the app opens, so it's usually up before the first form. */
+export function warmUpServer(): void {
+  void fetch(`${BASE}/health/live`, { cache: 'no-store' }).catch(() => undefined);
+}
+
 export function setAccessToken(token: string | null): void {
   accessToken = token;
 }
@@ -46,8 +97,12 @@ export function onSessionExpired(listener: () => void): () => void {
  */
 export function refreshSession(): Promise<AuthResponse | null> {
   refreshInFlight ??= (async () => {
+    const refresh = () => fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' });
     try {
-      const res = await fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' });
+      let res = await refresh();
+      // A sleeping server must not look like a signed-out user. Retrying is safe: if the first
+      // attempt was processed after all, the old token is still accepted for 30 seconds.
+      if (isHostingError(res) && (await waitUntilAwake())) res = await refresh();
       if (!res.ok) {
         accessToken = null;
         return null;
@@ -94,7 +149,37 @@ async function toApiError(res: Response): Promise<ApiError> {
  * Calls the API. On 401 it refreshes the session once and retries; if that fails, listeners are
  * told the session has expired (the app then shows the sign-in page).
  */
-export async function api<T>(path: string, options: RequestOptions = {}, retry = true): Promise<T> {
+export async function api<T>(
+  path: string,
+  options: RequestOptions = {},
+  retry = true,
+  afterWake = false,
+): Promise<T> {
+  const res = await send(path, options);
+  if (isHostingError(res)) {
+    const awake = !afterWake && (await waitUntilAwake());
+    // Reads are repeated automatically (once). Changes are not, because the first attempt might
+    // have been processed after all: the person decides whether to send it again.
+    if (awake && (options.method ?? 'GET') === 'GET') return api<T>(path, options, retry, true);
+    throw new ApiError(
+      res.status,
+      'SERVICE_UNAVAILABLE',
+      awake
+        ? 'The server just woke up after a quiet period. Please try again.'
+        : 'The server is not responding. Please try again in a minute.',
+    );
+  }
+
+  if (res.status === 401 && retry && !path.startsWith('/auth/')) {
+    if (await refreshSession()) return api<T>(path, options, false);
+    expiredListeners.forEach((listener) => listener());
+  }
+  if (!res.ok) throw await toApiError(res);
+  if (res.status === 204) return undefined as T;
+  return (await res.json()) as T;
+}
+
+async function send(path: string, options: RequestOptions): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   let body: BodyInit | undefined;
@@ -105,9 +190,8 @@ export async function api<T>(path: string, options: RequestOptions = {}, retry =
     body = JSON.stringify(options.json);
   }
 
-  let res: Response;
   try {
-    res = await fetch(buildUrl(path, options.query), {
+    return await fetch(buildUrl(path, options.query), {
       method: options.method ?? 'GET',
       headers,
       body,
@@ -118,12 +202,4 @@ export async function api<T>(path: string, options: RequestOptions = {}, retry =
     if (error instanceof DOMException && error.name === 'AbortError') throw error;
     throw new ApiError(0, 'NETWORK_ERROR', 'Could not reach the server. Check your connection.');
   }
-
-  if (res.status === 401 && retry && !path.startsWith('/auth/')) {
-    if (await refreshSession()) return api<T>(path, options, false);
-    expiredListeners.forEach((listener) => listener());
-  }
-  if (!res.ok) throw await toApiError(res);
-  if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
 }
