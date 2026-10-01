@@ -1,222 +1,129 @@
-# 🏛️ RU Lost & Found
+# RU Lost & Found
 
-![Project Status](https://img.shields.io/badge/Status-Completed-success)
-![Tech Stack](https://img.shields.io/badge/Stack-MERN-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
+[![CI](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml/badge.svg)](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
+![Tests](https://img.shields.io/badge/tests-331%20API%20%2B%204%20end--to--end-success)
+![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)
 
-A comprehensive, full-stack Lost & Found portal custom-built for **Rishihood University**. This platform connects lost items with their owners within the university community through a secure, feature-rich, and visually stunning web application.
+The lost & found portal of **Rishihood University**: students report what they lost or found, prove an item is theirs, and get it back through a verified handover, without sharing phone numbers with strangers.
 
----
+**Live:** [ru-lost-found.vercel.app](https://ru-lost-found.vercel.app) · **API docs:** `/api/v1/docs` on the same domain
 
-## 📝 Project Overview
+<p>
+  <img src="docs/screenshots/sign-in.jpg" alt="Sign-in page" width="49%" />
+  <img src="docs/screenshots/handover-code.png" alt="Claim page with the handover code" width="49%" />
+</p>
+<p>
+  <img src="docs/screenshots/admin-overview.png" alt="Admin overview" width="74%" />
+  <img src="docs/screenshots/admin-mobile.png" alt="Admin overview on a phone" width="24%" />
+</p>
 
-**RU Lost & Found** is a robust web application built for students to report, search, and claim lost or found items on campus. The platform facilitates secure, privacy-respecting communication between students via automated email notifications, with built-in identity verification through OTP-based email validation.
+## How it works
 
----
+1. **Report.** A student posts a lost or found item with photos, place and date. For found items, the finder can add questions only the owner could answer ("What's the wallpaper?").
+2. **Claim.** The owner finds it by search or filters and claims it, answering the questions. The finder is notified in the app and by email.
+3. **Decide.** The finder checks the answers and approves (or declines). Contact details are shared only now, and only with each other.
+4. **Hand over.** They meet. The owner shows a 6-digit handover code; the finder enters it and the item is marked returned. Five wrong codes lock it, and the security desk can confirm in person instead.
 
-## ✨ Key Features & Workflows
+Claims that never get handed over expire, other claims on the item close automatically, and everything is recorded in an audit log.
 
-### 🔐 Enterprise-Grade Security
-* **OTP-Verified Registration:** Users must verify their email addresses via a 6-digit OTP before they can create an account. OTPs are stored securely in-memory and auto-clean.
-* **Password Recovery:** Secure "Forgot Password" flow with timed, single-use OTPs stored in MongoDB.
-* **JWT Authentication:** Stateful user sessions protected by secure HTTP bearer tokens (5-hour expiry).
-* **Encrypted Passwords:** Passwords securely hashed using `bcryptjs`.
+## Features
 
-### 📦 Core Functionality
-* **Mandatory Image Reporting:** Custom HTML5 drag-and-drop file upload zone (powered by Multer) ensures all items are verifiable with a photo. Image preview and client-side validation (5MB max) included.
-* **Real-time Search & Filter:** Lightning-fast, client-side search across item titles, descriptions, and locations. Works dynamically with category tabs (All, Lost, Found, Claimed).
-* **Automated Email Notifications:** "Claiming" an item triggers an atomic transaction that sends a professionally formatted HTML email to the reporter, facilitating connection without exposing private phone numbers unless authorized.
-* **Editable Profiles:** Full CRUD profile management via a dropdown card. Users can update their name, year, school, phone number, and profile picture.
+**For students:** sign-up limited to university email addresses (verified by an emailed code) · search and filters · photo upload from phone or desktop · verification questions · in-app and email notifications · claim timeline · profile and picture · works on 360 px phones and up.
 
-### 🎨 Premium UI/UX Design
-* **Glassmorphism Aesthetic:** Frosted glass headers and modals (`backdrop-blur`) layered over high-quality campus imagery.
-* **Modern Typography:** High-end font pairing using Google Fonts (`Playfair Display` for editorial headings, `Inter` for crisp body text).
-* **Micro-interactions:** Staggered scroll animations (Intersection Observer), smooth hover lifts, floating action buttons, and glowing borders.
-* **Consistent Layouts:** Flexbox-driven card dimensions ensure pixel-perfect alignment across all devices regardless of content length.
+**For staff:** security-desk handover confirmation · admin dashboard (posts in play, return rate, average time to return, 8-week trend) · reports queue for flagged posts (remove with a reason, or keep) · people management (roles, suspension with immediate sign-out) · activity log in plain language.
 
----
+**Under the hood:** rotating refresh tokens with theft detection · rate limits that work behind a campus-wide shared IP · images stripped of location data and re-encoded before storage · transactional outbox so no notification is lost · OpenAPI docs · error tracking · Docker images · re-brandable for other organisations through configuration.
 
-## 🛠️ Technology Stack (MERN)
+## Architecture
 
-### Frontend
-| Technology | Purpose |
-|---|---|
-| **React 18 + TypeScript** | UI framework, built with Vite |
-| **Tailwind CSS** | Utility-first responsive styling |
-| **lucide-react** | SVG icon library |
-| **React Context API** | Global auth state management (`AuthContext.tsx`) |
-| **react-router-dom** | Client-side routing |
-
-### Backend
-| Technology | Purpose |
-|---|---|
-| **Node.js + Express.js** | REST API server |
-| **MongoDB + Mongoose** | Database and ODM |
-| **JWT + bcryptjs** | Authentication and security |
-| **multer** | Multipart file upload handling (images) |
-| **nodemailer** | Automated transactional emails |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-* Node.js (v16+)
-* MongoDB (Local instance or MongoDB Atlas cluster)
-* A Gmail account with an "App Password" generated for Nodemailer
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/your-username/ru-lost-and-found.git
-cd ru-lost-and-found
+```mermaid
+flowchart LR
+    B[Browser<br/>React SPA] -->|/api rewrite| A[API<br/>Express · TypeScript]
+    A --> M[(MongoDB<br/>transactions)]
+    A --> R[(Redis<br/>codes · rate limits · leases)]
+    A --> C[Cloudinary<br/>images]
+    A -. outbox .-> W[Background worker<br/>notifications · emails · jobs]
+    W --> M
+    W --> E[Brevo<br/>email]
+    A --> S[Sentry]
 ```
 
-### 2. Environment Variables
-Create a `.env` file in the `backend/` directory:
-
-```env
-# Backend Server Port (using 5001 to avoid macOS AirPlay conflicts)
-PORT=5001
-
-# MongoDB Connection String
-MONGODB_URI=mongodb://127.0.0.1:27017/ru-lost-found
-
-# Security
-JWT_SECRET=your_super_secret_jwt_key_here
-
-# Email Configuration (Nodemailer)
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_gmail_app_password
-```
-
-### 3. Install Dependencies & Run
-
-You will need two terminal windows to run both servers concurrently.
-
-**Terminal 1 (Backend):**
-```bash
-cd backend
-npm install
-node server.js
-```
-
-**Terminal 2 (Frontend):**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The application will be accessible at `http://localhost:5173`. 
-*(Note: Vite proxy is configured to automatically route `/api/*` requests to your backend at `http://127.0.0.1:5001`).*
-
----
-
-## ⚡ Performance & Deployment Architecture
-
-To ensure a production-ready, lightning-fast experience on free-tier hosting, several specific architectural optimizations were implemented:
-
-* **Cloudinary Media Pipeline:** Bypassed ephemeral serverless storage limitations by integrating `multer-storage-cloudinary`. All user uploads are streamed directly to Cloudinary's global CDN, ensuring permanent image persistence.
-* **Separation of Concerns:** Deployed the static React/Vite frontend to [**Vercel**](https://ru-lost-found.vercel.app/) for edge-network delivery, while the stateful Node/Express API is hosted on [**Render**](https://ru-lost-found.onrender.com).
-* **Zero-Latency Cold Starts (The Cron Hack):** Free-tier Render backends typically sleep after 15 minutes of inactivity, causing 30+ second delays for the next user. This was solved by engineering a dedicated, database-free `/api/ping` endpoint. An external service ([cron-job.org](https://cron-job.org/)) pings this endpoint every 10 minutes, keeping the server perpetually awake without consuming MongoDB read quotas.
-* **Graceful Degradation:** Implemented a custom animated loading state in `Dashboard.tsx` that informs users ("Waking up the server...") in the rare event a cold start does occur.
-
----
-
-## 📂 Detailed Directory Structure
+A **modular monolith** in layers (route → controller → service → domain → repository), with a rich domain model: the claim lifecycle is a state machine (State pattern), aggregates guard their own rules and use optimistic concurrency, and side effects run through a **transactional outbox** (a change and its events are saved in one transaction; a worker delivers them at least once, with retries). Every external service sits behind an interface chosen in one composition root, so tests use in-memory fakes and each free-tier provider can be swapped for a paid one.
 
 ```text
-RU Lost & Found/
-├── backend/
-│   ├── controllers/
-│   │   ├── authController.js      # Register, Login, Passwords, OTPs, Profile
-│   │   ├── contactController.js   # Claim workflow & Email dispatch
-│   │   └── itemController.js      # CRUD for items with image uploads
-│   ├── middleware/
-│   │   ├── auth.js                # JWT verification
-│   │   └── upload.js              # Multer configuration (crypto filenames)
-│   ├── models/
-│   │   ├── User.js                # User schema (12 fields)
-│   │   └── Item.js                # Item schema with claimedBy subdoc
-│   ├── routes/                    # API route definitions
-│   ├── uploads/                   # Stored images (Express static serving)
-│   ├── server.js                  # Entry point
-│   └── package.json               
-│
-└── frontend/
-    ├── public/
-    │   ├── rishihood-logo.png     # University branding
-    │   ├── ru-symbol.png          # Favicon & Header logo
-    │   └── campus-illustration.png# Footer aesthetic
-    ├── src/
-    │   ├── components/
-    │   │   ├── Login.tsx           # 4-mode auth logic & UI
-    │   │   ├── Dashboard.tsx       # Main feed, filters, pagination
-    │   │   ├── Header.tsx          # Glassmorphism navbar & search
-    │   │   ├── ProfileCard.tsx     # Editable dropdown profile
-    │   │   ├── ItemCard.tsx        # Item display with hover effects
-    │   │   ├── ClaimModal.tsx      # Atomic claim workflow UI
-    │   │   ├── ReportForm.tsx      # Drag & Drop upload form
-    │   │   ├── Footer.tsx          # Illustrated footer
-    │   │   └── PrivateRoute.tsx    # Route guard
-    │   ├── contexts/
-    │   │   └── AuthContext.tsx     # Global JWT state management
-    │   ├── services/
-    │   │   └── itemService.ts      # API wrappers (fetch API)
-    │   ├── types.ts                # TypeScript interfaces
-    │   ├── App.tsx                 # Root Router
-    │   └── index.css               # Tailwind directives & Animations
-    ├── tailwind.config.js          # Custom theme colors & radii
-    └── vite.config.ts              # Proxy configuration
+apps/api          REST API (Express 5, Mongoose 9, Zod)          → docs/architecture/backend.md
+apps/web          React 18 SPA (Vite, Tailwind, TanStack Query)  → docs/architecture/frontend.md
+packages/shared   Zod schemas, enums and DTO types used by both, so client and server validate the same way
+load              k6 load test                                    → docs/load-test.md
 ```
 
----
+Design patterns and why each is there, security decisions, the data model and the API table are in the [backend design document](docs/architecture/backend.md).
 
-## 🗄️ Database Schemas
+## Quality
 
-### User Schema
-* `email`, `password` (hashed)
-* `firstName`, `lastName`, `year`, `school`, `enrollmentNumber`
-* `phone`, `profilePicture` (optional)
-* `resetOtp`, `resetOtpExpiry` (temporary)
+| | |
+|---|---|
+| **Tests** | 331 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 4 Playwright journeys in a real browser on desktop and a phone, including the full handover and the moderation flow |
+| **Load** | 200 simultaneous users on one instance: 95% of reads under 9 ms, writes under 36 ms, zero errors. Up to 1,000 simultaneous users (360 requests/s) without a single failed request. [Details](docs/load-test.md) |
+| **Security** | Independent review with every finding fixed; strict content security policy; no personal data in logs or error reports. [Details](docs/architecture/backend.md#9-authentication-and-security) |
+| **CI** | Typecheck, lint, formatting, tests with coverage, builds, end-to-end tests and Docker image builds on every push |
 
-### Item Schema
-* `type` ('lost' or 'found')
-* `title`, `description`, `location`, `date`
-* `reporter`, `reporterId` (ref: User)
-* `status` ('open' or 'claimed')
-* `image` (URL to `/uploads/`)
-* `claimedBy` (Object: name, contact, details)
+## Tech stack
 
----
+| Area | Choices |
+|---|---|
+| Web | React 18, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, React Hook Form + Zod |
+| API | Node.js 22, Express 5, TypeScript, Mongoose 9, Zod, pino, sharp, JWT, bcrypt |
+| Data | MongoDB Atlas (transactions), Upstash Redis |
+| Services | Cloudinary (images), Brevo (email), Sentry (errors), UptimeRobot (uptime) |
+| Delivery | Vercel (web), Render (API, Docker), GitHub Actions |
+| Testing | Vitest, Supertest, mongodb-memory-server, Playwright, k6 |
 
-## 🔌 API Endpoints Reference
+## Running it locally
 
-### Auth (`/api/auth`)
-* `POST /send-signup-otp` - Dispatch verification email
-* `POST /register` - Create account (Multer `profilePicture`)
-* `POST /login` - Issue JWT
-* `POST /forgot-password` - Dispatch reset OTP
-* `POST /reset-password` - Update password
-* `GET /me` - Fetch profile
-* `PUT /me` - Update profile fields (Multer `profilePicture`)
+**Everything in Docker** (needs Docker only):
 
-### Items (`/api/items`)
-* `GET /` - Fetch all items (populated)
-* `POST /` - Create item (Multer `image` mandatory)
-* `PATCH /:id/status` - Mark claimed
-* `DELETE /:id` - Delete item (Owner only)
+```bash
+docker compose up --build        # → http://localhost:8080 · API docs at /api/v1/docs
+docker compose logs api          # sign-up codes are printed here
+```
 
-### Contact (`/api/contact`)
-* `POST /:itemId` - Send claim email & trigger item status update
+**For development** (Node 22, plus Docker for MongoDB):
 
----
+```bash
+npm ci
+docker run -d --name rlf-mongo -p 27017:27017 mongo:7 --replSet rs0
+docker exec rlf-mongo mongosh --quiet --eval "rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: '127.0.0.1:27017' }] })"
+cp apps/api/.env.example apps/api/.env     # works as is for local development
+npm run seed -w @ru-lost-found/api         # creates the university
+npm run dev:api                            # http://localhost:5001 (sign-up codes appear in this log)
+npm run dev:web                            # http://localhost:5173
+npm run set-role -w @ru-lost-found/api -- you@rishihood.edu.in UNIVERSITY_ADMIN   # after signing up
+```
 
-## 👤 Author
+| Command | Does |
+|---|---|
+| `npm run check` | Typecheck, lint, formatting and all tests with coverage |
+| `npm run e2e` | Playwright journeys (starts its own database, API and web app) |
+| `npm run build` | Production builds of the API and the web app |
 
-**Prashant Kumar**  
-Rishihood University  
-📧 [prashant.k23csai@nst.rishihood.edu.in](mailto:prashant.k23csai@nst.rishihood.edu.in)
+## Documentation
 
----
-*Created with ❤️ for the Rishihood University Community.*
+- [Backend design](docs/architecture/backend.md): architecture, domain model, claim state machine, outbox, security, API, patterns, testing
+- [Frontend design](docs/architecture/frontend.md): structure, sessions, data layer, screens, accessibility
+- [Deployment runbook](docs/deployment.md): production setup, switch-over and rollback, free-tier limits
+- [Load test](docs/load-test.md): method, results, and the bottleneck it found
+- [Branding](docs/branding.md): running the portal for another organisation
+
+## For other organisations
+
+The portal is built for Rishihood University. Its name, logo, colours, email domains and departments are configuration, so another organisation can have its own deployment without code changes. Running it requires a licence: contact the author.
+
+## Author
+
+**Prashant Kumar** · Rishihood University · [prashant.k23csai@nst.rishihood.edu.in](mailto:prashant.k23csai@nst.rishihood.edu.in)
+
+## License
+
+Copyright © Prashant Kumar. **All rights reserved.** The source is visible for review and evaluation only; see [LICENSE](LICENSE).
