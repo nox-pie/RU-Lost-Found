@@ -47,3 +47,6 @@ services:
         sync: false
       - key: SENTRY_DSN
         sync: false
+      # The owners' accounts, made platform admins automatically (see apps/api/.env.example).
+      - key: ADMIN_EMAILS
+        sync: false

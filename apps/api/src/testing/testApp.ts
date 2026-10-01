@@ -76,7 +76,9 @@ export interface TestApp {
  * The real application (real composition root, repositories and MongoDB) with fakes only at the
  * edges: a fixed clock, captured emails and an in-memory key-value store. State is reset after each test.
  */
-export function useTestApp(options: { healthIndicators?: HealthIndicator[] } = {}): TestApp {
+export function useTestApp(
+  options: { healthIndicators?: HealthIndicator[]; env?: Record<string, string> } = {},
+): TestApp {
   const db = useTestDatabase();
   const clock = new FixedClock();
   const email = new CapturingEmailSender();
@@ -86,7 +88,7 @@ export function useTestApp(options: { healthIndicators?: HealthIndicator[] } = {
   let container: Container | undefined;
 
   beforeAll(async () => {
-    const env = testEnv();
+    const env = testEnv(options.env);
     const logger = createLogger(env);
     container = await buildContainer(
       env,

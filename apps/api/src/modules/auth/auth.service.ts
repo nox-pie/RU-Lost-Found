@@ -22,6 +22,7 @@ import type { PasswordHasher } from '../../core/security/PasswordHasher';
 import type { TokenService } from '../../core/security/TokenService';
 import type { UniversityRepository } from '../universities/domain/UniversityRepository';
 import { User, normalizeEmail } from '../users/domain/User';
+import type { AdminAccounts } from '../users/AdminAccounts';
 import type { UserRepository } from '../users/domain/UserRepository';
 import type { AuthEmails } from './auth.emails';
 import type { LoginThrottle } from './LoginThrottle';
@@ -50,6 +51,7 @@ export interface AuthServiceDeps {
   audit: AuditTrail;
   loginThrottle: LoginThrottle;
   logger: Logger;
+  adminAccounts: AdminAccounts;
 }
 
 const INVALID_CREDENTIALS = 'Incorrect email or password.';
@@ -166,6 +168,7 @@ export class AuthService {
       },
       now: clock.now(),
     });
+    this.deps.adminAccounts.applyTo(user);
     await users.create(user);
 
     return this.signIn(user, client);

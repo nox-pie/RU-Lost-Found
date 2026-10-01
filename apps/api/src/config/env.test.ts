@@ -77,6 +77,17 @@ describe('loadEnv', () => {
     );
   });
 
+  it('reads ADMIN_EMAILS as a list of email addresses', () => {
+    expect(loadEnv(valid).ADMIN_EMAILS).toEqual([]);
+    expect(loadEnv({ ...valid, ADMIN_EMAILS: ' A@x.in , b@y.com ' }).ADMIN_EMAILS).toEqual([
+      'a@x.in',
+      'b@y.com',
+    ]);
+    expect(() => loadEnv({ ...valid, ADMIN_EMAILS: 'a@x.in, not-an-email' })).toThrow(
+      /ADMIN_EMAILS/,
+    );
+  });
+
   it('accepts a Sentry DSN only as a URL', () => {
     expect(loadEnv({ ...valid, SENTRY_DSN: '' }).SENTRY_DSN).toBeUndefined();
     expect(() => loadEnv({ ...valid, SENTRY_DSN: 'not a url' })).toThrow(/SENTRY_DSN/);

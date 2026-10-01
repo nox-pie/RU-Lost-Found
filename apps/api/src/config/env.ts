@@ -68,6 +68,15 @@ const envSchema = z
     SENTRY_RELEASE: optionalString,
     RENDER_GIT_COMMIT: optionalString,
 
+    /**
+     * Accounts of the deployment's owners (comma-separated emails): always platform admins,
+     * appointed at startup or as soon as they sign up. Set it in the hosting dashboard, not in a
+     * committed file (the repository is public).
+     */
+    ADMIN_EMAILS: commaSeparatedList
+      .pipe(z.array(z.string().trim().toLowerCase().email('must be email addresses')))
+      .default(''),
+
     /** Master secret. Separate keys for tokens and codes are derived from it. */
     APP_SECRET: z.string().min(32, 'must be at least 32 characters'),
     /** bcrypt work factor. Each +1 doubles the time to hash (and to brute-force). */

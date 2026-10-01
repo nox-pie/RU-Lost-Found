@@ -50,8 +50,10 @@ export LEGACY_MONGODB_URI='mongodb+srv://…/<old database>'
 npm run migrate-legacy                                     # dry run: prints what would happen
 npm run migrate-legacy -- --apply                          # copies accounts and items
 
-npm run set-role -- your.email@rishihood.edu.in UNIVERSITY_ADMIN   # after you have an account
+npm run set-role -- your.email@rishihood.edu.in PLATFORM_ADMIN     # only if ADMIN_EMAILS isn't set
 ```
+
+**Admins:** the owners' emails go in the Render setting `ADMIN_EMAILS` (comma-separated). The API makes those accounts platform admins when it starts, or as soon as they sign up, so a fresh deployment needs no manual step. The actual addresses are kept in the dashboard because the repository is public.
 
 The migration keeps ids and passwords (people sign in as before), never writes to the old database, sends no emails and can be run again safely. It does not copy the old "claimed by" contact notes (personal data). Inside the Docker image the same scripts are `node dist/scripts/<name>.js`.
 

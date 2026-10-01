@@ -69,6 +69,7 @@ import { NotificationEmails } from './modules/notifications/notification.emails'
 import { NotificationService } from './modules/notifications/notification.service';
 import { MongoUniversityRepository } from './modules/universities/infrastructure/MongoUniversityRepository';
 import { UniversityController } from './modules/universities/university.controller';
+import { AdminAccounts } from './modules/users/AdminAccounts';
 import { MongoUserRepository } from './modules/users/infrastructure/MongoUserRepository';
 import { UserController } from './modules/users/user.controller';
 import { UserService } from './modules/users/user.service';
@@ -101,6 +102,7 @@ export interface Container {
   };
   /** Application services used outside HTTP requests (scheduled jobs, event handlers). */
   services: {
+    adminAccounts: AdminAccounts;
     claims: ClaimService;
     items: ItemService;
     audit: MongoAuditTrail;
@@ -230,6 +232,7 @@ export async function buildContainer(
   });
   const notificationEmails = new NotificationEmails(emailLayout, env.APP_URL);
 
+  const adminAccounts = new AdminAccounts(env.ADMIN_EMAILS, repositories.users, clock, logger);
   const sessions = new SessionManager(repositories.sessions, unitOfWork, ids, clock, logger, audit);
   const authService = new AuthService({
     users: repositories.users,
@@ -240,6 +243,7 @@ export async function buildContainer(
     passwords: passwordHasher,
     email: emailSender,
     emails: new AuthEmails(emailLayout),
+    adminAccounts,
     ids,
     clock,
     audit,
@@ -368,6 +372,7 @@ export async function buildContainer(
       admin: adminController,
     },
     services: {
+      adminAccounts,
       claims: claimService,
       items: itemService,
       audit,
