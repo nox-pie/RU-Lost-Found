@@ -87,6 +87,16 @@ export const OPERATIONS: Operation[] = [
     access: 'public',
     ok: { 200: 'Every dependency is healthy', 503: 'A dependency is down' },
   },
+  {
+    method: 'get',
+    path: '/health/client',
+    tag: 'Health',
+    summary: 'How the API sees the caller (client IP and proxy chain)',
+    description:
+      'For checking TRUST_PROXY_HOPS after a deploy: `ip` must be your own public address.',
+    access: 'public',
+    ok: { 200: '`{ ip, forwardedFor, directPeer, trustProxyHops }`' },
+  },
 
   // Auth
   {

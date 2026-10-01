@@ -13,6 +13,20 @@ describe('API app', () => {
     expect(res.body).toMatchObject({ status: 'ok', uptimeSeconds: expect.any(Number) });
   });
 
+  it('GET /api/v1/health/client shows the caller how the API sees it', async () => {
+    const res = await request(t.app)
+      .get('/api/v1/health/client')
+      .set('X-Forwarded-For', '203.0.113.7, 198.51.100.2');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      forwardedFor: ['203.0.113.7', '198.51.100.2'],
+      trustProxyHops: 0,
+    });
+    // No proxy is trusted in tests, so the client is the direct peer.
+    expect(res.body.ip).toBe(res.body.directPeer);
+  });
+
   it('GET /api/v1/health/ready returns 200 when dependencies are up', async () => {
     redis.healthy = true;
 
