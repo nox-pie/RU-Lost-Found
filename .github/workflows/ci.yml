@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch cancels the run still in progress.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API · typecheck, lint, test, build
+    # Pinned: the in-memory MongoDB 7.0 test binary is published for Ubuntu 22.04.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    services:
+      # Real Redis, so the Redis key-value store runs the same contract tests as the in-memory one.
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      REDIS_URL: redis://localhost:6379
+      # MongoDB binary used by the in-memory test database (pinned for reproducible runs).
+      MONGOMS_VERSION: 7.0.24
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cache MongoDB test binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-${{ runner.os }}-${{ env.MONGOMS_VERSION }}
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: |
+          npm run typecheck -w @ru-lost-found/shared
+          npm run typecheck -w @ru-lost-found/api
+
+      - name: Lint
+        run: npm run lint -w @ru-lost-found/api
+
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Tests with coverage (fails below the thresholds)
+        run: npm run test:coverage -w @ru-lost-found/api
+
+      - name: Build
+        run: npm run build -w @ru-lost-found/api
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage
+          retention-days: 14
+
+  web:
+    name: Web · typecheck, lint, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck -w @ru-lost-found/web
+
+      - name: Lint
+        run: npm run lint -w @ru-lost-found/web
+
+      - name: Build
+        run: npm run build -w @ru-lost-found/web
+
+  e2e:
+    name: End-to-end · real browser, web app and API
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      MONGOMS_VERSION: 7.0.24
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cache MongoDB test binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-${{ runner.os }}-${{ env.MONGOMS_VERSION }}
+
+      - run: npm ci
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Run journeys (desktop and mobile)
+        run: npm run e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          retention-days: 14
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the API image
+        run: docker build -f apps/api/Dockerfile -t ru-lost-found-api:ci .
+
+      - name: Build the web image
+        run: docker build -f apps/web/Dockerfile -t ru-lost-found-web:ci .
