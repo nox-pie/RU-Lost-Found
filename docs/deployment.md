@@ -16,6 +16,20 @@ UptimeRobot ──► /api/v1/health/live every 5 minutes (alerts, and keeps the
 
 The browser only ever talks to the Vercel domain: `/api` is rewritten to Render, so the refresh-token cookie is first-party and no CORS preflight is needed.
 
+## Where configuration lives
+
+| File or place                                              | Committed?       | Used for                                                                                                                                            |
+| ---------------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/api/.env.example`                                    | Yes              | Reference: every API setting, explained, with no real values                                                                                        |
+| `apps/api/.env`                                            | No (git-ignored) | Local development (`npm run dev:api`): local database, no production secrets                                                                        |
+| `apps/api/.env.production`                                 | No (git-ignored) | Production values, for running scripts against production from a laptop (`npx tsx --env-file=.env.production …`) and as a copy of Render's settings |
+| Render dashboard → `ru-lost-found-api` → Environment       | n/a              | The live API's settings (the source of truth)                                                                                                       |
+| `apps/web/.env.example`                                    | Yes              | Reference: the web app's settings                                                                                                                   |
+| `apps/web/.env.production`                                 | No (git-ignored) | Production build settings, a copy of Vercel's                                                                                                       |
+| Vercel dashboard → `ru-lost-found` → Environment Variables | n/a              | The live website's settings (the source of truth)                                                                                                   |
+
+A new developer copies `apps/api/.env.example` to `apps/api/.env` and is ready (see the README); the web app needs no env file locally. Every `*.env` and `.env.*` file except the examples is git-ignored. When a value changes in a dashboard, update the local copy too.
+
 ## 2. Before the first deploy
 
 | Service       | What to set up                                                                                                                                                                                                   |
