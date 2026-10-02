@@ -1,6 +1,6 @@
 # Frontend Architecture
 
-Status: Built (Days 9–10) · Last updated: 1 October 2026
+Status: Built and live · Last updated: 1 October 2026
 
 The web app is a React 18 single-page application (TypeScript, Vite, Tailwind CSS) organised **by feature**. It talks to the API only through one typed client, keeps server data in TanStack Query's cache, and validates forms with the **same Zod schemas the API uses** (from `packages/shared`), so the client and server can't disagree about what's valid.
 
@@ -10,7 +10,7 @@ The web app is a React 18 single-page application (TypeScript, Vite, Tailwind CS
 
 ```
 apps/web/src/
-├── main.tsx                 # Providers: TanStack Query → Router → Auth → App (+ toasts)
+├── main.tsx                 # ErrorBoundary → TanStack Query → Router → Auth → App (+ toasts, wake-up notice)
 ├── App.tsx                  # Routes; every page is lazy-loaded (code splitting)
 ├── brand/brand.config.ts    # Name, texts, image paths and colours of this deployment
 ├── lib/
@@ -18,10 +18,15 @@ apps/web/src/
 │   ├── api/endpoints.ts     # one typed function per API endpoint
 │   ├── queryClient.ts       # cache defaults + all query keys in one place
 │   ├── forms.ts             # maps API field errors onto form inputs
-│   └── format.ts            # labels, status colours, dates (en-IN)
+│   ├── format.ts            # labels, status colours, dates (en-IN)
+│   ├── hooks.ts             # useDebouncedValue (search as you type)
+│   └── monitoring.ts        # Sentry, loaded lazily and only when configured
 ├── components/
-│   ├── ui/                  # Button, Input/Select/Textarea, Modal, Badge, Avatar, …
-│   └── layout/              # Header (nav, notifications, account menu), AppLayout, footer
+│   ├── ui/                  # Button, Field (Input/Select/Textarea/Checkbox), Modal, ConfirmDialog, Spinner,
+│   │                        #   misc (Badge, Avatar, EmptyState, ErrorState, PageLoader)
+│   ├── layout/              # Header (nav, notifications, account menu), AppLayout, footer
+│   ├── ErrorBoundary.tsx    # a crash shows a way out instead of a blank page, and is reported
+│   └── ServerWakeNotice.tsx # "Waking up the server…" while the API starts
 └── features/
     ├── auth/                # session provider, route guards, sign-in, 3-step sign-up and reset
     ├── items/               # browse/search, report dialog, item page, my items
@@ -34,7 +39,7 @@ apps/web/src/
 
 **Branding:** no component names the organisation or hard-codes a colour. Texts and image paths come from `src/brand/brand.config.ts`; colours reach Tailwind as `primary`, `secondary` and `surface`; `index.html` gets its title, description, icon and theme colour from the same file through a small Vite plugin. Images live in `public/brand/`. See [../branding.md](../branding.md).
 
-**Rule:** features depend on `lib` and `components`, never on each other's internals (the item page uses the claims feature's public `ClaimDialog` component only).
+**Rule:** features depend on `lib` and `components`, and use only other features' public pieces, never their internals: the item page uses `ClaimDialog` (claims) and `FlagItemDialog` (moderation), and pages read the signed-in user through the auth context.
 
 ## 2. Session handling
 
@@ -53,7 +58,7 @@ The Vite dev server proxies `/api` to the API, exactly like the Vercel rewrite i
 - **Server state lives in the cache, not in components.** Pages read with `useQuery` / `useInfiniteQuery` and change data with `useMutation`; after a change the affected keys are invalidated (`queryKeys` defines every key in one place).
 - **Cursor pagination → "Load more".** `useInfiniteQuery` passes the API's `nextCursor` back as `cursor`.
 - **Freshness without a reload:** notifications poll every 60 s and on window focus; a claim page polls every 15 s while a handover is pending, so each person sees the other's actions.
-- **Retries** only for network errors, never for 4xx answers.
+- **Retries** (up to 2) for network and server errors, never for 4xx answers. A sleeping API (502/503/504 from the hosting layer) is handled in the API client itself (see Cold start).
 
 ## 4. Forms
 
@@ -64,7 +69,7 @@ The Vite dev server proxies `/api` to the API, exactly like the Vercel rewrite i
 | Route                                   | Screen                                                                                                                                                              |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/login`, `/signup`, `/forgot-password` | Sign-in; sign-up and reset as three steps: email → emailed code → details / new password                                                                            |
-| `/`                                     | Browse: search (debounced), Lost / Found / Returned tabs, category filter; filters live in the URL so a view can be shared                                          |
+| `/`                                     | Browse: search (debounced), All / Lost / Found / Returned tabs, category filter; filters live in the URL so a view can be shared                                    |
 | `/items/:id`                            | Photos, details; the reporter sees claims and can remove the report; others can claim                                                                               |
 | `/my-items`                             | Everything the user reported                                                                                                                                        |
 | `/claims`, `/claims/:id`                | Claims on my items / made by me; the claim page adapts to the viewer: reporter decides, owner sees the handover code, finder enters it, staff can confirm in person |
@@ -87,6 +92,7 @@ Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `a
 - `e2e/start-api.mjs` starts MongoDB, seeds the university and runs the API with its background worker; emails are written to files (a local mail catcher), so tests read sign-up codes like a person would.
 - **Journey 1:** two students sign up → the finder reports a found item with a photo and a verification question → the owner searches, finds and claims it → the finder is notified, checks the answer and approves → the owner sees the code → the finder enters it → the item shows as returned.
 - **Moderation journey:** a student reports a fake post → an admin (appointed with the real `set-role` script) removes it with a reason → the poster is notified and the post is gone → the admin suspends the poster, whose session ends → the activity log shows the decisions.
-- **Journey 2** (desktop and a Pixel 7 phone): the session survives a reload, sign-out ends it, sign-in brings it back.
+- **Journey 2** (desktop and a Pixel 7 phone): a visitor signs up with a Gmail address, the session survives a reload, sign-out ends it, sign-in brings it back.
+- **Resilience:** with the hosting layer faked to answer 502, pages load by themselves once the server wakes up, and a form sent to a sleeping server explains the wait and is not sent twice.
 
 CI runs these on every push (`e2e` job).
