@@ -66,20 +66,21 @@ The Vite dev server proxies `/api` to the API, exactly like the Vercel rewrite i
 
 ## 5. Screens
 
-| Route                                   | Screen                                                                                                                                                              |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/login`, `/signup`, `/forgot-password` | Sign-in; sign-up and reset as three steps: email → emailed code → details / new password                                                                            |
-| `/`                                     | Browse: search (debounced), All / Lost / Found / Returned tabs, category filter; filters live in the URL so a view can be shared                                    |
-| `/items/:id`                            | Photos, details; the reporter sees claims and can remove the report; others can claim                                                                               |
-| `/my-items`                             | Everything the user reported                                                                                                                                        |
-| `/claims`, `/claims/:id`                | Claims on my items / made by me; the claim page adapts to the viewer: reporter decides, owner sees the handover code, finder enters it, staff can confirm in person |
-| `/profile`                              | Details (school list from the user's university), picture, sign out                                                                                                 |
-| `/admin`                                | Admins only: overview (posts in play, returns, recovery rate, time to return, last 8 weeks, people and claims breakdowns)                                           |
-| `/admin/reports`                        | Review queue: reports grouped by post; keep the post or remove it with a reason for the poster                                                                      |
-| `/admin/users`                          | Search people; change roles and suspend / reactivate, offered only where the role rules allow it                                                                    |
-| `/admin/activity`                       | The university's audit log in plain language, filterable by action                                                                                                  |
+| Route                                   | Screen                                                                                                                                                                                     |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/login`, `/signup`, `/forgot-password` | Sign-in; sign-up and reset as three steps: email → emailed code → details / new password                                                                                                   |
+| `/`                                     | Browse: search (debounced), All / Lost / Found / Returned tabs, category filter; filters live in the URL so a view can be shared                                                           |
+| `/items/:id`                            | Photos, details; the reporter sees claims and can remove the report; others can claim                                                                                                      |
+| `/my-items`                             | Everything the user reported                                                                                                                                                               |
+| `/claims`, `/claims/:id`                | Claims on my items / made by me; the claim page adapts to the viewer: reporter decides, owner sees the handover code, finder enters it, staff can confirm in person                        |
+| `/profile`                              | Details (school list from the user's university), picture, sign out                                                                                                                        |
+| `/admin`                                | Admins only: overview (posts in play, returns, recovery rate, time to return, last 8 weeks, people and claims breakdowns)                                                                  |
+| `/admin/reports`                        | Review queue: reports grouped by post; keep the post or remove it with a reason for the poster                                                                                             |
+| `/admin/users`                          | Search people; change roles and suspend / reactivate, offered only where the role rules allow it                                                                                           |
+| `/admin/posts`                          | Every post (any status, removed included) with search and filters; remove any post with a reason for the poster                                                                            |
+| `/admin/activity`                       | The university's audit log in plain language: filter by action, by day range (the viewer's local days) and by person (click a name, or "View activity" in People); filters live in the URL |
 
-Every item page also has **Report this post** (reason + details); admins additionally see **Remove post**. The admin area is lazy-loaded, so students never download it, and its guard only shapes the UI: the API checks the stored role on every admin request.
+Every item page also has **Report this post** (reason + details); admins additionally see **Remove post** (with a reason), also on their own posts once handed over. The admin area is lazy-loaded, so students never download it, and its guard only shapes the UI: the API checks the stored role on every admin request.
 
 ## 6. Accessibility and UX
 
@@ -93,6 +94,7 @@ Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `a
 - **Journey 1:** two students sign up → the finder reports a found item with a photo and a verification question → the owner searches, finds and claims it → the finder is notified, checks the answer and approves → the owner sees the code → the finder enters it → the item shows as returned.
 - **Moderation journey:** a student reports a fake post → an admin (appointed with the real `set-role` script) removes it with a reason → the poster is notified and the post is gone → the admin suspends the poster, whose session ends → the activity log shows the decisions.
 - **Journey 2** (desktop and a Pixel 7 phone): a visitor signs up with a Gmail address, the session survives a reload, sign-out ends it, sign-in brings it back.
+- **Admin tools:** an admin removes a post from the Posts tab with a reason, then narrows the activity log to a day and to one person.
 - **Resilience:** with the hosting layer faked to answer 502, pages load by themselves once the server wakes up, and a form sent to a sleeping server explains the wait and is not sent twice.
 
 CI runs these on every push (`e2e` job).

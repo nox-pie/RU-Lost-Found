@@ -13,6 +13,7 @@ import { queryKeys } from '../../lib/queryClient';
 import { isAdmin, useCurrentUser } from '../auth/authContext';
 import { ClaimDialog } from '../claims/ClaimDialog';
 import { FlagItemDialog } from '../moderation/FlagItemDialog';
+import { RemovePostDialog } from '../moderation/RemovePostDialog';
 
 export default function ItemPage() {
   const { id = '' } = useParams();
@@ -103,7 +104,7 @@ function ItemView({ item }: { item: ItemDto }) {
           <div className="mt-6">
             {item.isMine ? <ReporterActions item={item} /> : <ClaimantActions item={item} />}
           </div>
-          {!item.isMine && <ModerationActions item={item} />}
+          <ModerationActions item={item} />
         </div>
       </div>
     </div>
@@ -153,34 +154,31 @@ function ClaimantActions({ item }: { item: ItemDto }) {
   );
 }
 
-/** For everyone but the reporter: report the post; admins can also remove it straight away. */
+/**
+ * Others can report the post; admins can remove any post straight away, with a reason for the
+ * poster (also their own, once handed over, when the reporter's own "Remove" is gone).
+ */
 function ModerationActions({ item }: { item: ItemDto }) {
   const user = useCurrentUser();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [flagging, setFlagging] = useState(false);
   const [removing, setRemoving] = useState(false);
-
-  const remove = useMutation({
-    mutationFn: () => itemsApi.remove(item.id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
-      toast.success('The post was removed.');
-      navigate('/');
-    },
-    onError: (error) => toast.error(error.message),
-  });
+  const canFlag = !item.isMine;
+  const canRemove = isAdmin(user) && (!item.isMine || item.status === 'RESOLVED');
+  if (!canFlag && !canRemove) return null;
 
   return (
     <div className="mt-8 flex flex-wrap items-center gap-4 border-t pt-4 text-sm">
-      <button
-        type="button"
-        onClick={() => setFlagging(true)}
-        className="inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-800"
-      >
-        <Flag className="h-4 w-4" /> Report this post
-      </button>
-      {isAdmin(user) && (
+      {canFlag && (
+        <button
+          type="button"
+          onClick={() => setFlagging(true)}
+          className="inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-800"
+        >
+          <Flag className="h-4 w-4" /> Report this post
+        </button>
+      )}
+      {canRemove && (
         <button
           type="button"
           onClick={() => setRemoving(true)}
@@ -189,19 +187,13 @@ function ModerationActions({ item }: { item: ItemDto }) {
           <Trash2 className="h-4 w-4" /> Remove post (admin)
         </button>
       )}
-      <FlagItemDialog item={item} open={flagging} onClose={() => setFlagging(false)} />
-      <ConfirmDialog
+      {canFlag && <FlagItemDialog item={item} open={flagging} onClose={() => setFlagging(false)} />}
+      <RemovePostDialog
+        post={item}
         open={removing}
-        title="Remove this post?"
-        confirmLabel="Remove"
-        danger
-        loading={remove.isPending}
-        onConfirm={() => remove.mutate()}
         onClose={() => setRemoving(false)}
-      >
-        It will disappear from the site, its open claims will be closed and the poster will be told.
-        To give them a reason, decide on it from the Reports page instead.
-      </ConfirmDialog>
+        onRemoved={() => navigate('/')}
+      />
     </div>
   );
 }

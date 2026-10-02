@@ -86,7 +86,7 @@ test('an admin removes a reported post and suspends its poster', async ({ browse
   });
 
   await test.step('the activity log shows the admin’s decisions', async () => {
-    await admin.getByRole('link', { name: 'Activity' }).click();
+    await admin.getByRole('link', { name: 'Activity', exact: true }).click();
     // Audit entries are written by the background worker, a moment after the action.
     const log = admin.getByRole('list').filter({ hasText: 'Created an account' });
     await expect(async () => {

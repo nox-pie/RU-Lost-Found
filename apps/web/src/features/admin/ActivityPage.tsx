@@ -6,17 +6,18 @@ import {
   type Role,
 } from '@ru-lost-found/shared';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { History } from 'lucide-react';
-import { useState } from 'react';
+import { History, X } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/Button';
-import { Select } from '../../components/ui/Field';
+import { Input, Select } from '../../components/ui/Field';
 import { Avatar, EmptyState, ErrorState, PageLoader } from '../../components/ui/misc';
-import { adminApi } from '../../lib/api/endpoints';
+import { adminApi, type ActivityFilters } from '../../lib/api/endpoints';
 import {
   AUDIT_ACTION_LABELS,
   REPORT_REASON_LABELS,
   ROLE_LABELS,
   formatDateTime,
+  todayIso,
 } from '../../lib/format';
 import { queryKeys } from '../../lib/queryClient';
 
@@ -58,39 +59,110 @@ function detailOf(entry: AuditEntryDto): string | null {
   }
 }
 
+/** "2026-10-03" (a day in the viewer's time zone) → the moment it starts, as an ISO string. */
+function startOfLocalDay(day: string, plusDays = 0): string {
+  const [year, month, date] = day.split('-').map(Number);
+  return new Date(year ?? 1970, (month ?? 1) - 1, (date ?? 1) + plusDays).toISOString();
+}
+
 export default function ActivityPage() {
-  const [action, setAction] = useState<AuditAction | ''>('');
-  const filters = { action: action || undefined };
+  // Filters live in the URL, so a filtered view can be shared or opened from the People tab.
+  const [params, setParams] = useSearchParams();
+  const action = (params.get('action') ?? '') as AuditAction | '';
+  const actorId = params.get('actor') ?? '';
+  const actorName = params.get('name') ?? 'this person';
+  const fromDay = params.get('from') ?? '';
+  const toDay = params.get('to') ?? '';
+  const backwards = Boolean(fromDay && toDay && toDay < fromDay);
+
+  const update = (changes: Record<string, string | null>) =>
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      for (const [key, value] of Object.entries(changes)) {
+        if (value) next.set(key, value);
+        else next.delete(key);
+      }
+      return next;
+    });
+
+  const filters: ActivityFilters = {
+    action: action || undefined,
+    actorId: actorId || undefined,
+    from: fromDay ? startOfLocalDay(fromDay) : undefined,
+    // "To" is inclusive for people: everything before the next day starts.
+    until: toDay ? startOfLocalDay(toDay, 1) : undefined,
+  };
 
   const query = useInfiniteQuery({
     queryKey: queryKeys.admin.activity(filters),
     queryFn: ({ pageParam }) => adminApi.activity(filters, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: !backwards,
   });
   const entries = query.data?.pages.flatMap((page) => page.data) ?? [];
+  const filtered = Boolean(action || actorId || fromDay || toDay);
 
   return (
     <div className="max-w-3xl">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <p className="max-w-md text-sm text-gray-600">
-          Security-relevant actions in the last year: sign-ins, posts, claims and admin decisions.
-        </p>
-        <div className="w-full sm:w-64">
-          <Select
-            label="Show"
-            value={action}
-            onChange={(event) => setAction(event.target.value as AuditAction | '')}
-          >
-            <option value="">Everything</option>
-            {AUDIT_ACTIONS.map((a) => (
-              <option key={a} value={a}>
-                {AUDIT_ACTION_LABELS[a]}
-              </option>
-            ))}
-          </Select>
-        </div>
+      <p className="max-w-xl text-sm text-gray-600">
+        Security-relevant actions in the last year: sign-ins, posts, claims and admin decisions.
+        Click a name to see everything that person did.
+      </p>
+      <div className="mt-4 grid gap-3 rounded-2xl bg-white p-4 shadow-sm sm:grid-cols-3">
+        <Select
+          label="Show"
+          value={action}
+          onChange={(event) => update({ action: event.target.value })}
+        >
+          <option value="">Everything</option>
+          {AUDIT_ACTIONS.map((a) => (
+            <option key={a} value={a}>
+              {AUDIT_ACTION_LABELS[a]}
+            </option>
+          ))}
+        </Select>
+        <Input
+          label="From"
+          type="date"
+          value={fromDay}
+          max={toDay || todayIso()}
+          onChange={(event) => update({ from: event.target.value })}
+        />
+        <Input
+          label="To"
+          type="date"
+          value={toDay}
+          min={fromDay || undefined}
+          max={todayIso()}
+          onChange={(event) => update({ to: event.target.value })}
+          error={backwards ? '"To" must be on or after "From"' : undefined}
+        />
       </div>
+      {(actorId || filtered) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          {actorId && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
+              By {actorName}
+              <button
+                type="button"
+                onClick={() => update({ actor: null, name: null })}
+                aria-label={`Stop showing only ${actorName}`}
+                className="rounded-full p-0.5 hover:bg-primary/20"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => setParams({})}
+            className="text-gray-500 underline hover:text-gray-800"
+          >
+            Clear filters
+          </button>
+        </div>
+      )}
 
       <div className="mt-6">
         {query.isPending ? (
@@ -98,7 +170,10 @@ export default function ActivityPage() {
         ) : query.isError ? (
           <ErrorState error={query.error} onRetry={() => void query.refetch()} />
         ) : entries.length === 0 ? (
-          <EmptyState icon={<History className="h-10 w-10" />} title="No activity yet" />
+          <EmptyState
+            icon={<History className="h-10 w-10" />}
+            title={filtered ? 'Nothing matches these filters' : 'No activity yet'}
+          />
         ) : (
           <>
             <ol className="divide-y overflow-hidden rounded-2xl bg-white shadow-sm">
@@ -111,8 +186,23 @@ export default function ActivityPage() {
                     <Avatar name={who} url={entry.actor?.avatarUrl} size="sm" />
                     <div className="min-w-0 flex-grow text-sm">
                       <p className="text-gray-900">
-                        <span className="font-medium">{who}</span> ·{' '}
-                        {AUDIT_ACTION_LABELS[entry.action]}
+                        {entry.actor ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              update({
+                                actor: entry.actor?.id ?? null,
+                                name: entry.actor?.name ?? null,
+                              })
+                            }
+                            className="font-medium hover:text-primary hover:underline"
+                          >
+                            {who}
+                          </button>
+                        ) : (
+                          <span className="font-medium">{who}</span>
+                        )}{' '}
+                        · {AUDIT_ACTION_LABELS[entry.action]}
                       </p>
                       {detail && <p className="mt-0.5 break-words text-gray-600">{detail}</p>}
                       <p className="mt-0.5 text-xs text-gray-500">

@@ -38,5 +38,6 @@ export const queryKeys = {
     users: (filters: object) => ['admin', 'users', filters] as const,
     reports: (status: string) => ['admin', 'reports', status] as const,
     activity: (filters: object) => ['admin', 'activity', filters] as const,
+    items: (filters: object) => ['admin', 'items', filters] as const,
   },
 };

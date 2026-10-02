@@ -1,6 +1,6 @@
 import request, { type Response } from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { daysAfter } from '../../testing/builders';
+import { T0, daysAfter, minutesAfter } from '../../testing/builders';
 import {
   TEST_PASSWORD,
   reportItem,
@@ -270,5 +270,71 @@ describe('activity log', () => {
     expect(res.body.nextCursor).toEqual(expect.any(String));
     const next = await get(priya, `audit?limit=50&cursor=${res.body.nextCursor}`).expect(200);
     expect(next.body.data.map((e: { action: string }) => e.action)).toContain('USER_REGISTERED');
+  });
+});
+
+describe('activity filters', () => {
+  const activity = (query: string) => get(priya, `audit?${query}`);
+  const iso = (date: Date) => encodeURIComponent(date.toISOString());
+
+  it('shows only the entries in a time range (from inclusive, until exclusive)', async () => {
+    await reportItem(t, asha, { title: 'Black phone' });
+    await drain();
+    const hourBefore = minutesAfter(T0, -60);
+    const hourAfter = minutesAfter(T0, 60);
+
+    const around = await activity(`from=${iso(hourBefore)}&until=${iso(hourAfter)}`).expect(200);
+    const later = await activity(`from=${iso(hourAfter)}`).expect(200);
+    const earlier = await activity(`until=${iso(T0)}`).expect(200);
+
+    expect(around.body.data.map((e: { action: string }) => e.action)).toContain('ITEM_REPORTED');
+    expect(later.body.data).toEqual([]);
+    expect(earlier.body.data).toEqual([]);
+  });
+
+  it('refuses a range that ends before it starts, or a date that is not a moment', async () => {
+    const backwards = await activity(`from=${iso(T0)}&until=${iso(minutesAfter(T0, -1))}`);
+    const notAMoment = await activity('from=yesterday');
+
+    expect(backwards.status).toBe(400);
+    expect(backwards.body.error.details).toEqual([
+      expect.objectContaining({ path: 'query.until' }),
+    ]);
+    expect(notAMoment.status).toBe(400);
+  });
+
+  it('shows what one person did', async () => {
+    await reportItem(t, asha, { title: 'Black phone' });
+    await reportItem(t, ravi, { title: 'Blue bottle' });
+    await drain();
+
+    const res = await activity(`actorId=${asha.id}`).expect(200);
+
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data.every((e: { actor: { id: string } }) => e.actor.id === asha.id)).toBe(
+      true,
+    );
+  });
+});
+
+describe('posts', () => {
+  it('lists every post of the university, removed ones included, with filters', async () => {
+    const phone = await reportItem(t, asha, { title: 'Black phone' });
+    await reportItem(t, ravi, { type: 'LOST', title: 'Blue bottle', category: 'BOTTLE' });
+    await api().delete(`/api/v1/items/${phone}`).set('Authorization', asha.bearer).expect(204);
+
+    const all = await get(priya, 'items').expect(200);
+    const removed = await get(priya, 'items?status=REMOVED').expect(200);
+    const lost = await get(priya, 'items?type=LOST').expect(200);
+    const search = await get(priya, 'items?q=bottle').expect(200);
+
+    expect(all.body.data.map((i: { title: string }) => i.title)).toEqual([
+      'Blue bottle',
+      'Black phone',
+    ]);
+    expect(removed.body.data).toMatchObject([{ id: phone, status: 'REMOVED' }]);
+    expect(lost.body.data).toMatchObject([{ title: 'Blue bottle' }]);
+    expect(search.body.data).toMatchObject([{ title: 'Blue bottle' }]);
+    expect((await get(asha, 'items')).status).toBe(403);
   });
 });

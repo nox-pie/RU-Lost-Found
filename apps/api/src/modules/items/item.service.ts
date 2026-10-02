@@ -1,5 +1,7 @@
 import {
+  ITEM_STATUSES,
   LISTABLE_ITEM_STATUSES,
+  type ListAdminItemsQuery,
   type CreateItemInput,
   type ListItemsQuery,
   type PageQuery,
@@ -95,6 +97,21 @@ export class ItemService {
     const page = await this.items.search(
       scope,
       { text: query.q, type: query.type, category: query.category, statuses: query.status },
+      { cursor: query.cursor, limit: query.limit },
+    );
+    return { items: await this.withReporters(page.items), nextCursor: page.nextCursor };
+  }
+
+  /** Every post of the university, removed ones included (admin "Posts" tab). */
+  async listAll(scope: TenantScope, query: ListAdminItemsQuery): Promise<PageResult<ItemView>> {
+    const page = await this.items.search(
+      scope,
+      {
+        text: query.q,
+        type: query.type,
+        category: query.category,
+        statuses: query.status ?? ITEM_STATUSES,
+      },
       { cursor: query.cursor, limit: query.limit },
     );
     return { items: await this.withReporters(page.items), nextCursor: page.nextCursor };

@@ -2,10 +2,12 @@ import { Router, type RequestHandler } from 'express';
 import {
   changeRoleSchema,
   itemIdParamsSchema,
+  listAdminItemsQuerySchema,
   listAuditQuerySchema,
   listReportsQuerySchema,
   listUsersQuerySchema,
   moderateItemSchema,
+  removePostSchema,
   suspendUserSchema,
   userIdParamsSchema,
 } from '@ru-lost-found/shared';
@@ -43,6 +45,13 @@ export function createAdminRouter(deps: {
   router.post('/users/:id/reactivate', validate({ params: userIdParamsSchema }), admin.reactivate);
 
   router.get('/audit', validate({ query: listAuditQuerySchema }), admin.activity);
+
+  router.get('/items', validate({ query: listAdminItemsQuerySchema }), admin.listItems);
+  router.post(
+    '/items/:id/remove',
+    validate({ params: itemIdParamsSchema, body: removePostSchema }),
+    moderation.removePost,
+  );
 
   router.get('/reports', validate({ query: listReportsQuerySchema }), moderation.list);
   router.post(

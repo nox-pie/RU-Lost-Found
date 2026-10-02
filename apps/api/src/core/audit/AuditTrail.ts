@@ -44,6 +44,10 @@ export interface AuditLogFilter {
   action?: AuditAction;
   actorId?: string;
   targetId?: string;
+  /** At or after. */
+  from?: Date;
+  /** Before (exclusive). */
+  until?: Date;
 }
 
 /** Read side of the audit trail: one university's entries, newest first. */

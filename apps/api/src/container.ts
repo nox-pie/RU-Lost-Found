@@ -295,6 +295,7 @@ export async function buildContainer(
   const adminController = new AdminController(
     new UserAdminService(repositories.users, sessions, clock),
     new AdminDashboardService(new MongoStatsReader(connection), audit, repositories.users, clock),
+    itemService,
   );
 
   // Notifications

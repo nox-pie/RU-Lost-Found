@@ -2,6 +2,7 @@ import { ROLES, ROLE_RANK, type AdminUserDto, type MeDto, type Role } from '@ru-
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -146,6 +147,12 @@ function UserRow({ user, me }: { user: AdminUserDto; me: MeDto }) {
             {user.school} · year {user.year} · {user.enrollmentNumber} · joined{' '}
             {formatDay(user.createdAt.slice(0, 10))}
           </p>
+          <Link
+            to={`/admin/activity?actor=${user.id}&name=${encodeURIComponent(name)}`}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            View activity
+          </Link>
         </div>
       </div>
 

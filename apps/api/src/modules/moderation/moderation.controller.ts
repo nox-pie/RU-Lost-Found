@@ -6,6 +6,7 @@ import type {
   ModerateItemInput,
   ModerationReportDto,
   Page,
+  RemovePostInput,
 } from '@ru-lost-found/shared';
 import { actorOf, scopeOf } from '../../core/http/auth';
 import { toModerationReportDto } from './moderation.mapper';
@@ -29,6 +30,17 @@ export class ModerationController {
       data: page.items.map(toModerationReportDto),
       nextCursor: page.nextCursor,
     } satisfies Page<ModerationReportDto>);
+  };
+
+  removePost: RequestHandler = async (req, res) => {
+    const { reason } = req.body as RemovePostInput;
+    const result = await this.moderation.removePost(
+      actorOf(req),
+      scopeOf(req),
+      idOf(req),
+      reason ?? null,
+    );
+    res.json(result);
   };
 
   moderateItem: RequestHandler = async (req, res) => {

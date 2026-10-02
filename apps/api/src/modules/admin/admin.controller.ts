@@ -3,12 +3,16 @@ import type {
   AdminUserDto,
   AuditEntryDto,
   ChangeRoleInput,
+  ItemDto,
+  ListAdminItemsQuery,
   ListAuditQuery,
   ListUsersQuery,
   Page,
   SuspendUserInput,
 } from '@ru-lost-found/shared';
-import { actorOf, scopeOf } from '../../core/http/auth';
+import { actorOf, authOf, scopeOf } from '../../core/http/auth';
+import { toItemDto } from '../items/item.mapper';
+import type { ItemService } from '../items/item.service';
 import { toAdminUserDto, toAuditEntryDto } from './admin.mapper';
 import type { AdminDashboardService } from './admin-dashboard.service';
 import type { UserAdminService } from './user-admin.service';
@@ -19,7 +23,20 @@ export class AdminController {
   constructor(
     private readonly users: UserAdminService,
     private readonly dashboard: AdminDashboardService,
+    private readonly items: ItemService,
   ) {}
+
+  listItems: RequestHandler = async (req, res) => {
+    const page = await this.items.listAll(
+      scopeOf(req),
+      req.query as unknown as ListAdminItemsQuery,
+    );
+    const viewerId = authOf(req).userId;
+    res.json({
+      data: page.items.map((view) => toItemDto(view, viewerId)),
+      nextCursor: page.nextCursor,
+    } satisfies Page<ItemDto>);
+  };
 
   stats: RequestHandler = async (req, res) => {
     res.json(await this.dashboard.universityStats(scopeOf(req)));

@@ -113,6 +113,20 @@ export const notificationsApi = {
     }),
 };
 
+export interface AdminItemFilters {
+  q?: string;
+  type?: 'LOST' | 'FOUND';
+  status?: string;
+}
+
+/** `from` (inclusive) and `until` (exclusive) are exact moments, as ISO strings. */
+export interface ActivityFilters {
+  action?: AuditAction;
+  actorId?: string;
+  from?: string;
+  until?: string;
+}
+
 export interface UserFilters {
   q?: string;
   role?: Role;
@@ -133,6 +147,14 @@ export const adminApi = {
     api<Page<ModerationReportDto>>('/admin/reports', { query: { status, cursor, limit: 20 } }),
   moderate: (itemId: string, input: ModerateItemInput) =>
     api<{ resolved: number }>(`/admin/items/${itemId}/moderation`, { method: 'POST', json: input }),
-  activity: (filters: { action?: AuditAction }, cursor?: string) =>
+  items: (filters: AdminItemFilters, cursor?: string) =>
+    api<Page<ItemDto>>('/admin/items', { query: { ...filters, cursor, limit: 20 } }),
+  /** Removes any post (also an admin's own, also after handover); closes its open reports. */
+  removePost: (itemId: string, reason?: string) =>
+    api<{ resolvedReports: number }>(`/admin/items/${itemId}/remove`, {
+      method: 'POST',
+      json: reason ? { reason } : {},
+    }),
+  activity: (filters: ActivityFilters, cursor?: string) =>
     api<Page<AuditEntryDto>>('/admin/audit', { query: { ...filters, cursor, limit: 50 } }),
 };

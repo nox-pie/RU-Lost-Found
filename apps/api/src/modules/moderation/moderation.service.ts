@@ -1,8 +1,8 @@
 import type { FlagItemInput, ListReportsQuery, ModerateItemInput } from '@ru-lost-found/shared';
-import type { Actor } from '../../core/domain/Actor';
+import { isModerator, type Actor } from '../../core/domain/Actor';
 import type { Clock } from '../../core/domain/Clock';
 import type { IdGenerator } from '../../core/domain/IdGenerator';
-import { NotFoundError } from '../../core/errors/AppError';
+import { ForbiddenError, NotFoundError } from '../../core/errors/AppError';
 import type { PageResult } from '../../core/persistence/Pagination';
 import type { TenantScope } from '../../core/persistence/Repository';
 import type { UnitOfWork } from '../../core/persistence/UnitOfWork';
@@ -84,6 +84,34 @@ export class ModerationService {
    * happen in one transaction; the post's open claims are then closed by the claims module
    * (it reacts to ItemRemoved) and the reporter is told why.
    */
+  /**
+   * An admin removes a post without waiting for reports (e.g. found in the Posts tab), with a
+   * reason for the poster. Any open reports on it are closed as actioned in the same
+   * transaction, so the review queue never shows a post that is already gone.
+   */
+  async removePost(
+    actor: Actor,
+    scope: TenantScope,
+    itemId: string,
+    reason: string | null,
+  ): Promise<{ resolvedReports: number }> {
+    const { reports, items, unitOfWork, clock } = this.deps;
+    return unitOfWork.run(async (tx) => {
+      const now = clock.now();
+      const item = await items.findById(scope, itemId, tx);
+      if (!item) throw new NotFoundError('Item');
+      if (!isModerator(actor)) throw new ForbiddenError('Only admins can remove posts here.');
+      item.remove(actor, now, reason);
+      await items.update(item, tx);
+      const open = await reports.findOpenForItem(scope, itemId, tx);
+      for (const report of open) {
+        report.resolve('REMOVE_ITEM', actor, reason, now);
+        await reports.update(report, tx);
+      }
+      return { resolvedReports: open.length };
+    });
+  }
+
   async moderateItem(
     actor: Actor,
     scope: TenantScope,

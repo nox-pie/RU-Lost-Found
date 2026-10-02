@@ -28,7 +28,13 @@ export class AdminDashboardService {
   async activity(scope: TenantScope, query: ListAuditQuery): Promise<ActivityPage> {
     const page = await this.auditLog.search(
       scope,
-      { action: query.action, actorId: query.actorId, targetId: query.targetId },
+      {
+        action: query.action,
+        actorId: query.actorId,
+        targetId: query.targetId,
+        from: query.from,
+        until: query.until,
+      },
       { cursor: query.cursor, limit: query.limit },
     );
     const actors = await this.users.findByIds(

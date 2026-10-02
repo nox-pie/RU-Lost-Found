@@ -134,6 +134,12 @@ export class MongoAuditTrail implements AuditTrail, AuditLog {
     if (filter.action) query.action = filter.action;
     if (filter.actorId) query.actorId = parseObjectId(filter.actorId);
     if (filter.targetId) query.targetId = filter.targetId;
+    if (filter.from || filter.until) {
+      query.occurredAt = {
+        ...(filter.from ? { $gte: filter.from } : {}),
+        ...(filter.until ? { $lt: filter.until } : {}),
+      };
+    }
     if (page.cursor) {
       const after = decodeCursor(page.cursor);
       query.$or = [

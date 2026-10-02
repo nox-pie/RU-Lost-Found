@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { MongoItemRepository } from '../items/infrastructure/MongoItemRepository';
 import { reportItem, signUp, withRole, type SignedInUser } from '../../testing/signedIn';
 import { seedUniversity, useTestApp } from '../../testing/testApp';
 
@@ -188,3 +189,54 @@ describe('deciding on reports', () => {
     expect(stats.body.moderation.openReports).toBe(1);
   });
 });
+
+describe('removing a post directly', () => {
+  const remove = (itemId: string, body: object = {}, user = priya) =>
+    api().post(`/api/v1/admin/items/${itemId}/remove`).set('Authorization', user.bearer).send(body);
+
+  it('removes it with a reason, closes its open reports and tells the poster', async () => {
+    const item = await reportItem(t, asha, { title: 'Phones for sale' });
+    await flag(ravi, item).expect(201);
+
+    const res = await remove(item, { reason: 'Selling is not allowed' });
+    await drain();
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ resolvedReports: 1 });
+    expect((await queue().expect(200)).body.data).toEqual([]);
+    const notifications = await api()
+      .get('/api/v1/notifications')
+      .set('Authorization', asha.bearer)
+      .expect(200);
+    expect(notifications.body.data[0]).toMatchObject({
+      type: 'ITEM_REMOVED_BY_MODERATOR',
+      body: expect.stringContaining('Reason: Selling is not allowed'),
+    });
+    expect((await remove(item)).status).toBe(409);
+  });
+
+  it('works for an admin’s own post, even after it was handed over', async () => {
+    const item = await reportItem(t, priya, { title: 'Test post' });
+    const items = new MongoItemRepository(t.connection);
+    const stored = await items.findById({ universityId: await priyasUniversity() }, item);
+    stored!.reserve(t.clock.now());
+    stored!.resolve(t.clock.now());
+    await items.update(stored!);
+
+    const res = await remove(item);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ resolvedReports: 0 });
+  });
+
+  it('is only for admins', async () => {
+    const item = await reportItem(t, asha);
+
+    expect((await remove(item, {}, kabir)).status).toBe(403);
+  });
+});
+
+async function priyasUniversity(): Promise<string> {
+  const me = await api().get('/api/v1/users/me').set('Authorization', priya.bearer).expect(200);
+  return me.body.universityId as string;
+}

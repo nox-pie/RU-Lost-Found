@@ -7,6 +7,7 @@ import { queryKeys } from '../../lib/queryClient';
 const TABS = [
   { to: '/admin', label: 'Overview', end: true },
   { to: '/admin/reports', label: 'Reports', end: false },
+  { to: '/admin/posts', label: 'Posts', end: false },
   { to: '/admin/users', label: 'People', end: false },
   { to: '/admin/activity', label: 'Activity', end: false },
 ];

@@ -17,6 +17,7 @@ const ProfilePage = lazy(() => import('./features/profile/ProfilePage'));
 const AdminLayout = lazy(() => import('./features/admin/AdminLayout'));
 const OverviewPage = lazy(() => import('./features/admin/OverviewPage'));
 const ReportsPage = lazy(() => import('./features/admin/ReportsPage'));
+const PostsPage = lazy(() => import('./features/admin/PostsPage'));
 const UsersPage = lazy(() => import('./features/admin/UsersPage'));
 const ActivityPage = lazy(() => import('./features/admin/ActivityPage'));
 
@@ -72,6 +73,7 @@ export default function App() {
           >
             <Route index element={<OverviewPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="posts" element={<PostsPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="activity" element={<ActivityPage />} />
           </Route>

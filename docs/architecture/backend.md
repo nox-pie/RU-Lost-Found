@@ -521,7 +521,9 @@ Base path: `/api/v1`. Request and response bodies are JSON (except image uploads
 | PATCH                    | `/admin/users/:id/role`       | admin                | Change a role (only for people ranked below you; roles up to your own)                                                                                                   |
 | POST                     | `/admin/users/:id/suspend`    | admin                | Suspend with a reason: blocks sign-in, ends every session, emails the user                                                                                               |
 | POST                     | `/admin/users/:id/reactivate` | admin                | Undo a suspension                                                                                                                                                        |
-| GET                      | `/admin/audit`                | admin                | Activity log of the university (`action`, `actorId`, `targetId`, cursor)                                                                                                 |
+| GET                      | `/admin/audit`                | admin                | Activity log of the university: `action`, person (`actorId`), record (`targetId`), time range (`from` inclusive, `until` exclusive, ISO moments), cursor                 |
+| GET                      | `/admin/items`                | admin                | Every post, removed ones included (`q`, `type`, `category`, `status` comma list), cursor                                                                                 |
+| POST                     | `/admin/items/:id/remove`     | admin                | Remove any post (also the admin's own, also after handover) with a `reason` for the poster; its open reports are closed in the same transaction                          |
 | **Health**               |                               |                      |                                                                                                                                                                          |
 | GET                      | `/health/live`                | –                    | Process is up (UptimeRobot ping; replaces `/api/ping`)                                                                                                                   |
 | GET                      | `/health/ready`               | –                    | MongoDB and Redis reachable                                                                                                                                              |
@@ -627,7 +629,7 @@ One `errorHandler` middleware converts `AppError` into the error format above. A
 - A fixed, controllable clock: expiry, deadlines, back-off and rate-limit windows are tested by moving time, not by waiting.
 - Every test server binds explicitly to `127.0.0.1`: with many test files running in parallel, supertest's default (all addresses) occasionally let requests reach another file's server.
 
-**Current numbers:** 345 API tests and 6 end-to-end tests. Coverage is 95% statements, 86% branches, 96% functions, 96% lines. The build fails below 93 / 84 / 95 / 95.
+**Current numbers:** 352 API tests and 7 end-to-end tests. Coverage is 95% statements, 86% branches, 96% functions, 96% lines. The build fails below 93 / 84 / 95 / 95.
 
 ### Continuous integration (`.github/workflows/ci.yml`)
 
