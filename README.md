@@ -62,23 +62,23 @@ Design patterns and why each is there, security decisions, the data model and th
 
 ## Quality
 
-| | |
-|---|---|
-| **Tests** | 354 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 7 Playwright tests in a real browser on desktop and a phone, including the full handover, the moderation flow and a sleeping server |
-| **Load** | 200 simultaneous users on one instance: 95% of reads under 9 ms, writes under 36 ms, zero errors. Up to 1,000 simultaneous users (360 requests/s) without a single failed request. [Details](docs/load-test.md) |
-| **Security** | Independent review with every finding fixed; strict content security policy; no personal data in logs or error reports. [Details](docs/architecture/backend.md#9-authentication-and-security) |
-| **CI** | Typecheck, lint, formatting, tests with coverage, builds, end-to-end tests and Docker image builds on every push |
+|              |                                                                                                                                                                                                                                                                                                                |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Tests**    | 354 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 7 Playwright tests in a real browser on desktop and a phone, including the full handover, the moderation flow and a sleeping server |
+| **Load**     | 200 simultaneous users on one instance: 95% of reads under 9 ms, writes under 36 ms, zero errors. Up to 1,000 simultaneous users (360 requests/s) without a single failed request. [Details](docs/load-test.md)                                                                                                |
+| **Security** | Independent review with every finding fixed; strict content security policy; no personal data in logs or error reports. [Details](docs/architecture/backend.md#9-authentication-and-security)                                                                                                                  |
+| **CI**       | Typecheck, lint, formatting, tests with coverage, builds, end-to-end tests and Docker image builds on every push                                                                                                                                                                                               |
 
 ## Tech stack
 
-| Area | Choices |
-|---|---|
-| Web | React 18, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, React Hook Form + Zod |
-| API | Node.js 22, Express 5, TypeScript, Mongoose 9, Zod, pino, sharp, JWT, bcrypt |
-| Data | MongoDB Atlas (transactions), Upstash Redis |
-| Services | Cloudinary (images), Brevo (email), Sentry (errors), UptimeRobot (uptime) |
-| Delivery | Vercel (web), Render (API, Docker), GitHub Actions |
-| Testing | Vitest, Supertest, mongodb-memory-server, Playwright, k6 |
+| Area     | Choices                                                                                       |
+| -------- | --------------------------------------------------------------------------------------------- |
+| Web      | React 18, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, React Hook Form + Zod |
+| API      | Node.js 22, Express 5, TypeScript, Mongoose 9, Zod, pino, sharp, JWT, bcrypt                  |
+| Data     | MongoDB Atlas (transactions), Upstash Redis                                                   |
+| Services | Cloudinary (images), Brevo (email), Sentry (errors), UptimeRobot (uptime)                     |
+| Delivery | Vercel (web), Render (API, Docker), GitHub Actions                                            |
+| Testing  | Vitest, Supertest, mongodb-memory-server, Playwright, k6                                      |
 
 ## Running it locally
 
@@ -102,16 +102,17 @@ npm run dev:web                            # http://localhost:5173
 npm run set-role -w @ru-lost-found/api -- you@rishihood.edu.in UNIVERSITY_ADMIN   # after signing up
 ```
 
-| Command | Does |
-|---|---|
-| `npm run check` | Typecheck, lint, formatting and all tests with coverage |
-| `npm run e2e` | Playwright journeys (starts its own database, API and web app) |
-| `npm run build` | Production builds of the API and the web app |
+| Command         | Does                                                           |
+| --------------- | -------------------------------------------------------------- |
+| `npm run check` | Typecheck, lint, formatting and all tests with coverage        |
+| `npm run e2e`   | Playwright journeys (starts its own database, API and web app) |
+| `npm run build` | Production builds of the API and the web app                   |
 
 ## Documentation
 
 - [Backend design](docs/architecture/backend.md): architecture, domain model, claim state machine, outbox, security, API, patterns, testing
 - [Frontend design](docs/architecture/frontend.md): structure, sessions, data layer, screens, accessibility
+- [External services](docs/services.md): every service used (MongoDB Atlas, Upstash, Render, Vercel, Cloudinary, Brevo, Sentry, UptimeRobot), its limits, settings and how to rotate keys
 - [Deployment runbook](docs/deployment.md): production setup, switch-over and rollback, free-tier limits
 - [Load test](docs/load-test.md): method, results, and the bottleneck it found
 - [Branding](docs/branding.md): running the portal for another organisation
