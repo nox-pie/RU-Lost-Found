@@ -420,6 +420,42 @@ describe('refresh tokens', () => {
     expect(refresh.status).toBe(401);
   });
 
+  it('sign out the whole device even when a refresh races the sign-out (no conflict)', async () => {
+    const { cookie: first } = await signUp();
+    const rotated = refreshCookie(
+      await api().post('/api/v1/auth/refresh').set('Cookie', first).expect(200),
+    );
+
+    // The browser signs out while another request is refreshing with the same token.
+    const [logout, racingRefresh] = await Promise.all([
+      api().post('/api/v1/auth/logout').set('Cookie', rotated),
+      api().post('/api/v1/auth/refresh').set('Cookie', rotated),
+    ]);
+
+    expect(logout.status).toBe(204);
+    expect([200, 401]).toContain(racingRefresh.status);
+    // Whatever the race produced, nothing from this sign-in works any more.
+    if (racingRefresh.status === 200) {
+      const issued = refreshCookie(racingRefresh);
+      expect((await api().post('/api/v1/auth/refresh').set('Cookie', issued)).status).toBe(401);
+    }
+    expect((await api().post('/api/v1/auth/refresh').set('Cookie', rotated)).status).toBe(401);
+  });
+
+  it('refuse a signed-out token without raising a theft alarm', async () => {
+    const { cookie } = await signUp();
+    await api().post('/api/v1/auth/logout').set('Cookie', cookie).expect(204);
+    t.clock.set(minutesAfter(t.clock.now(), 5));
+
+    expect((await api().post('/api/v1/auth/refresh').set('Cookie', cookie)).status).toBe(401);
+
+    await t.container.worker.drain();
+    const alarms = await t.container.services.audit.findRecent({
+      action: 'SESSION_REUSE_DETECTED',
+    });
+    expect(alarms).toEqual([]);
+  });
+
   it('are required to refresh', async () => {
     expect((await api().post('/api/v1/auth/refresh')).status).toBe(401);
   });

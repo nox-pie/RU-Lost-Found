@@ -56,7 +56,12 @@ export class SessionManager {
     if (!current) throw new UnauthorizedError('Your session has ended. Please sign in again.');
 
     if (current.isEnded) {
-      if (!current.wasRotatedWithin(ROTATION_GRACE_SECONDS, now)) {
+      // Only a *rotated* token coming back means it was copied (theft). Tokens ended by sign-out,
+      // a password change or a suspension are just refused.
+      if (
+        current.endReason === 'ROTATED' &&
+        !current.wasRotatedWithin(ROTATION_GRACE_SECONDS, now)
+      ) {
         const ended = await this.sessions.endFamily(current.familyId, 'REUSE_DETECTED', now);
         this.logger.warn(
           { userId: current.userId, familyId: current.familyId, ended },
@@ -102,12 +107,16 @@ export class SessionManager {
     return { userId: current.userId, refreshToken: nextToken, expiresAt: next.expiresAt };
   }
 
-  /** Signs out one device. Unknown or already-ended tokens are ignored. */
+  /**
+   * Signs out one device: ends every session of the token's family (the chain of rotations
+   * since that sign-in) in one atomic update. Unlike saving the single session, this can't
+   * clash with a refresh running at the same moment, and it also ends a token that such a
+   * refresh has just issued. Unknown tokens are ignored.
+   */
   async end(refreshToken: string): Promise<void> {
     const session = await this.sessions.findByTokenHash(hashToken(refreshToken));
-    if (!session || session.isEnded) return;
-    session.end('LOGOUT', this.clock.now());
-    await this.sessions.update(session);
+    if (!session) return;
+    await this.sessions.endFamily(session.familyId, 'LOGOUT', this.clock.now());
   }
 
   /** Signs out every device of a user. */

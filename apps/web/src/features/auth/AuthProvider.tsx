@@ -48,6 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut: async () => {
         try {
           await authApi.logout();
+        } catch {
+          // Signing out locally must always work; the server session expires on its own anyway.
         } finally {
           clearSession();
         }
