@@ -9,8 +9,8 @@ import type {
   VerificationClaims,
 } from '../../core/security/TokenService';
 
-export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
-export const VERIFICATION_TOKEN_TTL_SECONDS = 30 * 60;
+const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+const VERIFICATION_TOKEN_TTL_SECONDS = 30 * 60;
 
 const ISSUER = 'ru-lost-found';
 const ACCESS_AUDIENCE = 'api';

@@ -134,7 +134,7 @@ export interface Providers {
 }
 
 /** Where images are kept when Cloudinary is not configured (development only). */
-export const LOCAL_UPLOADS = { directory: '.uploads', publicPath: '/api/v1/uploads' };
+const LOCAL_UPLOADS = { directory: '.uploads', publicPath: '/api/v1/uploads' };
 
 function defaultProviders(
   env: Env,

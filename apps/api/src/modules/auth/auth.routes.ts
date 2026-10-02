@@ -18,7 +18,7 @@ const MINUTE = 60;
  * Per-IP limits are generous because a whole campus can share one public IP address (NAT);
  * the tight limits are per email (code requests) and per account (failed logins, LoginThrottle).
  */
-export const AUTH_RATE_LIMITS = {
+const AUTH_RATE_LIMITS = {
   otpPerIp: { name: 'otp-ip', limit: 60, windowSeconds: HOUR },
   otpPerEmail: { name: 'otp-email', limit: 5, windowSeconds: HOUR },
   verifyPerIp: { name: 'verify-ip', limit: 120, windowSeconds: 10 * MINUTE },

@@ -94,7 +94,7 @@ export function aLostItem(overrides: Partial<ReportInput> = {}): Item {
 }
 
 /** Answers every verification question of the item. */
-export function answersFor(item: Item): ClaimAnswer[] {
+function answersFor(item: Item): ClaimAnswer[] {
   return item.verificationQuestions.map((q) => ({ questionId: q.id, answer: 'A mountain photo' }));
 }
 

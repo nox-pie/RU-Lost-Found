@@ -4,7 +4,7 @@ import { validate } from '../../core/http/middleware/validate';
 import { rateLimit, type RateLimiter, type RateLimitRule } from '../../core/http/rateLimit';
 import type { ModerationController } from './moderation.controller';
 
-export const MODERATION_RATE_LIMITS = {
+const MODERATION_RATE_LIMITS = {
   flagsPerUser: { name: 'item-flag-user', limit: 20, windowSeconds: 24 * 60 * 60 },
 } satisfies Record<string, RateLimitRule>;
 

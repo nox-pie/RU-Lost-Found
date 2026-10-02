@@ -8,7 +8,7 @@ import type { UnitOfWork } from '../../core/persistence/UnitOfWork';
 import { Session, type SessionEndReason } from './domain/Session';
 import type { SessionRepository } from './domain/SessionRepository';
 
-export const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
+const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 /** Two tabs refreshing with the same token within this window is treated as a race, not theft. */
 const ROTATION_GRACE_SECONDS = 30;
 

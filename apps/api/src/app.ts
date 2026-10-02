@@ -18,8 +18,8 @@ import { createNotificationRouter } from './modules/notifications/notification.r
 import { createUniversityRouter } from './modules/universities/university.controller';
 import { createUserRouter } from './modules/users/user.routes';
 
-export const API_PREFIX = '/api/v1';
-export const API_VERSION = '2.0.0';
+const API_PREFIX = '/api/v1';
+const API_VERSION = '2.0.0';
 
 /** Builds the Express application from an already-wired container. Starts nothing and opens no connections. */
 export function createApp(container: Container): Express {

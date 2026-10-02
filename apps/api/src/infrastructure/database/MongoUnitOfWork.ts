@@ -1,7 +1,7 @@
 import type { ClientSession, Connection } from 'mongoose';
 import type { TransactionContext, UnitOfWork } from '../../core/persistence/UnitOfWork';
 
-export class MongoTransaction implements TransactionContext {
+class MongoTransaction implements TransactionContext {
   readonly kind = 'transaction' as const;
 
   constructor(readonly session: ClientSession) {}

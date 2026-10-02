@@ -7,7 +7,7 @@ import type { UserController } from './user.controller';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
-export const USER_RATE_LIMITS = {
+const USER_RATE_LIMITS = {
   avatarPerUser: { name: 'avatar-user', limit: 20, windowSeconds: 24 * 60 * 60 },
 } satisfies Record<string, RateLimitRule>;
 

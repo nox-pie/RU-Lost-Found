@@ -15,7 +15,7 @@ import { InMemoryStorageProvider } from './InMemoryStorageProvider';
 import { serve } from './http';
 import { useTestDatabase } from './testDatabase';
 
-export function testEnv(overrides: Record<string, string> = {}): Env {
+function testEnv(overrides: Record<string, string> = {}): Env {
   return loadEnv({
     NODE_ENV: 'test',
     MONGODB_URI: 'mongodb://127.0.0.1:27017/unused-in-tests',

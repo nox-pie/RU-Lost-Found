@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { Badge } from '../../components/ui/misc';
 import { CATEGORY_LABELS, ITEM_STATUS, formatDay } from '../../lib/format';
 
-export function ItemCard({ item }: { item: ItemDto }) {
+function ItemCard({ item }: { item: ItemDto }) {
   const status = ITEM_STATUS[item.status];
   return (
     <Link

@@ -4,9 +4,9 @@ import type { KeyValueStore } from '../../core/cache/KeyValueStore';
 import { RateLimitError, ValidationError } from '../../core/errors/AppError';
 import { generateNumericCode } from '../../core/security/randomCode';
 
-export const OTP_TTL_SECONDS = 10 * 60;
+const OTP_TTL_SECONDS = 10 * 60;
 export const OTP_MAX_ATTEMPTS = 5;
-export const OTP_RESEND_COOLDOWN_SECONDS = 60;
+const OTP_RESEND_COOLDOWN_SECONDS = 60;
 /**
  * Wrong codes allowed per email per day, across all codes. Requesting a new code resets the
  * per-code limit but not this one, so guessing can't be sped up by asking for fresh codes.

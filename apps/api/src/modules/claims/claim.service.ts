@@ -17,7 +17,7 @@ import { HandoverCodeIncorrectError, HandoverLockedError } from './domain/errors
 import type { ClaimView } from './claim.mapper';
 
 /** How long the two people have to meet after a claim is approved. */
-export const HANDOVER_WINDOW_DAYS = 7;
+const HANDOVER_WINDOW_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface ClaimServiceDeps {

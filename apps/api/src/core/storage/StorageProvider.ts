@@ -2,8 +2,7 @@ import type { ImageRef } from '../domain/ImageRef';
 
 export type ImageFolder = 'items' | 'avatars';
 
-export const IMAGE_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
-export type ImageContentType = (typeof IMAGE_CONTENT_TYPES)[number];
+export type ImageContentType = 'image/jpeg' | 'image/png' | 'image/webp';
 
 /** An image received from a client, already checked to really be a JPEG, PNG or WebP. */
 export interface ImageUpload {

@@ -13,7 +13,7 @@ import { validate } from '../../core/http/middleware/validate';
 import { rateLimit, type RateLimiter, type RateLimitRule } from '../../core/http/rateLimit';
 import type { ClaimController } from './claim.controller';
 
-export const CLAIM_RATE_LIMITS = {
+const CLAIM_RATE_LIMITS = {
   claimsPerUser: { name: 'claim-submit-user', limit: 30, windowSeconds: 24 * 60 * 60 },
   handoverPerUser: { name: 'claim-handover-user', limit: 30, windowSeconds: 60 * 60 },
 } satisfies Record<string, RateLimitRule>;
