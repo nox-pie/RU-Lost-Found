@@ -4,17 +4,17 @@ Every service the product runs on: what it does, how it is connected, what to wa
 
 ## Overview
 
-| Service                         | Role                                                    | Plan             | Connected through                                                      |
-| ------------------------------- | ------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------- |
-| [MongoDB Atlas](#mongodb-atlas) | The database                                            | M0 (free)        | `MONGODB_URI`                                                          |
-| [Upstash Redis](#upstash-redis) | One-time codes, rate limits, login throttle, job leases | Free             | `REDIS_URL`                                                            |
-| [Render](#render)               | Runs the API (and its background worker)                | Free web service | GitHub + `render.yaml`                                                 |
-| [Vercel](#vercel)               | Serves the website, forwards `/api` to Render           | Hobby (free)     | GitHub + `apps/web/vercel.json`                                        |
-| [Cloudinary](#cloudinary)       | Stores and delivers photos                              | Free             | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` |
-| [Brevo](#brevo)                 | Sends email                                             | Free             | `BREVO_API_KEY`, `EMAIL_FROM_ADDRESS`                                  |
-| [Sentry](#sentry)               | Error tracking (API and website)                        | Developer (free) | `SENTRY_DSN` (API), `VITE_SENTRY_DSN` (website)                        |
-| [UptimeRobot](#uptimerobot)     | Uptime alerts; keeps the free API awake                 | Free             | Monitor on `/api/v1/health/live`                                       |
-| [GitHub](#github)               | Code, CI, dependency updates                            | Free             | Repository `nox-pie/RU-Lost-Found`                                     |
+| Service                         | Role                                                    | Plan             | Where to find it                                                                                                         | Connected through                                                                                                |
+| ------------------------------- | ------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| [MongoDB Atlas](#mongodb-atlas) | The database                                            | M0 (free)        | [cloud.mongodb.com](https://cloud.mongodb.com) → cluster **Lost-and-Found** → database **ru-lost-found-v2**              | Setting `MONGODB_URI` (Render)                                                                                   |
+| [Upstash Redis](#upstash-redis) | One-time codes, rate limits, login throttle, job leases | Free             | [console.upstash.com](https://console.upstash.com) → Redis → database **ru-lost-found** (Singapore)                      | Setting `REDIS_URL` (Render)                                                                                     |
+| [Render](#render)               | Runs the API (and its background worker)                | Free web service | [dashboard.render.com](https://dashboard.render.com) → service **ru-lost-found-api**                                     | Deploys from GitHub `main` using `render.yaml`; API address https://ru-lost-found-api.onrender.com               |
+| [Vercel](#vercel)               | Serves the website, forwards `/api` to Render           | Hobby (free)     | [vercel.com](https://vercel.com) → project **ru-lost-found**                                                             | Deploys from GitHub `main` (root `apps/web`) using `apps/web/vercel.json`; site https://ru-lost-found.vercel.app |
+| [Cloudinary](#cloudinary)       | Stores and delivers photos                              | Free             | [console.cloudinary.com](https://console.cloudinary.com) → cloud **dowyiom8** → Media Library → folder **ru-lost-found** | Settings `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (Render)                         |
+| [Brevo](#brevo)                 | Sends email                                             | Free             | [app.brevo.com](https://app.brevo.com) → Transactional (logs), SMTP & API (keys), Senders                                | Settings `BREVO_API_KEY`, `EMAIL_FROM_ADDRESS` (Render)                                                          |
+| [Sentry](#sentry)               | Error tracking (API and website)                        | Developer (free) | [sentry.io](https://sentry.io) → projects **ru-lost-found-api** and **ru-lost-found-web**                                | Settings `SENTRY_DSN` (Render) and `VITE_SENTRY_DSN` (Vercel)                                                    |
+| [UptimeRobot](#uptimerobot)     | Uptime alerts; keeps the free API awake                 | Free             | [dashboard.uptimerobot.com](https://dashboard.uptimerobot.com) → monitor **RU Lost & Found API**                         | HTTP(s) monitor on https://ru-lost-found-api.onrender.com/api/v1/health/live every 5 minutes                     |
+| [GitHub](#github)               | Code, CI, dependency updates                            | Free             | https://github.com/nox-pie/RU-Lost-Found → Actions (CI), Pull requests (Dependabot)                                      | Render and Vercel deploy every push to `main`                                                                    |
 
 Each provider sits behind an interface in the code (`StorageProvider`, `EmailSender`, `KeyValueStore`, `ErrorReporter`, …), so replacing one means a new adapter and a line in `apps/api/src/container.ts`. Business code doesn't change.
 
@@ -22,6 +22,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 ## MongoDB Atlas
 
+- **Dashboard:** [cloud.mongodb.com](https://cloud.mongodb.com) → cluster **Lost-and-Found** → Browse Collections → **ru-lost-found-v2**.
 - **What:** all data: universities, users, sessions, posts, claims, notifications, moderation reports, the audit log and the outbox of pending events. Transactions (claim + item + events saved together) need a replica set, which every Atlas cluster is.
 - **Where:** project with the cluster **`Lost-and-Found`** (M0, AWS Mumbai `ap-south-1`). The app's database is **`ru-lost-found-v2`**; it creates its collections and indexes itself on start-up.
 - **Setting:** `MONGODB_URI` (connection string ending in `/ru-lost-found-v2`), in Render and in `apps/api/.env.production`.
@@ -34,6 +35,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 ## Upstash Redis
 
+- **Dashboard:** [console.upstash.com](https://console.upstash.com) → Redis → **ru-lost-found**.
 - **What:** short-lived shared state: one-time codes (stored as a hash, 10 minutes), rate-limit counters, failed-login counters and the leases that make each scheduled job run on one instance only. Losing it is harmless: codes must be requested again and counters restart.
 - **Where:** database **`ru-lost-found`**, region **AP-Southeast-1 (Singapore)**, next to the API.
 - **Setting:** `REDIS_URL`, which must start with `rediss://` (encrypted). The API refuses anything else at start-up.
@@ -44,6 +46,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 ## Render
 
+- **Dashboard:** [dashboard.render.com](https://dashboard.render.com) → **ru-lost-found-api** (tabs: Logs, Events, Environment, Metrics).
 - **What:** runs the API as a Docker container built from `apps/api/Dockerfile`, with the background worker (notifications, emails, scheduled jobs) in the same process.
 - **Where:** web service **`ru-lost-found-api`** (region Singapore, free plan), created from `render.yaml`. URL: `https://ru-lost-found-api.onrender.com`. Visitors never call it directly; Vercel forwards `/api`.
 - **Settings:** every API setting is under the service's **Environment** tab (the source of truth). Notable non-secret ones: `NODE_ENV=production`, `TRUST_PROXY_HOPS=4`, `APP_URL`, `CORS_ORIGINS`, `ADMIN_EMAILS`, `WORKER_ENABLED`.
@@ -54,6 +57,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 ## Vercel
 
+- **Dashboard:** [vercel.com](https://vercel.com) → **ru-lost-found** (tabs: Deployments, Settings → Environment Variables, Settings → Build and Deployment).
 - **What:** builds and serves the React website, adds its security headers, and rewrites `/api/*` to the Render API so the browser sees a single origin (needed for the refresh-token cookie).
 - **Where:** project **`ru-lost-found`**, Root Directory **`apps/web`**, framework Vite, Node 22. Address: `https://ru-lost-found.vercel.app`.
 - **Settings:** `VITE_SENTRY_DSN` (Environment Variables). Rewrites and headers are in `apps/web/vercel.json`.
@@ -63,6 +67,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 ## Cloudinary
 
+- **Dashboard:** [console.cloudinary.com](https://console.cloudinary.com) → Media Library → folder **ru-lost-found**; keys under Settings → API Keys.
 - **What:** stores post photos and profile pictures and delivers them through its CDN, resized and in the best format for each browser (`f_auto,q_auto,c_limit,w_1600`). The API cleans every image first (strips location data, resizes, re-encodes) and uploads with signed requests.
 - **Where:** cloud name **`dowyiom8`** (owned by the project owner's GitHub sign-in). Folders `ru-lost-found/items` and `ru-lost-found/avatars` are created by the API.
 - **Settings:** `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (Settings → API Keys).
@@ -74,6 +79,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 ## Brevo
 
+- **Dashboard:** [app.brevo.com](https://app.brevo.com) → Transactional → Logs; keys under SMTP & API; sender under Senders, Domains & Dedicated IPs.
 - **What:** sends every email: sign-up and password-reset codes, claim notifications (new claim, approval with the handover code, decline, cancellation, expiry), removed-post notices and account notices (password changed, suspended, reactivated).
 - **Settings:** `BREVO_API_KEY` (SMTP & API → API Keys) and `EMAIL_FROM_ADDRESS` (a sender verified under Senders). The sender name defaults to "RU Lost & Found" (`EMAIL_FROM_NAME`).
 - **Limits:** 300 emails a day on the free plan.
@@ -84,6 +90,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 ## Sentry
 
+- **Dashboard:** [sentry.io](https://sentry.io) → Issues (filter by project **ru-lost-found-api** or **ru-lost-found-web**).
 - **What:** records unexpected errors with their stack trace, so problems are found before users report them. Expected errors (validation, not found, rate limits) are never sent, and no personal data is collected: no cookies, headers, bodies, query strings, IP addresses or passwords in URLs.
 - **Where:** two projects: **`ru-lost-found-api`** (Node.js) and **`ru-lost-found-web`** (React).
 - **Settings:** `SENTRY_DSN` on Render for the API; `VITE_SENTRY_DSN` on Vercel for the website (a public value, built into the page).
@@ -93,12 +100,14 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 ## UptimeRobot
 
-- **What:** checks `https://ru-lost-found-api.onrender.com/api/v1/health/live` every 5 minutes. It emails an alert when the API is down, and its regular visits stop the free Render instance from sleeping.
-- **Also useful:** `/api/v1/health/ready` reports whether MongoDB and Redis are reachable (for an alert-only monitor).
+- **Dashboard:** [dashboard.uptimerobot.com](https://dashboard.uptimerobot.com) → monitor **RU Lost & Found API** (HTTP(s), every 5 minutes, URL https://ru-lost-found-api.onrender.com/api/v1/health/live).
+- **What:** checks https://ru-lost-found-api.onrender.com/api/v1/health/live every 5 minutes. It emails an alert when the API is down, and its regular visits stop the free Render instance from sleeping.
+- **Also useful:** https://ru-lost-found-api.onrender.com/api/v1/health/ready reports whether MongoDB and Redis are reachable (for an alert-only monitor).
 - **Limits:** 50 monitors at 5-minute intervals on the free plan.
 
 ## GitHub
 
+- **Repository:** https://github.com/nox-pie/RU-Lost-Found (Actions for CI runs, Pull requests for Dependabot).
 - **What:** the repository `nox-pie/RU-Lost-Found`; pushes to `main` deploy both Render and Vercel.
 - **CI** (`.github/workflows/ci.yml`): on every push and pull request: API (typecheck, lint, formatting, tests with coverage, build), web (typecheck, lint, build), end-to-end tests in a real browser, and Docker image builds.
 - **Dependabot** (`.github/dependabot.yml`): weekly grouped updates for npm (minor and patch only; major versions are upgraded by hand) and monthly for GitHub Actions. CI checks each pull request.
