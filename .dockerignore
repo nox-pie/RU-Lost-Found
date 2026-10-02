@@ -10,8 +10,6 @@
 apps/web/test-results
 apps/web/playwright-report
 apps/web/e2e
-backend
-frontend
 docs
 .git
 .github

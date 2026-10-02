@@ -11,10 +11,6 @@ coverage/
 .env.*
 !.env.example
 
-# Legacy backend uploads
-backend/uploads/*
-!backend/uploads/.gitkeep
-
 # OS / editor
 .DS_Store
 .idea/

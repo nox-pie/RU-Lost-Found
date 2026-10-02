@@ -6,7 +6,7 @@ import { Item } from '../../modules/items/domain/Item';
 import type { University } from '../../modules/universities/domain/University';
 import { User, normalizeEmail } from '../../modules/users/domain/User';
 
-/** A user document of the first version (backend/models/User.js). */
+/** A user document of the first version (its Mongoose `User` model). */
 export interface LegacyUser {
   _id: Types.ObjectId;
   email: string;
@@ -22,7 +22,7 @@ export interface LegacyUser {
   updatedAt?: Date;
 }
 
-/** An item document of the first version (backend/models/Item.js). */
+/** An item document of the first version (its Mongoose `Item` model). */
 export interface LegacyItem {
   _id: Types.ObjectId;
   type: 'lost' | 'found';
