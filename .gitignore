@@ -9,6 +9,7 @@ coverage/
 # Environment
 .env
 .env.*
+*.env
 !.env.example
 
 # OS / editor
