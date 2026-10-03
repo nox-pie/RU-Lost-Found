@@ -16,7 +16,7 @@ export function DemoBanner() {
   const persona = personaOf(user.email);
 
   return (
-    <div className="border-b border-secondary/30 bg-secondary/10" role="note">
+    <div className="border-b border-secondary-light/40 bg-secondary-light/10" role="note">
       <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <p className="flex items-start gap-2">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-secondary-dark" />

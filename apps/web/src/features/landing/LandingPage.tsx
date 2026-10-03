@@ -41,7 +41,7 @@ function TopBar() {
     <header className="header-solid shadow-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-secondary bg-white p-1.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-secondary-light bg-white p-1.5">
             <img src={brand.images.symbol} alt="" className="h-full w-full object-contain" />
           </span>
           <span className="truncate font-display text-lg font-bold text-white sm:text-xl">
@@ -109,21 +109,21 @@ const PREVIEW: {
   status: ItemStatus;
 }[] = [
   {
-    photo: '/demo/black-bifold-wallet.jpg',
+    photo: '/landing/black-bifold-wallet.webp',
     type: 'FOUND',
     title: 'Black bifold wallet',
     place: 'Library reading room',
     status: 'OPEN',
   },
   {
-    photo: '/demo/camera-backpack.jpg',
+    photo: '/landing/camera-backpack.webp',
     type: 'FOUND',
     title: 'Black camera backpack',
     place: 'Campus bus stop',
     status: 'RESERVED',
   },
   {
-    photo: '/demo/brass-keys.jpg',
+    photo: '/landing/brass-keys.webp',
     type: 'FOUND',
     title: 'Bunch of brass keys',
     place: 'Hostel laundry',
@@ -144,7 +144,16 @@ function SamplePosts() {
             <div
               className={`relative bg-gray-100 ${index === 0 ? 'aspect-[16/9]' : 'aspect-[4/3]'}`}
             >
-              <img src={post.photo} alt="" className="h-full w-full object-cover" />
+              <img
+                src={post.photo}
+                alt=""
+                width={index === 0 ? 800 : 480}
+                height={index === 0 ? 450 : 360}
+                // The first photo is the largest thing on screen: fetch it first. (React 18 only
+                // passes the lowercase HTML attribute through; React 19 adds `fetchPriority`.)
+                {...({ fetchpriority: index === 0 ? 'high' : 'auto' } as Record<string, string>)}
+                className="h-full w-full object-cover"
+              />
               <span
                 className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow ${post.type === 'LOST' ? 'bg-primary' : 'bg-secondary'}`}
               >
@@ -292,7 +301,7 @@ function GetStarted() {
     <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
       <div className="rounded-3xl bg-primary px-6 py-12 text-center text-white shadow-card sm:px-12">
         <h2 className="font-display text-3xl font-bold">Ready to use it for real?</h2>
-        <p className="mx-auto mt-3 max-w-xl text-white/85">{brand.emailHint}</p>
+        <p className="mx-auto mt-3 max-w-xl text-white">{brand.emailHint}</p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             to="/signup"

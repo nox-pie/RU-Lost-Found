@@ -14,7 +14,7 @@ const LINKS = [
 ];
 
 function navClass({ isActive }: { isActive: boolean }) {
-  return `rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${isActive ? 'bg-white text-primary' : 'text-white/90 hover:bg-white/15'}`;
+  return `rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${isActive ? 'bg-white text-primary' : 'text-white hover:bg-white/15'}`;
 }
 
 export function Header() {
@@ -55,7 +55,7 @@ export function Header() {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-secondary bg-white p-1.5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-secondary-light bg-white p-1.5">
             <img src={brand.images.symbol} alt="" className="h-full w-full object-contain" />
           </span>
           <span className="font-display text-lg font-bold text-white sm:text-xl">

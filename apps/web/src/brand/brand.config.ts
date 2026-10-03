@@ -51,6 +51,11 @@ export interface Brand {
      * inside the central 80 % (Android may crop it to a circle), and 180 px for iOS. */
     appIcons: { small: string; large: string; maskable: string; apple: string };
   };
+  /**
+   * White text sits on `primary` and `secondary`, and both are used as text on light
+   * backgrounds, so each needs a contrast of at least 4.5:1 against white and the surface
+   * (WCAG AA; the accessibility e2e test checks it). `light` shades are decorative only.
+   */
   colors: {
     /** Header, buttons, links. */
     primary: ColorScale;
@@ -76,7 +81,7 @@ export const brand: Brand = {
   images: {
     logo: '/brand/logo.png',
     symbol: '/brand/symbol.png',
-    authBackground: '/brand/auth-background.png',
+    authBackground: '/brand/auth-background.jpg',
     footerArt: '/brand/footer-art.png',
     appIcons: {
       small: '/brand/app-icon-192.png',
@@ -86,8 +91,8 @@ export const brand: Brand = {
     },
   },
   colors: {
-    primary: { DEFAULT: '#E63946', light: '#FF6B6B', dark: '#D32F2F' },
-    secondary: { DEFAULT: '#F4A261', light: '#FFB085', dark: '#E67E22' },
+    primary: { DEFAULT: '#C62835', light: '#FF6B6B', dark: '#A8232B' },
+    secondary: { DEFAULT: '#A9530F', light: '#F4A261', dark: '#8A430C' },
     surface: '#fcf1e8',
   },
 };

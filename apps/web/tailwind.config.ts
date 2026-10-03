@@ -10,7 +10,9 @@ export default {
         display: ['Playfair Display', 'Georgia', 'serif'],
       },
       // Brand colours come from the brand file, so components only ever say "primary".
-      colors: brand.colors,
+      // Greys one step darker than Tailwind's, so secondary text stays readable (4.5:1) on
+      // white and on the warm page background.
+      colors: { ...brand.colors, gray: { 400: '#6b7280', 500: '#5f6673' } },
       boxShadow: {
         card: '0 4px 20px -2px rgba(0, 0, 0, 0.06)',
         'card-hover': '0 12px 32px -4px rgba(0, 0, 0, 0.12)',

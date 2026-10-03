@@ -1,11 +1,15 @@
 import { lazy, Suspense } from 'react';
 import { Link, Route, Routes } from 'react-router';
-import { AppLayout } from './components/layout/AppLayout';
 import { PageLoader } from './components/ui/misc';
 import { PublicOnly, RequireAdmin, RequireAuth } from './features/auth/guards';
+// Not lazy: it is the first screen of every new visitor, and small.
+import LandingPage from './features/landing/LandingPage';
 
-// Each page is loaded on first visit, keeping the initial download small.
-const LandingPage = lazy(() => import('./features/landing/LandingPage'));
+// Each page is loaded on first visit, keeping the initial download small. The signed-in layout
+// too: its header carries the report form, which signed-out visitors never need.
+const AppLayout = lazy(() =>
+  import('./components/layout/AppLayout').then((module) => ({ default: module.AppLayout })),
+);
 const LoginPage = lazy(() => import('./features/auth/LoginPage'));
 const SignupPage = lazy(() => import('./features/auth/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('./features/auth/ForgotPasswordPage'));

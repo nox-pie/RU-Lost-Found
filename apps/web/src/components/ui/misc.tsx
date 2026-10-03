@@ -38,7 +38,8 @@ export function Avatar({
   if (url) {
     return <img src={url} alt="" className={`${dimensions} rounded-full object-cover`} />;
   }
-  // No picture: the person's initials on a brand-coloured circle.
+  // No picture: the person's initials on a brand-tinted circle. The tint sits on white, so the
+  // initials stay readable on any background (a coloured header included).
   const initials = name
     .split(/\s+/)
     .filter(Boolean)
@@ -46,11 +47,10 @@ export function Avatar({
     .map((part) => part[0]?.toUpperCase())
     .join('');
   return (
-    <span
-      aria-hidden
-      className={`${dimensions} inline-flex shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary`}
-    >
-      {initials || '?'}
+    <span aria-hidden className={`${dimensions} inline-flex shrink-0 rounded-full bg-white`}>
+      <span className="flex h-full w-full items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
+        {initials || '?'}
+      </span>
     </span>
   );
 }

@@ -109,7 +109,7 @@ export default function FeedPage() {
                 {t.label}
                 {counts.data && (
                   <span
-                    className={`ml-1.5 tabular-nums ${tab === t.id ? 'text-white/80' : 'text-gray-400'}`}
+                    className={`ml-1.5 tabular-nums ${tab === t.id ? 'text-white' : 'text-gray-500'}`}
                   >
                     {counts.data[t.id]}
                   </span>
