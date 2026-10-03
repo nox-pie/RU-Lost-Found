@@ -19,6 +19,8 @@ export type ColorScale = {
 export interface Brand {
   /** The product's name, shown in the header, page titles and messages. */
   productName: string;
+  /** Name under the icon when installed on a phone's home screen (about 12 characters fit). */
+  shortName: string;
   /** Browser tab title. */
   pageTitle: string;
   /** Search-engine and link-preview description. */
@@ -45,6 +47,9 @@ export interface Brand {
     authBackground: string;
     /** Line drawing faded into the footer. */
     footerArt: string;
+    /** Installed-app icons (square PNGs): 192 and 512 px, a 512 px "maskable" one with the art
+     * inside the central 80 % (Android may crop it to a circle), and 180 px for iOS. */
+    appIcons: { small: string; large: string; maskable: string; apple: string };
   };
   colors: {
     /** Header, buttons, links. */
@@ -58,6 +63,7 @@ export interface Brand {
 
 export const brand: Brand = {
   productName: 'RU Lost & Found',
+  shortName: 'Lost & Found',
   pageTitle: 'RU Lost & Found - Rishihood University',
   description:
     'Lost & Found portal for Rishihood University - Connect lost items with their owners',
@@ -72,6 +78,12 @@ export const brand: Brand = {
     symbol: '/brand/symbol.png',
     authBackground: '/brand/auth-background.png',
     footerArt: '/brand/footer-art.png',
+    appIcons: {
+      small: '/brand/app-icon-192.png',
+      large: '/brand/app-icon-512.png',
+      maskable: '/brand/app-icon-maskable-512.png',
+      apple: '/brand/apple-touch-icon.png',
+    },
   },
   colors: {
     primary: { DEFAULT: '#E63946', light: '#FF6B6B', dark: '#D32F2F' },

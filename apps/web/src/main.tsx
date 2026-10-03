@@ -15,6 +15,14 @@ import './index.css';
 startMonitoring();
 warmUpServer();
 
+// Installable app with an offline page (public/sw.js). Not in development: it would cache
+// files the dev server changes.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+  });
+}
+
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
 

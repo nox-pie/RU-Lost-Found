@@ -88,11 +88,15 @@ The Vite dev server proxies `/api` to the API, exactly like the Vercel rewrite i
 
 Every item page also has **Report this post** (reason + details); admins additionally see **Remove post** (with a reason), also on their own posts once handed over. The admin area is lazy-loaded, so students never download it, and its guard only shapes the UI: the API checks the stored role on every admin request.
 
-## 6. Accessibility and UX
+## 6. Installable app
+
+The site can be installed on a phone or computer like an app. `/manifest.webmanifest` is generated from the brand file (name, short name, colours, icons) by a small Vite plugin. `public/sw.js`, a deliberately small service worker registered only in production builds, keeps the build's hashed files (`/assets/...`) for faster repeat visits and shows `offline.html` when a page is opened without a connection. It never handles `/api/...` and never serves a cached page, so a new deploy is always picked up; Vercel serves `sw.js` with `Cache-Control: no-cache`.
+
+## 7. Accessibility and UX
 
 Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `aria-describedby`), dialogs with `aria-modal`, Esc to close and focus restored afterwards, a skip-to-content link, keyboard-visible focus rings, `prefers-reduced-motion` respected, and a layout that works from 360 px phones to desktop. Toasts replace the old `alert()` pop-ups.
 
-## 7. Testing
+## 8. Testing
 
 **End-to-end (Playwright)**, in a real browser against the real API and an in-memory database:
 
