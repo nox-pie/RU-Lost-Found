@@ -65,6 +65,15 @@ export class MongoSessionRepository
     return this.findOne({ tokenHash }, tx);
   }
 
+  async hasActiveInFamily(familyId: string, now: Date): Promise<boolean> {
+    const active = await this.model.exists({
+      familyId: toObjectId(familyId),
+      endedAt: null,
+      expiresAt: { $gt: now },
+    });
+    return active !== null;
+  }
+
   async endFamily(familyId: string, reason: SessionEndReason, now: Date): Promise<number> {
     return this.endMany({ familyId: toObjectId(familyId) }, reason, now);
   }

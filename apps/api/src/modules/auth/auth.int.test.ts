@@ -393,8 +393,39 @@ describe('refresh tokens', () => {
     const secondTab = await api().post('/api/v1/auth/refresh').set('Cookie', cookie);
     const stillValid = await api().post('/api/v1/auth/refresh').set('Cookie', refreshCookie(first));
 
-    expect(secondTab.status).toBe(401);
+    expect(secondTab.status).toBe(200);
     expect(stillValid.status).toBe(200);
+  });
+
+  it('keep a device signed in when the answer to a refresh never reached it', async () => {
+    const { cookie } = await signUp();
+    // The page was left mid-refresh: the server rotated the token, the browser kept the old one.
+    await api().post('/api/v1/auth/refresh').set('Cookie', cookie).expect(200);
+    t.clock.set(new Date(t.clock.now().getTime() + 10_000));
+
+    const retried = await api().post('/api/v1/auth/refresh').set('Cookie', cookie);
+
+    expect(retried.status).toBe(200);
+    await api().post('/api/v1/auth/refresh').set('Cookie', refreshCookie(retried)).expect(200);
+  });
+
+  it('tolerate refreshes sent at the very same moment', async () => {
+    const { cookie } = await signUp();
+
+    const results = await Promise.all(
+      [1, 2, 3].map(() => api().post('/api/v1/auth/refresh').set('Cookie', cookie)),
+    );
+    expect(results.map((res) => res.status)).toEqual([200, 200, 200]);
+  });
+
+  it('never bring back a signed-out device, even within the grace window', async () => {
+    const { cookie } = await signUp();
+    const rotated = refreshCookie(
+      await api().post('/api/v1/auth/refresh').set('Cookie', cookie).expect(200),
+    );
+    await api().post('/api/v1/auth/logout').set('Cookie', rotated).expect(204);
+
+    expect((await api().post('/api/v1/auth/refresh').set('Cookie', cookie)).status).toBe(401);
   });
 
   it('expire after 7 days', async () => {
