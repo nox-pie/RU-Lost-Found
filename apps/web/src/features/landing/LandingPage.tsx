@@ -1,20 +1,41 @@
 import { ArrowRight, Bell, Flag, KeyRound, Lock, ShieldCheck, UserCheck } from 'lucide-react';
-import { useEffect, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, type RefObject } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Footer } from '../../components/layout/Footer';
 import { brand } from '../../brand/brand.config';
+import { useInView } from '../../lib/hooks';
 import { DemoPersonaCards } from '../demo/DemoSignIn';
-import { HandoverStory } from './HandoverStory';
+import { LandingNav } from './LandingNav';
+import { Reveal, SectionHeading } from './Reveal';
 import { SampleCarousel } from './SampleCarousel';
 
-/** What a signed-out visitor sees at the home page: what the portal does and how to start. */
+// Below the fold, and built from the app's real components (forms, dropdown, cards): loaded
+// right after the first paint so they don't weigh on it.
+const HandoverStory = lazy(() =>
+  import('./HandoverStory').then((module) => ({ default: module.HandoverStory })),
+);
+
+/** The campus photo in three sizes; the browser picks one, and reuses it further down. */
+const CAMPUS_PHOTO = {
+  src: '/landing/campus-1280.webp',
+  srcSet:
+    '/landing/campus-768.webp 768w, /landing/campus-1280.webp 1280w, /landing/campus-1920.webp 1920w',
+  sizes: '100vw',
+};
+
+/**
+ * What a signed-out visitor sees at the home page. One rhythm (photo, light, dark, light,
+ * photo) and a small motion budget: sections fade up once, the post carousel, the story, and a
+ * slow zoom in the last card. All of it stops for people who reduce motion.
+ */
 export default function LandingPage() {
+  const heroRef = useRef<HTMLElement>(null);
   useScrollToHash();
   return (
     <div className="flex min-h-screen flex-col bg-surface">
-      <TopBar />
+      <LandingNav heroRef={heroRef} />
       <main className="flex-grow">
-        <Hero />
+        <Hero heroRef={heroRef} />
         <HowItWorks />
         <TryTheDemo />
         <Safeguards />
@@ -25,7 +46,7 @@ export default function LandingPage() {
   );
 }
 
-/** Links like /#demo (from the footer or other pages) land on their section once it's drawn. */
+/** Links like /#demo (from other pages) land on their section once it's drawn. */
 function useScrollToHash() {
   const { hash } = useLocation();
   useEffect(() => {
@@ -34,45 +55,15 @@ function useScrollToHash() {
   }, [hash]);
 }
 
-function TopBar() {
+function Hero({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
   return (
-    <header className="header-solid shadow-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-        <Link to="/" className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-secondary bg-white p-1.5">
-            <img src={brand.images.symbol} alt="" className="h-full w-full object-contain" />
-          </span>
-          <span className="truncate font-display text-lg font-bold text-white sm:text-xl">
-            {brand.productName}
-          </span>
-        </Link>
-        <nav className="flex shrink-0 items-center gap-1 sm:gap-2" aria-label="Account">
-          <Link
-            to="/login"
-            className="rounded-full px-3 py-2 text-sm font-medium text-white hover:bg-white/15"
-          >
-            Sign in
-          </Link>
-          <Link
-            to="/signup"
-            className="hidden rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm hover:bg-surface sm:inline-block"
-          >
-            Create account
-          </Link>
-        </nav>
-      </div>
-    </header>
-  );
-}
-
-function Hero() {
-  return (
-    <section className="relative isolate overflow-hidden">
+    <section
+      ref={heroRef}
+      className="relative isolate flex min-h-[92svh] items-center overflow-hidden"
+    >
       {/* The campus, with a dark wash on the reading side so white text stays legible. */}
       <img
-        src="/landing/campus-1280.webp"
-        srcSet="/landing/campus-768.webp 768w, /landing/campus-1280.webp 1280w, /landing/campus-1920.webp 1920w"
-        sizes="100vw"
+        {...CAMPUS_PHOTO}
         alt=""
         width={1920}
         height={1027}
@@ -82,10 +73,10 @@ function Hero() {
         className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_65%]"
       />
       <div
-        className="absolute inset-0 -z-10 bg-gradient-to-b from-black/70 via-black/55 to-black/75 lg:bg-gradient-to-r lg:from-black/80 lg:via-black/55 lg:to-black/25"
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-black/70 via-black/55 to-black/80 lg:bg-gradient-to-r lg:from-black/80 lg:via-black/55 lg:to-black/30"
         aria-hidden
       />
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:py-24">
+      <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 pb-16 pt-28 sm:px-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:pb-20 lg:pt-32">
         <div className="text-center text-white lg:text-left">
           <p className="text-sm font-semibold uppercase tracking-widest text-white/90">
             {brand.organisation.name}
@@ -120,20 +111,20 @@ function Hero() {
 
 function HowItWorks() {
   return (
-    <section id="how-it-works" className="scroll-mt-4 py-16 sm:py-20">
+    <section id="how-it-works" className="scroll-mt-16 py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="mb-10 text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-primary">
-            How it works
-          </p>
-          <h2 className="mt-2 font-display text-3xl font-bold text-gray-900 sm:text-4xl">
-            From “I lost it” to “I got it back”
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-gray-600">
-            Follow one wallet through the portal, from the moment it goes missing to the handover.
-          </p>
-        </div>
-        <HandoverStory />
+        <Reveal>
+          <SectionHeading
+            eyebrow="How it works"
+            title="From “I lost it” to “I got it back”"
+            intro="Follow one wallet through the portal, from the moment it goes missing to the handover."
+          />
+        </Reveal>
+        <Reveal>
+          <Suspense fallback={<div className="min-h-[34rem]" aria-hidden />}>
+            <HandoverStory />
+          </Suspense>
+        </Reveal>
       </div>
     </section>
   );
@@ -141,22 +132,31 @@ function HowItWorks() {
 
 function TryTheDemo() {
   return (
-    <section id="demo" className="scroll-mt-4 bg-white/60 py-16">
-      <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
-        <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">
-          Try it now, no sign-up
-        </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-gray-600">
-          Sign in as one of two sample students and walk through a real claim. For the whole story,
-          claim the wallet as Ravi, then sign out and approve his claim as Asha.
-        </p>
-        <div className="mt-10">
+    <section
+      id="demo"
+      className="relative isolate scroll-mt-16 overflow-hidden bg-[#1d0b0e] py-20 sm:py-24"
+    >
+      {/* A soft glow in the brand colours, behind the cards. */}
+      <div
+        className="absolute left-1/2 top-1/2 -z-10 h-[34rem] w-[min(60rem,140vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-primary/40 via-primary-dark/30 to-secondary/25 blur-3xl"
+        aria-hidden
+      />
+      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        <Reveal>
+          <SectionHeading
+            dark
+            eyebrow="Try it now, no sign-up"
+            title="Be Ravi, or be Asha"
+            intro="Sign in as one of two sample students and walk through a real claim. For the whole story, claim the wallet as Ravi, then sign out and approve his claim as Asha."
+          />
+        </Reveal>
+        <Reveal>
           <DemoPersonaCards />
-        </div>
-        <p className="mx-auto mt-6 max-w-2xl text-sm text-gray-500">
-          Demo accounts are shared by every visitor and the sample posts reset every hour. They
-          can’t post, edit or remove items, or change their profile.
-        </p>
+          <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-white/80">
+            Demo accounts are shared by every visitor and the sample posts reset every hour. They
+            can’t post, edit or remove items, or change their profile.
+          </p>
+        </Reveal>
       </div>
     </section>
   );
@@ -197,65 +197,81 @@ const SAFEGUARDS = [
 
 function Safeguards() {
   return (
-    <Section title="Built so items reach the right person">
-      <ul className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
-        {SAFEGUARDS.map((item) => (
-          <li key={item.title} className="flex gap-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary/15 text-secondary-dark">
-              <item.icon className="h-5 w-5" />
-            </span>
-            <div>
-              <h3 className="font-sans font-semibold text-gray-900">{item.title}</h3>
-              <p className="mt-1 text-sm text-gray-600">{item.text}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </Section>
-  );
-}
-
-function GetStarted() {
-  return (
-    <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
-      <div className="rounded-3xl bg-primary px-6 py-12 text-center text-white shadow-card sm:px-12">
-        <h2 className="font-display text-3xl font-bold">Ready to use it for real?</h2>
-        <p className="mx-auto mt-3 max-w-xl text-white">{brand.emailHint}</p>
-        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link
-            to="/signup"
-            className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 font-semibold text-primary hover:bg-surface"
-          >
-            Create your account
-          </Link>
-          <Link
-            to="/login"
-            className="inline-flex h-12 items-center justify-center rounded-full border border-white/60 px-7 font-semibold text-white hover:bg-white/10"
-          >
-            Sign in
-          </Link>
-        </div>
+    <section id="safeguards" className="scroll-mt-16 py-20 sm:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <Reveal>
+          <SectionHeading
+            eyebrow="Safeguards"
+            title="Built so items reach the right person"
+            intro="Every step is designed so a lost item goes back to its owner, and only to its owner."
+          />
+        </Reveal>
+        <Reveal>
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {SAFEGUARDS.map((item) => (
+              <li
+                key={item.title}
+                className="rounded-3xl bg-white p-6 shadow-card ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-card-hover"
+              >
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <item.icon className="h-5 w-5" aria-hidden />
+                </span>
+                <h3 className="mt-4 font-sans text-lg font-semibold text-gray-900">{item.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-gray-600">{item.text}</p>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </div>
     </section>
   );
 }
 
-function Section({
-  title,
-  intro,
-  children,
-}: {
-  title: string;
-  intro?: string;
-  children: ReactNode;
-}) {
+function GetStarted() {
+  const card = useRef<HTMLDivElement>(null);
+  // The slow zoom only runs while the card can be seen.
+  const visible = useInView(card, 0.1);
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-      <div className="mb-10 text-center">
-        <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">{title}</h2>
-        {intro && <p className="mt-3 text-gray-600">{intro}</p>}
-      </div>
-      {children}
+    <section className="mx-auto w-full max-w-7xl px-4 pb-20 sm:px-6 sm:pb-24">
+      <Reveal>
+        <div
+          ref={card}
+          className="relative isolate overflow-hidden rounded-3xl px-6 py-16 text-center text-white shadow-2xl sm:px-12 sm:py-20"
+        >
+          <img
+            {...CAMPUS_PHOTO}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 -z-20 h-full w-full object-cover animate-kenburns"
+            style={{ animationPlayState: visible ? 'running' : 'paused' }}
+          />
+          <div
+            className="absolute inset-0 -z-10 bg-gradient-to-br from-primary-dark/95 via-primary/85 to-black/75"
+            aria-hidden
+          />
+          <p className="text-sm font-semibold uppercase tracking-widest text-white/90">
+            {brand.organisation.name}
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold sm:text-5xl">
+            Ready to use it for real?
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-white/90">{brand.emailHint}</p>
+          <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              to="/signup"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-8 font-semibold text-primary shadow-lg hover:bg-surface"
+            >
+              Create your account <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              to="/login"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-white/70 px-8 font-semibold text-white hover:bg-white/10"
+            >
+              Sign in
+            </Link>
+          </div>
+        </div>
+      </Reveal>
     </section>
   );
 }

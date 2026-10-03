@@ -1,10 +1,9 @@
 import { DEMO_PERSONAS, type DemoPersonaKey } from '@ru-lost-found/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/Button';
-import { Avatar } from '../../components/ui/misc';
 import { authApi } from '../../lib/api/endpoints';
 import { queryKeys } from '../../lib/queryClient';
 import { useAuth } from '../auth/authContext';
@@ -45,34 +44,50 @@ export function DemoPersonaCards() {
   if (!demo.checking && !demo.available) return null;
 
   return (
-    <div className="grid gap-5 sm:grid-cols-2">
-      {DEMO_PERSONAS.map((persona) => (
-        <article
-          key={persona.key}
-          className="flex flex-col rounded-2xl bg-white p-6 text-left shadow-card"
-        >
-          <div className="flex items-center gap-3">
-            <Avatar name={`${persona.firstName} ${persona.lastName}`} url={null} />
-            <div>
-              <h3 className="font-sans text-lg font-semibold text-gray-900">
-                {persona.firstName} {persona.lastName}
-              </h3>
-              <p className="text-sm font-medium text-primary">{persona.role}</p>
-            </div>
-          </div>
-          <p className="mt-4 text-gray-700">{persona.story}</p>
-          <p className="mt-2 text-sm text-gray-500">{persona.tryThis}</p>
-          <Button
-            size="lg"
-            className="mt-6 w-full"
-            loading={demo.checking || demo.startingAs === persona.key}
-            disabled={demo.startingAs !== undefined}
-            onClick={() => demo.start(persona.key)}
+    <div className="grid gap-6 sm:grid-cols-2">
+      {DEMO_PERSONAS.map((persona) => {
+        // The finder wears the Found colour, the owner the Lost colour, as on the posts.
+        const finder = persona.key === 'asha.verma';
+        return (
+          <article
+            key={persona.key}
+            className="flex flex-col rounded-3xl bg-white p-7 text-left shadow-2xl ring-1 ring-white/10 transition duration-300 hover:-translate-y-1"
           >
-            Try as {persona.firstName} <ArrowRight className="h-4 w-4" />
-          </Button>
-        </article>
-      ))}
+            <div className="flex items-start justify-between gap-3">
+              <span
+                className={`flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold ${finder ? 'bg-secondary-light/25 text-secondary-dark' : 'bg-primary/10 text-primary'}`}
+                aria-hidden
+              >
+                {persona.firstName[0]}
+                {persona.lastName[0]}
+              </span>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${finder ? 'bg-secondary text-secondary-contrast' : 'bg-primary text-primary-contrast'}`}
+              >
+                {persona.role.replace(/^The /, '')}
+              </span>
+            </div>
+            <h3 className="mt-5 font-sans text-xl font-semibold text-gray-900">
+              {persona.firstName} {persona.lastName}
+            </h3>
+            <p className="mt-2 text-gray-700">{persona.story}</p>
+            <p className="mt-4 flex gap-2 rounded-2xl bg-gray-50 p-3 text-sm text-gray-600">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              {persona.tryThis}
+            </p>
+            <Button
+              size="lg"
+              variant={finder ? 'secondary' : 'primary'}
+              className="mt-6 w-full"
+              loading={demo.checking || demo.startingAs === persona.key}
+              disabled={demo.startingAs !== undefined}
+              onClick={() => demo.start(persona.key)}
+            >
+              Try as {persona.firstName} <ArrowRight className="h-4 w-4" />
+            </Button>
+          </article>
+        );
+      })}
     </div>
   );
 }

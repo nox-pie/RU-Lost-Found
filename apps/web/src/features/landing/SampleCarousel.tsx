@@ -8,6 +8,22 @@ import { SAMPLE_POSTS, type SamplePost } from './samplePosts';
 
 const SLIDE_MS = 4500;
 
+/** True once the visitor has scrolled, pointed, touched or pressed a key on the page. */
+function useFirstInteraction(): boolean {
+  const [engaged, setEngaged] = useState(false);
+  useEffect(() => {
+    if (engaged) return;
+    const events = ['scroll', 'pointermove', 'pointerdown', 'keydown', 'touchstart'] as const;
+    const engage = () => setEngaged(true);
+    for (const event of events)
+      window.addEventListener(event, engage, { once: true, passive: true });
+    return () => {
+      for (const event of events) window.removeEventListener(event, engage);
+    };
+  }, [engaged]);
+  return engaged;
+}
+
 /**
  * Sample posts, one at a time, as they look in the app. Moves on by itself while visible
  * (never for people who reduce motion), pauses on hover or keyboard focus, and has a pause
@@ -16,12 +32,15 @@ const SLIDE_MS = 4500;
 export function SampleCarousel() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const engaged = useFirstInteraction();
   const [hovered, setHovered] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const root = useRef<HTMLElement>(null);
   const visible = useInView(root);
   const count = SAMPLE_POSTS.length;
-  const playing = !paused && !reducedMotion && !hovered && visible;
+  // Nothing moves until the visitor does something (scrolls, points, touches, types): they
+  // read the headline first, and the page settles before any motion.
+  const playing = engaged && !paused && !reducedMotion && !hovered && visible;
   const current = SAMPLE_POSTS[index] as SamplePost;
 
   useEffect(() => {

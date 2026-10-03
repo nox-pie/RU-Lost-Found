@@ -4,13 +4,33 @@ import { Link } from 'react-router';
 import { Badge } from '../../components/ui/misc';
 import { CATEGORY_LABELS, ITEM_STATUS, formatDay } from '../../lib/format';
 
+const CARD =
+  'group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card transition duration-300';
+
 function ItemCard({ item }: { item: ItemDto }) {
-  const status = ITEM_STATUS[item.status];
   return (
     <Link
       to={`/items/${item.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-card-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className={`${CARD} hover:-translate-y-1 hover:shadow-card-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
     >
+      <ItemCardContent item={item} />
+    </Link>
+  );
+}
+
+/** The same card, not clickable: for previews (the landing page's story). */
+export function ItemCardPreview({ item, className = '' }: { item: ItemDto; className?: string }) {
+  return (
+    <div className={`${CARD} ${className}`}>
+      <ItemCardContent item={item} />
+    </div>
+  );
+}
+
+function ItemCardContent({ item }: { item: ItemDto }) {
+  const status = ITEM_STATUS[item.status];
+  return (
+    <>
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
         {item.photos[0] && (
           <img
@@ -62,7 +82,7 @@ function ItemCard({ item }: { item: ItemDto }) {
           )}
         </div>
       </div>
-    </Link>
+    </>
   );
 }
 

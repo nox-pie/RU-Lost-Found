@@ -26,8 +26,8 @@ export default {
         'dialog-in': 'fadeIn 0.18s ease-out forwards',
         'slide-down': 'slideDown 0.3s ease-out forwards',
         rise: 'rise 0.45s ease-out both',
-        // Duration set where used (it matches a step's time on screen).
-        progress: 'progress linear forwards',
+        // A very slow zoom on a photo ("Ken Burns"), back and forth.
+        kenburns: 'kenburns 24s ease-in-out infinite alternate',
       },
       keyframes: {
         fadeIn: {
@@ -38,9 +38,9 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        progress: {
-          '0%': { transform: 'scaleX(0)' },
-          '100%': { transform: 'scaleX(1)' },
+        kenburns: {
+          '0%': { transform: 'scale(1)' },
+          '100%': { transform: 'scale(1.1)' },
         },
         slideDown: {
           '0%': { opacity: '0', transform: 'translateY(-10px)' },

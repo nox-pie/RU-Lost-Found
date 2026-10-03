@@ -112,7 +112,7 @@ test('signing in again restores the session, and signing out ends it @mobile', a
     page.getByRole('heading', { name: 'Lost something on campus? Found something?' }),
   ).toBeVisible();
   await page
-    .getByRole('navigation', { name: 'Account' })
+    .getByRole('navigation', { name: 'Main' })
     .getByRole('link', { name: 'Sign in' })
     .click();
 
