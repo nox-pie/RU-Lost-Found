@@ -54,7 +54,7 @@ import { ClaimService } from './modules/claims/claim.service';
 import { CloseClaimsOnItemRemoved } from './modules/claims/handlers/CloseClaimsOnItemRemoved';
 import { MongoClaimRepository } from './modules/claims/infrastructure/MongoClaimRepository';
 import { DemoClock } from './modules/demo/DemoClock';
-import { DemoSeeder } from './modules/demo/DemoSeeder';
+import { DEMO_RESET_INTERVAL_SECONDS, DemoSeeder } from './modules/demo/DemoSeeder';
 import { MongoDemoDataStore } from './modules/demo/infrastructure/MongoDemoDataStore';
 import { HealthController } from './modules/health/health.controller';
 import { HealthService } from './modules/health/health.service';
@@ -368,7 +368,7 @@ export async function buildContainer(
         ? [
             {
               name: 'reset-demo-data',
-              intervalSeconds: 24 * 60 * 60,
+              intervalSeconds: DEMO_RESET_INTERVAL_SECONDS,
               run: () => demo.reset(clock.now()),
             },
           ]

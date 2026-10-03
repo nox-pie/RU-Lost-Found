@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml/badge.svg)](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
-![Tests](https://img.shields.io/badge/tests-372%20API%20%2B%2010%20end--to--end-success)
+![Tests](https://img.shields.io/badge/tests-374%20API%20%2B%2010%20end--to--end-success)
 ![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)
 
 The lost & found portal of **Rishihood University**: students report what they lost or found, prove an item is theirs, and get it back through a verified handover, without sharing phone numbers with strangers.
@@ -29,7 +29,7 @@ Claims that never get handed over expire, other claims on the item close automat
 
 ## Features
 
-**For visitors:** a landing page that explains the portal, and one-click sign-in as a sample student to try a whole claim on the [sample data](docs/demo-data.md) (shared demo accounts that reset daily and can't post, edit or remove items, or change their profile).
+**For visitors:** a landing page that explains the portal, and one-click sign-in as a sample student to try a whole claim on the [sample data](docs/demo-data.md) (shared demo accounts that reset every hour and can't post, edit or remove items, or change their profile).
 
 **For students:** sign-up verified by an emailed code (open to any email so visitors can try it; can be limited to university addresses by configuration) · search and filters · photo upload from phone or desktop · verification questions · in-app and email notifications · claim timeline · profile and picture · works on 360 px phones and up.
 

@@ -25,7 +25,7 @@ Signing in as Ravi, claiming, signing out and approving as Asha shows the whole 
 | Emails to people who don't exist          | Demo accounts use addresses on `demo.invalid`, a domain reserved for testing that can never receive mail. `SkipUndeliverableEmailSender` (a decorator around the email provider) drops mail to reserved domains, so Brevo's quota and sender reputation are untouched                                                                                   |
 | Demo activity tangling with real data     | Demo accounts can only claim sample posts. Removal deletes demo posts and everything tied to them, including real visitors' claims on sample posts and the notifications about them; real posts and accounts are never touched                                                                                                                          |
 | Anyone can use a demo account             | Demo accounts can't post new items (so no uploads), edit or remove the sample posts, change their profile or picture, or flag real posts. These rules live in the domain and services (`User.assertEditable`, `ItemService`, `ModerationService.flag`), so the API enforces them whatever the client does; the web app just hides what would be refused |
-| Visitors changing the samples             | With `DEMO_MODE=true`, the API resets the sample data every 24 hours                                                                                                                                                                                                                                                                                    |
+| Visitors changing the samples             | With `DEMO_MODE=true`, the API resets the sample data every hour (shared accounts: one visitor's claim changes the story for the next, so it is put back often). The reset keeps the demo accounts and their sessions, so visitors signed in at that moment stay signed in and see the story start again                                                |
 | Cloudinary usage                          | Sample photos are static files served by the web app from `/demo/`; they use no Cloudinary credits and no clean-up job deletes them                                                                                                                                                                                                                     |
 
 ## Commands
@@ -39,7 +39,7 @@ npm run demo -- remove    # delete all of it
 
 Against production, add `--env-file=.env.production` through `npx tsx --env-file=.env.production src/scripts/demo.ts <command>` (see [deployment.md](deployment.md#where-configuration-lives)).
 
-**`DEMO_MODE`** (API setting, default `false`): when `true`, the API creates the sample data at start-up if it is missing and resets it every 24 hours.
+**`DEMO_MODE`** (API setting, default `false`): when `true`, the API creates the sample data at start-up if it is missing and resets it every hour (`DEMO_RESET_INTERVAL_SECONDS`).
 
 ## Before real users arrive
 

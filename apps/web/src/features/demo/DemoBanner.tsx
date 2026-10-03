@@ -25,7 +25,7 @@ export function DemoBanner() {
             <strong>
               {user.firstName} {user.lastName}
             </strong>
-            , a shared demo account that resets daily.
+            , a shared demo account that resets every hour.
             {persona && <> {persona.tryThis}</>}
           </span>
         </p>

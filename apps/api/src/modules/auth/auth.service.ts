@@ -230,7 +230,7 @@ export class AuthService {
   async signInAsDemo({ persona }: DemoSignInInput, client: ClientInfo): Promise<AuthResult> {
     if (!this.deps.demoSignIn) throw new NotFoundError('Demo sign-in');
     const user = await this.deps.users.findByEmail(`${persona}@${DEMO_EMAIL_DOMAIN}`);
-    // Briefly missing while the daily reset recreates the sample data.
+    // Briefly missing while the hourly reset recreates the sample data.
     if (!user) {
       throw new ServiceBusyError(30, 'The demo is being reset. Please try again in a minute.');
     }

@@ -7,6 +7,7 @@ import type { StorageProvider } from '../../core/storage/StorageProvider';
 import type { ClaimService } from '../claims/claim.service';
 import { Item } from '../items/domain/Item';
 import type { ItemRepository } from '../items/domain/ItemRepository';
+import type { University } from '../universities/domain/University';
 import type { UniversityRepository } from '../universities/domain/UniversityRepository';
 import { DEMO_EMAIL_DOMAIN, User } from '../users/domain/User';
 import type { UserRepository } from '../users/domain/UserRepository';
@@ -14,6 +15,12 @@ import type { DemoClock } from './DemoClock';
 import type { DemoDataStore } from './DemoDataStore';
 import { DEMO_PEOPLE, DEMO_POSTS, type DemoPost } from './demoData';
 import { SAMPLE_PHOTO_PREFIX } from './infrastructure/MongoDemoDataStore';
+
+/**
+ * How often DEMO_MODE puts the sample data back. Demo accounts are shared, so one visitor's claim
+ * changes the story for the next; hourly keeps it fresh, while most visits are much shorter.
+ */
+export const DEMO_RESET_INTERVAL_SECONDS = 60 * 60;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
@@ -53,11 +60,62 @@ export class DemoSeeder {
   /** Creates the sample data unless it is already there. */
   async seed(now: Date = new Date()): Promise<DemoSeedResult | null> {
     if (await this.isSeeded()) return null;
-    const { universities, users, items, clock, passwords, ids } = this.deps;
-    const university = await universities.findBySlug(this.deps.universitySlug);
+    const university = await this.university();
+    const people = await this.createPeople(university, now);
+    await this.createPosts(university, people, now);
+    this.deps.logger.info({ people: people.size, posts: DEMO_POSTS.length }, 'Demo data created');
+    return { people: people.size, posts: DEMO_POSTS.length };
+  }
+
+  /** Deletes all sample data, including anything visitors added while signed in as a demo account. */
+  async remove(): Promise<Record<string, number>> {
+    const ids = await this.deps.store.findDemoUserIds();
+    if (ids.length === 0) return {};
+    const removed = await this.removeData(ids, { keepAccounts: false });
+    this.deps.logger.info({ removed }, 'Demo data removed');
+    return removed;
+  }
+
+  /**
+   * Back to the original sample data (hourly, undoing what visitors changed). The demo accounts
+   * and their sessions are kept, so visitors signed in at that moment stay signed in and just
+   * see the story start again. If an account is missing or was suspended, everything is rebuilt.
+   */
+  async reset(now: Date = new Date()): Promise<DemoSeedResult | null> {
+    const people = await this.existingPeople();
+    if (!people) {
+      await this.remove();
+      return this.seed(now);
+    }
+    const removed = await this.removeData(
+      [...people.values()].map((user) => user.id),
+      { keepAccounts: true },
+    );
+    await this.createPosts(await this.university(), people, now);
+    this.deps.logger.info({ removed, posts: DEMO_POSTS.length }, 'Demo data reset');
+    return { people: people.size, posts: DEMO_POSTS.length };
+  }
+
+  private async university(): Promise<University> {
+    const university = await this.deps.universities.findBySlug(this.deps.universitySlug);
     if (!university)
       throw new Error(`No university "${this.deps.universitySlug}". Run the seed first.`);
+    return university;
+  }
 
+  /** Every sample person's account, if all of them exist and are active. */
+  private async existingPeople(): Promise<Map<string, User> | null> {
+    const people = new Map<string, User>();
+    for (const person of DEMO_PEOPLE) {
+      const user = await this.deps.users.findByEmail(`${person.key}@${DEMO_EMAIL_DOMAIN}`);
+      if (!user || !user.isActive) return null;
+      people.set(person.key, user);
+    }
+    return people;
+  }
+
+  private async createPeople(university: University, now: Date): Promise<Map<string, User>> {
+    const { users, passwords, ids } = this.deps;
     // Demo accounts sign in only through the demo sign-in; nobody knows this password.
     const passwordHash = await passwords.hash(randomBytes(24).toString('base64url'));
     const oldest = Math.max(...DEMO_POSTS.map((p) => p.daysAgo)) + 7;
@@ -81,7 +139,15 @@ export class DemoSeeder {
       await users.create(user);
       people.set(person.key, user);
     }
+    return people;
+  }
 
+  private async createPosts(
+    university: University,
+    people: ReadonlyMap<string, User>,
+    now: Date,
+  ): Promise<void> {
+    const { items, clock, ids } = this.deps;
     const actor = (key: string): Actor => {
       const user = people.get(key);
       if (!user) throw new Error(`Unknown demo person "${key}"`);
@@ -111,30 +177,20 @@ export class DemoSeeder {
       await items.create(item);
       await this.play(post, item.id, scope, actor, postedAt, now);
     }
-
     clock.set(now);
-    this.deps.logger.info({ people: people.size, posts: DEMO_POSTS.length }, 'Demo data created');
-    return { people: people.size, posts: DEMO_POSTS.length };
   }
 
-  /** Deletes all sample data, including anything visitors added while signed in as a demo account. */
-  async remove(): Promise<Record<string, number>> {
-    const ids = await this.deps.store.findDemoUserIds();
-    if (ids.length === 0) return {};
-    const { photoIds, removed } = await this.deps.store.removeAll(ids);
+  private async removeData(
+    userIds: readonly string[],
+    options: { keepAccounts: boolean },
+  ): Promise<Record<string, number>> {
+    const { photoIds, removed } = await this.deps.store.removeAll(userIds, options);
     for (const photoId of photoIds) {
       await this.deps.storage.delete(photoId).catch((err: unknown) => {
         this.deps.logger.warn({ err, photoId }, 'Could not delete a demo upload');
       });
     }
-    this.deps.logger.info({ removed }, 'Demo data removed');
     return removed;
-  }
-
-  /** Back to the original sample data (nightly, undoing what visitors changed). */
-  async reset(now: Date = new Date()): Promise<DemoSeedResult | null> {
-    await this.remove();
-    return this.seed(now);
   }
 
   /** Runs a post's story through the real claim service, at the right moments. */

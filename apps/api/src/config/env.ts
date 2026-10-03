@@ -79,7 +79,7 @@ const envSchema = z
 
     /**
      * Sample data for visitors (modules/demo): when on, the API creates it at start-up if it is
-     * missing and resets it every 24 hours. Turn off (and run `npm run demo -- remove`) before
+     * missing and resets it every hour. Turn off (and run `npm run demo -- remove`) before
      * real users arrive.
      */
     DEMO_MODE: z

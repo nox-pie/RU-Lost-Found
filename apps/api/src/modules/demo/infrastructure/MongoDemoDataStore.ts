@@ -28,7 +28,7 @@ export class MongoDemoDataStore implements DemoDataStore {
     return users.map((u) => String(u._id));
   }
 
-  async removeAll(userIds: readonly string[]) {
+  async removeAll(userIds: readonly string[], options = { keepAccounts: false }) {
     const users = userIds.map((id) => new Types.ObjectId(id));
     const items = await this.col('items')
       .find({ reporterId: { $in: users } }, { projection: { _id: 1, images: 1 } })
@@ -48,9 +48,11 @@ export class MongoDemoDataStore implements DemoDataStore {
       )
       .toArray();
     const reportIds = reports.map((r) => r._id);
-    const avatars = await this.col('users')
-      .find({ _id: { $in: users } }, { projection: { 'profile.avatar': 1 } })
-      .toArray();
+    const avatars = options.keepAccounts
+      ? []
+      : await this.col('users')
+          .find({ _id: { $in: users } }, { projection: { 'profile.avatar': 1 } })
+          .toArray();
 
     const allIds = [...users, ...itemIds, ...claimIds, ...reportIds].map(String);
     const photoIds = [
@@ -79,8 +81,10 @@ export class MongoDemoDataStore implements DemoDataStore {
     await remove('moderation_reports', { _id: { $in: reportIds } });
     await remove('claims', { _id: { $in: claimIds } });
     await remove('items', { _id: { $in: itemIds } });
-    await remove('sessions', { userId: { $in: users } });
-    await remove('users', { _id: { $in: users } });
+    if (!options.keepAccounts) {
+      await remove('sessions', { userId: { $in: users } });
+      await remove('users', { _id: { $in: users } });
+    }
     return { photoIds, removed };
   }
 }

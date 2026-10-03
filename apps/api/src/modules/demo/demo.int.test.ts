@@ -5,6 +5,7 @@ import { T0 } from '../../testing/builders';
 import { MongoUserRepository } from '../users/infrastructure/MongoUserRepository';
 import { reportItem, signUp, type SignedInUser } from '../../testing/signedIn';
 import { seedUniversity, useTestApp } from '../../testing/testApp';
+import { DEMO_RESET_INTERVAL_SECONDS } from './DemoSeeder';
 import { DEMO_POSTS } from './demoData';
 
 const t = useTestApp();
@@ -45,10 +46,10 @@ describe('sample data', { timeout: 30_000 }, () => {
     expect(t.email.sent).toHaveLength(0);
   });
 
-  it('keeps reserved posts reserved until the next daily reset', async () => {
+  it('keeps reserved posts reserved until the next reset', async () => {
     await demo().seed(T0);
 
-    t.clock.set(new Date(T0.getTime() + 24 * 60 * 60 * 1000));
+    t.clock.set(new Date(T0.getTime() + DEMO_RESET_INTERVAL_SECONDS * 1000));
     const expired = await t.container.services.claims.expireOverdue();
     t.clock.set(T0); // back to when the visitor's access token is valid
 

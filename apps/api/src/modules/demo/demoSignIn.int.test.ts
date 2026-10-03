@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { T0 } from '../../testing/builders';
 import { fakeJpeg, reportItem, signUp, type SignedInUser } from '../../testing/signedIn';
 import { seedUniversity, useTestApp } from '../../testing/testApp';
-import { DEMO_PEOPLE } from './demoData';
+import { DEMO_PEOPLE, DEMO_POSTS } from './demoData';
 
 const t = useTestApp({ env: { DEMO_MODE: 'true' } });
 const api = () => request(t.app);
@@ -88,6 +88,48 @@ describe('one-click demo sign-in', { timeout: 30_000 }, () => {
 
     for (let i = 0; i < 30; i += 1) expect((await signInAs('ravi.singh')).status).toBe(200);
     expect((await signInAs('ravi.singh')).status).toBe(429);
+  });
+});
+
+describe('the hourly reset', { timeout: 30_000 }, () => {
+  it('puts the story back without signing visitors out', async () => {
+    await t.container.services.demo.seed(T0);
+    const signIn = await signInAs('ravi.singh');
+    const ravi: SignedInUser = {
+      id: signIn.body.user.id,
+      email: signIn.body.user.email,
+      token: signIn.body.accessToken,
+      bearer: `Bearer ${signIn.body.accessToken}`,
+    };
+    const cookie = String(signIn.headers['set-cookie']).split(';')[0] ?? '';
+    const wallet = await samplePost(ravi, 'Black bifold wallet');
+    await api()
+      .post(`/api/v1/items/${wallet}/claims`)
+      .set('Authorization', ravi.bearer)
+      .send({ message: 'It is mine!', answers: [{ questionId: 'q1', answer: 'Ravi Singh' }] })
+      .expect(201);
+
+    await t.container.services.demo.reset(T0);
+
+    const me = await api().get('/api/v1/users/me').set('Authorization', ravi.bearer).expect(200);
+    expect(me.body.id).toBe(ravi.id);
+    await api().post('/api/v1/auth/refresh').set('Cookie', cookie).expect(200);
+    const claims = await api().get('/api/v1/claims/mine').set('Authorization', ravi.bearer);
+    expect(claims.body.data).toEqual([]);
+    expect(await samplePost(ravi, 'Black bifold wallet')).not.toBe(wallet); // a fresh post
+  });
+
+  it('rebuilds everything when a demo account was suspended', async () => {
+    await t.container.services.demo.seed(T0);
+    await t.connection
+      .collection('users')
+      .updateOne({ email: 'ravi.singh@demo.invalid' }, { $set: { status: 'SUSPENDED' } });
+
+    expect(await t.container.services.demo.reset(T0)).toEqual({
+      people: 8,
+      posts: DEMO_POSTS.length,
+    });
+    expect((await signInAs('ravi.singh')).status).toBe(200);
   });
 });
 

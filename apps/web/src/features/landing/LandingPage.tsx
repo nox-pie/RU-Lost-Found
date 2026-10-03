@@ -226,8 +226,8 @@ function TryTheDemo() {
           <DemoPersonaCards />
         </div>
         <p className="mx-auto mt-6 max-w-2xl text-sm text-gray-500">
-          Demo accounts are shared by every visitor and the sample posts reset each day. They can’t
-          post, edit or remove items, or change their profile.
+          Demo accounts are shared by every visitor and the sample posts reset every hour. They
+          can’t post, edit or remove items, or change their profile.
         </p>
       </div>
     </section>

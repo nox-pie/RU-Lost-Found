@@ -50,7 +50,7 @@ export class ClaimService {
     const item = await items.findById(scope, itemId);
     if (!item || item.status === 'REMOVED') throw new NotFoundError('Item');
 
-    // Demo accounts (sample data for visitors) only ever touch sample posts, so the nightly
+    // Demo accounts (sample data for visitors) only ever touch sample posts, so the hourly
     // demo reset can't affect anyone's real posts.
     const people = await this.deps.users.findByIds([actor.userId, item.reporterId]);
     const isDemo = (id: string) => people.find((u) => u.id === id)?.isDemo ?? false;
