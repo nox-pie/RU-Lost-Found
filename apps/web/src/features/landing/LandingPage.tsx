@@ -1,26 +1,15 @@
-import {
-  ArrowRight,
-  Bell,
-  Camera,
-  Flag,
-  KeyRound,
-  Lock,
-  MapPin,
-  MessageCircleQuestion,
-  ShieldCheck,
-  UserCheck,
-} from 'lucide-react';
-import type { ItemStatus, ItemType } from '@ru-lost-found/shared';
-import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { ArrowRight, Bell, Flag, KeyRound, Lock, ShieldCheck, UserCheck } from 'lucide-react';
+import { useEffect, type ReactNode } from 'react';
+import { Link, useLocation } from 'react-router';
 import { Footer } from '../../components/layout/Footer';
-import { Badge } from '../../components/ui/misc';
-import { ITEM_STATUS } from '../../lib/format';
 import { brand } from '../../brand/brand.config';
 import { DemoPersonaCards } from '../demo/DemoSignIn';
+import { HandoverStory } from './HandoverStory';
+import { SampleCarousel } from './SampleCarousel';
 
 /** What a signed-out visitor sees at the home page: what the portal does and how to start. */
 export default function LandingPage() {
+  useScrollToHash();
   return (
     <div className="flex min-h-screen flex-col bg-surface">
       <TopBar />
@@ -34,6 +23,15 @@ export default function LandingPage() {
       <Footer />
     </div>
   );
+}
+
+/** Links like /#demo (from the footer or other pages) land on their section once it's drawn. */
+function useScrollToHash() {
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
+  }, [hash]);
 }
 
 function TopBar() {
@@ -69,154 +67,75 @@ function TopBar() {
 
 function Hero() {
   return (
-    <section className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-20">
-      <div className="text-center lg:text-left">
-        <p className="text-sm font-semibold uppercase tracking-wider text-primary">
-          {brand.organisation.name}
-        </p>
-        <h1 className="mt-3 font-display text-4xl font-bold leading-tight text-gray-900 sm:text-5xl">
-          Lost something on campus? Found something?
-        </h1>
-        <p className="mx-auto mt-5 max-w-xl text-lg text-gray-600 lg:mx-0">
-          Post it with a photo, find it in one place, and get it back through a checked handover:
-          the owner proves it is theirs, and the item is marked returned only when you meet.
-        </p>
-        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-          <a
-            href="#demo"
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-7 font-semibold text-white shadow-sm hover:bg-primary-dark"
-          >
-            Try the demo <ArrowRight className="h-4 w-4" />
-          </a>
-          <Link
-            to="/signup"
-            className="inline-flex h-12 items-center justify-center rounded-full border border-gray-300 bg-white px-7 font-semibold text-gray-800 hover:bg-gray-50"
-          >
-            Create your account
-          </Link>
+    <section className="relative isolate overflow-hidden">
+      {/* The campus, with a dark wash on the reading side so white text stays legible. */}
+      <img
+        src="/landing/campus-1280.webp"
+        srcSet="/landing/campus-768.webp 768w, /landing/campus-1280.webp 1280w, /landing/campus-1920.webp 1920w"
+        sizes="100vw"
+        alt=""
+        width={1920}
+        height={1027}
+        // The largest thing on screen: fetch it first. (React 18 only passes the lowercase
+        // HTML attribute through; React 19 adds `fetchPriority`.)
+        {...({ fetchpriority: 'high' } as Record<string, string>)}
+        className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_65%]"
+      />
+      <div
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-black/70 via-black/55 to-black/75 lg:bg-gradient-to-r lg:from-black/80 lg:via-black/55 lg:to-black/25"
+        aria-hidden
+      />
+      <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:py-24">
+        <div className="text-center text-white lg:text-left">
+          <p className="text-sm font-semibold uppercase tracking-widest text-white/90">
+            {brand.organisation.name}
+          </p>
+          <h1 className="mt-3 font-display text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+            Lost something on campus? Found something?
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-lg text-white/90 lg:mx-0">
+            Post it with a photo, find it in one place, and get it back through a checked handover:
+            the owner proves it is theirs, and the item is marked returned only when you meet.
+          </p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+            <a
+              href="#demo"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-7 font-semibold text-white shadow-lg hover:bg-primary-dark"
+            >
+              Try the demo <ArrowRight className="h-4 w-4" />
+            </a>
+            <a
+              href="#how-it-works"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-white/70 bg-white/10 px-7 font-semibold text-white backdrop-blur hover:bg-white/20"
+            >
+              See how it works
+            </a>
+          </div>
         </div>
+        <SampleCarousel />
       </div>
-      <SamplePosts />
     </section>
   );
 }
 
-const PREVIEW: {
-  photo: string;
-  type: ItemType;
-  title: string;
-  place: string;
-  status: ItemStatus;
-}[] = [
-  {
-    photo: '/landing/black-bifold-wallet.webp',
-    type: 'FOUND',
-    title: 'Black bifold wallet',
-    place: 'Library reading room',
-    status: 'OPEN',
-  },
-  {
-    photo: '/landing/camera-backpack.webp',
-    type: 'FOUND',
-    title: 'Black camera backpack',
-    place: 'Campus bus stop',
-    status: 'RESERVED',
-  },
-  {
-    photo: '/landing/brass-keys.webp',
-    type: 'FOUND',
-    title: 'Bunch of brass keys',
-    place: 'Hostel laundry',
-    status: 'RESOLVED',
-  },
-];
-
-/** Three posts from the sample data, as the feed shows them (a picture, not live data). */
-function SamplePosts() {
-  return (
-    <div className="relative mx-auto w-full max-w-md lg:mr-0 lg:max-w-lg" aria-hidden>
-      <div className="grid grid-cols-2 gap-4 sm:gap-5">
-        {PREVIEW.map((post, index) => (
-          <div
-            key={post.title}
-            className={`overflow-hidden rounded-2xl bg-white shadow-card ${index === 0 ? 'col-span-2' : ''}`}
-          >
-            <div
-              className={`relative bg-gray-100 ${index === 0 ? 'aspect-[16/9]' : 'aspect-[4/3]'}`}
-            >
-              <img
-                src={post.photo}
-                alt=""
-                width={index === 0 ? 800 : 480}
-                height={index === 0 ? 450 : 360}
-                // The first photo is the largest thing on screen: fetch it first. (React 18 only
-                // passes the lowercase HTML attribute through; React 19 adds `fetchPriority`.)
-                {...({ fetchpriority: index === 0 ? 'high' : 'auto' } as Record<string, string>)}
-                className="h-full w-full object-cover"
-              />
-              <span
-                className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow ${post.type === 'LOST' ? 'bg-primary text-primary-contrast' : 'bg-secondary text-secondary-contrast'}`}
-              >
-                {post.type === 'LOST' ? 'Lost' : 'Found'}
-              </span>
-              {post.status !== 'OPEN' && (
-                <span className="absolute bottom-3 left-3">
-                  <Badge tone={ITEM_STATUS[post.status].tone}>
-                    {ITEM_STATUS[post.status].label}
-                  </Badge>
-                </span>
-              )}
-            </div>
-            <div className="p-3 sm:p-4">
-              <p className="line-clamp-1 font-semibold text-gray-900">{post.title}</p>
-              <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{post.place}</span>
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const STEPS = [
-  {
-    icon: Camera,
-    title: 'Post it',
-    text: 'Lost or found something? Add a photo, the place and the day. A finder can add a question that only the real owner can answer.',
-  },
-  {
-    icon: MessageCircleQuestion,
-    title: 'Claim it',
-    text: 'The owner finds the post and answers the question. The finder compares the answers and approves the right person.',
-  },
-  {
-    icon: KeyRound,
-    title: 'Hand it over',
-    text: 'You meet on campus. The owner shows a 6-digit code, the finder enters it, and the item is marked returned.',
-  },
-];
-
 function HowItWorks() {
   return (
-    <Section title="How it works" intro="Three steps from “I lost it” to “I got it back”.">
-      <ol className="grid gap-5 md:grid-cols-3">
-        {STEPS.map((step, index) => (
-          <li key={step.title} className="rounded-2xl bg-white p-6 shadow-card">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <step.icon className="h-5 w-5" />
-              </span>
-              <span className="text-sm font-semibold text-gray-400">Step {index + 1}</span>
-            </div>
-            <h3 className="mt-4 text-xl font-bold text-gray-900">{step.title}</h3>
-            <p className="mt-2 text-gray-600">{step.text}</p>
-          </li>
-        ))}
-      </ol>
-    </Section>
+    <section id="how-it-works" className="scroll-mt-4 py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mb-10 text-center">
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+            How it works
+          </p>
+          <h2 className="mt-2 font-display text-3xl font-bold text-gray-900 sm:text-4xl">
+            From “I lost it” to “I got it back”
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-gray-600">
+            Follow one wallet through the portal, from the moment it goes missing to the handover.
+          </p>
+        </div>
+        <HandoverStory />
+      </div>
+    </section>
   );
 }
 

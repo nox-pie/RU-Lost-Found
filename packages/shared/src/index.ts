@@ -2,6 +2,7 @@ export * from './admin';
 export * from './audit';
 export * from './auth';
 export * from './demo';
+export * from './demoPersonas';
 export * from './claims';
 export * from './enums';
 export * from './errors';

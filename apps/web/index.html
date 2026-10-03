@@ -8,6 +8,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="%BRAND_THEME_COLOR%" />
     <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- The landing page's campus photo (its largest element): fetched alongside the scripts
+         instead of after them. The browser picks one size; later pages reuse it from cache. -->
+    <link
+      rel="preload"
+      as="image"
+      type="image/webp"
+      imagesrcset="/landing/campus-768.webp 768w, /landing/campus-1280.webp 1280w, /landing/campus-1920.webp 1920w"
+      imagesizes="100vw"
+      fetchpriority="high"
+    />
     <meta name="description" content="%BRAND_DESCRIPTION%" />
     <title>%BRAND_TITLE%</title>
   </head>
