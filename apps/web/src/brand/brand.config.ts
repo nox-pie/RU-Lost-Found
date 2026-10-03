@@ -27,7 +27,14 @@ export interface Brand {
   pageTitle: string;
   /** Search-engine and link-preview description. */
   description: string;
-  organisation: { name: string; location: string };
+  organisation: {
+    name: string;
+    location: string;
+    /** Postal address, shown in the footer. */
+    address: string;
+    /** The organisation's own website, linked from the footer. */
+    website: string;
+  };
   /** One line under the product name in the footer. */
   tagline: string;
   /**
@@ -47,7 +54,9 @@ export interface Brand {
     symbol: string;
     /** Photo behind the sign-in card. */
     authBackground: string;
-    /** Line drawing faded into the footer. */
+    /** Organisation logo in white, for dark backgrounds (footer). */
+    logoOnDark: string;
+    /** White line drawing of the campus, shown on its own band in the footer (transparent PNG). */
     footerArt: string;
     /** Installed-app icons (square PNGs): 192 and 512 px, a 512 px "maskable" one with the art
      * inside the central 80 % (Android may crop it to a circle), and 180 px for iOS. */
@@ -75,7 +84,12 @@ export const brand: Brand = {
   pageTitle: 'RU Lost & Found - Rishihood University',
   description:
     'Lost & Found portal for Rishihood University - Connect lost items with their owners',
-  organisation: { name: 'Rishihood University', location: 'Sonipat, Haryana' },
+  organisation: {
+    name: 'Rishihood University',
+    location: 'Sonipat, Haryana',
+    address: 'NH-44 (GT Road), Delhi NCR, Sonipat, Haryana 131021',
+    website: 'https://rishihood.edu.in',
+  },
   tagline:
     'Helping the Rishihood University community reconnect with their belongings, one item at a time.',
   emailHint: 'Students: use your university email. Visitors can try it with any email.',
@@ -85,7 +99,8 @@ export const brand: Brand = {
     logo: '/brand/logo.png',
     symbol: '/brand/symbol.png',
     authBackground: '/brand/auth-background.jpg',
-    footerArt: '/brand/footer-art.png',
+    logoOnDark: '/brand/logo-white.webp',
+    footerArt: '/brand/campus-drawing-white.png',
     appIcons: {
       small: '/brand/app-icon-192.png',
       large: '/brand/app-icon-512.png',
