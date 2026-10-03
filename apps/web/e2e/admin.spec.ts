@@ -42,8 +42,10 @@ test('an admin removes a reported post and suspends its poster', async ({ browse
 
   await test.step('the admin reviews it and removes the post with a reason', async () => {
     await admin.getByRole('link', { name: 'Admin' }).click();
-    await expect(admin.getByText('Reports to review')).toBeVisible();
-    await admin.getByRole('link', { name: /^Reports/ }).click();
+    await expect(
+      admin.getByRole('heading', { name: '1 reported post needs a decision' }),
+    ).toBeVisible();
+    await admin.getByRole('link', { name: 'Review now' }).click();
 
     const card = admin.getByRole('listitem').filter({ hasText: title });
     await expect(card.getByText('“This is an advert”')).toBeVisible();

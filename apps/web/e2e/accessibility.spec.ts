@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { appoint, signUp, uniqueEmail } from './support';
 
 /**
  * Automated accessibility checks (axe-core, WCAG 2.1 A and AA rules) on the main pages, signed
@@ -55,4 +56,23 @@ test('the main pages pass automated accessibility checks @mobile', async ({ page
   await page.goto('/profile');
   await expect(page.getByRole('heading', { name: 'Your profile' })).toBeVisible();
   await expectNoViolations(page, 'Profile page');
+});
+
+test('the admin pages pass automated accessibility checks', async ({ page }) => {
+  const email = uniqueEmail('a11y-admin');
+  await signUp(page, { email, first: 'Ada', last: 'Admin' });
+  appoint(email, 'UNIVERSITY_ADMIN');
+  await page.reload();
+
+  for (const [path, title] of [
+    ['/admin', 'Overview'],
+    ['/admin/reports', 'Reported posts'],
+    ['/admin/posts', 'All posts'],
+    ['/admin/users', 'People'],
+    ['/admin/activity', 'Activity'],
+  ] as const) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+    await expectNoViolations(page, `Admin: ${title}`);
+  }
 });

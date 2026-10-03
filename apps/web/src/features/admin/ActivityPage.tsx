@@ -106,11 +106,7 @@ export default function ActivityPage() {
 
   return (
     <div className="max-w-3xl">
-      <p className="max-w-xl text-sm text-gray-600">
-        Security-relevant actions in the last year: sign-ins, posts, claims and admin decisions.
-        Click a name to see everything that person did.
-      </p>
-      <div className="mt-4 grid gap-3 rounded-2xl bg-white p-4 shadow-sm sm:grid-cols-3">
+      <div className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm sm:grid-cols-3">
         <Dropdown
           label="Show"
           value={action}
