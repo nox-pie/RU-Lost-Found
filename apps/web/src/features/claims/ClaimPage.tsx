@@ -13,6 +13,7 @@ import { ApiError } from '../../lib/api/client';
 import { claimsApi } from '../../lib/api/endpoints';
 import { CLAIM_STATUS, formatDateTime, timeAgo } from '../../lib/format';
 import { queryKeys } from '../../lib/queryClient';
+import { ClaimProgress } from './ClaimProgress';
 
 export default function ClaimPage() {
   const { id = '' } = useParams();
@@ -93,6 +94,8 @@ function ClaimView({ claim }: { claim: ClaimDto }) {
           </div>
         </div>
       </section>
+
+      <ClaimProgress claim={claim} />
 
       <div className="mt-6 grid gap-6 md:grid-cols-5">
         <div className="space-y-6 md:col-span-3">

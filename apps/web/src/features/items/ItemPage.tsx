@@ -1,6 +1,6 @@
 import type { ClaimDto, ItemDto } from '@ru-lost-found/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Flag, MapPin, ShieldCheck, Trash2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Expand, Flag, MapPin, ShieldCheck, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -14,6 +14,8 @@ import { isAdmin, useCurrentUser } from '../auth/authContext';
 import { ClaimDialog } from '../claims/ClaimDialog';
 import { FlagItemDialog } from '../moderation/FlagItemDialog';
 import { RemovePostDialog } from '../moderation/RemovePostDialog';
+import { PhotoLightbox } from './PhotoLightbox';
+import { ShareButton } from './ShareButton';
 
 export default function ItemPage() {
   const { id = '' } = useParams();
@@ -26,6 +28,7 @@ export default function ItemPage() {
 
 function ItemView({ item }: { item: ItemDto }) {
   const [photo, setPhoto] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
   const status = ITEM_STATUS[item.status];
 
   return (
@@ -38,9 +41,26 @@ function ItemView({ item }: { item: ItemDto }) {
       </Link>
       <div className="grid gap-8 lg:grid-cols-2">
         <div>
-          <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-gray-100 shadow-card">
+          <button
+            type="button"
+            onClick={() => setZoomed(true)}
+            aria-label={`Open photo ${photo + 1} full size`}
+            className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
             <img src={item.photos[photo]} alt={item.title} className="h-full w-full object-cover" />
-          </div>
+            <span className="absolute bottom-3 right-3 rounded-full bg-black/55 p-2 text-white opacity-80 transition group-hover:opacity-100">
+              <Expand className="h-4 w-4" aria-hidden />
+            </span>
+          </button>
+          {zoomed && (
+            <PhotoLightbox
+              photos={item.photos}
+              index={photo}
+              title={item.title}
+              onIndexChange={setPhoto}
+              onClose={() => setZoomed(false)}
+            />
+          )}
           {item.photos.length > 1 && (
             <div className="mt-3 flex gap-3">
               {item.photos.map((url, index) => (
@@ -70,7 +90,10 @@ function ItemView({ item }: { item: ItemDto }) {
             {item.isSample && <Badge tone="muted">Sample post</Badge>}
             <span className="text-xs text-gray-500">{CATEGORY_LABELS[item.category]}</span>
           </div>
-          <h1 className="mt-3 font-display text-3xl font-bold text-gray-900">{item.title}</h1>
+          <div className="mt-3 flex items-start justify-between gap-3">
+            <h1 className="font-display text-3xl font-bold text-gray-900">{item.title}</h1>
+            <ShareButton item={item} />
+          </div>
           {item.isSample && (
             <p className="mt-2 rounded-xl bg-gray-100 px-3 py-2 text-xs text-gray-600">
               This is a sample post, part of the demo data that shows how the portal works. You can
