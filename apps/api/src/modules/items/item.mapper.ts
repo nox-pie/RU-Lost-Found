@@ -27,6 +27,7 @@ export function toItemDto({ item, reporter }: ItemView, viewerId: string): ItemD
     })),
     reporter: toPersonSummary(item.reporterId, reporter),
     isMine: item.isReportedBy(viewerId),
+    isSample: reporter?.isDemo ?? false,
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
     resolvedAt: item.resolvedAt?.toISOString() ?? null,

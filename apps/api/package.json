@@ -18,6 +18,7 @@
     "seed": "tsx src/scripts/seed.ts",
     "set-role": "tsx src/scripts/set-role.ts",
     "migrate-legacy": "tsx src/scripts/migrate-legacy.ts",
+    "demo": "tsx src/scripts/demo.ts",
     "start:worker": "node dist/worker.js",
     "dev:worker": "tsx watch src/worker.ts"
   },

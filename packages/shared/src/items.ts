@@ -132,6 +132,8 @@ export interface ItemDto {
   reporter: PersonSummaryDto;
   /** True when the signed-in user reported this item. */
   isMine: boolean;
+  /** A sample post of the demo data: shown with a "Sample post" badge. */
+  isSample: boolean;
   createdAt: string;
   updatedAt: string;
   resolvedAt: string | null;

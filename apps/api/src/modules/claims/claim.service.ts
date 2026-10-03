@@ -50,6 +50,14 @@ export class ClaimService {
     const item = await items.findById(scope, itemId);
     if (!item || item.status === 'REMOVED') throw new NotFoundError('Item');
 
+    // Demo accounts (sample data for visitors) only ever touch sample posts, so the nightly
+    // demo reset can't affect anyone's real posts.
+    const people = await this.deps.users.findByIds([actor.userId, item.reporterId]);
+    const isDemo = (id: string) => people.find((u) => u.id === id)?.isDemo ?? false;
+    if (isDemo(actor.userId) && !isDemo(item.reporterId)) {
+      throw new ForbiddenError('Demo accounts can only claim sample posts.');
+    }
+
     if (await claims.wasRejectedByReporter(scope, item.id, actor.userId)) {
       throw new ForbiddenError('The reporter has already declined your claim on this item.');
     }

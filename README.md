@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml/badge.svg)](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
-![Tests](https://img.shields.io/badge/tests-354%20API%20%2B%207%20end--to--end-success)
+![Tests](https://img.shields.io/badge/tests-360%20API%20%2B%207%20end--to--end-success)
 ![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)
 
 The lost & found portal of **Rishihood University**: students report what they lost or found, prove an item is theirs, and get it back through a verified handover, without sharing phone numbers with strangers.
@@ -112,6 +112,7 @@ npm run set-role -w @ru-lost-found/api -- you@rishihood.edu.in UNIVERSITY_ADMIN 
 
 - [Backend design](docs/architecture/backend.md): architecture, domain model, claim state machine, outbox, security, API, patterns, testing
 - [Frontend design](docs/architecture/frontend.md): structure, sessions, data layer, screens, accessibility
+- [Demo data](docs/demo-data.md): the sample posts visitors see, their safeguards and how to remove them
 - [External services](docs/services.md): every service used (MongoDB Atlas, Upstash, Render, Vercel, Cloudinary, Brevo, Sentry, UptimeRobot), its limits, settings and how to rotate keys
 - [Deployment runbook](docs/deployment.md): production setup, switch-over and rollback, free-tier limits
 - [Load test](docs/load-test.md): method, results, and the bottleneck it found

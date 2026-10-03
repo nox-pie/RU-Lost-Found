@@ -31,6 +31,12 @@ export interface UserProps {
   version: number;
 }
 
+/**
+ * Demo accounts (sample data for visitors) use addresses on this domain. It is reserved
+ * (RFC 2606), so no email can ever reach it, and it marks the account as a demo account.
+ */
+export const DEMO_EMAIL_DOMAIN = 'demo.invalid';
+
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -96,6 +102,10 @@ export class User extends AggregateRoot {
   }
   get isActive() {
     return this.props.status === 'ACTIVE';
+  }
+  /** A demo account of the sample data (see modules/demo). */
+  get isDemo() {
+    return this.props.email.endsWith(`@${DEMO_EMAIL_DOMAIN}`);
   }
   get createdAt() {
     return this.props.createdAt;

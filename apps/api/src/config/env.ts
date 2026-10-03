@@ -77,6 +77,16 @@ const envSchema = z
       .pipe(z.array(z.string().trim().toLowerCase().email('must be email addresses')))
       .default(''),
 
+    /**
+     * Sample data for visitors (modules/demo): when on, the API creates it at start-up if it is
+     * missing and resets it every 24 hours. Turn off (and run `npm run demo -- remove`) before
+     * real users arrive.
+     */
+    DEMO_MODE: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
+
     /** Master secret. Separate keys for tokens and codes are derived from it. */
     APP_SECRET: z.string().min(32, 'must be at least 32 characters'),
     /** bcrypt work factor. Each +1 doubles the time to hash (and to brute-force). */

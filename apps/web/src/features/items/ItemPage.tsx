@@ -67,9 +67,16 @@ function ItemView({ item }: { item: ItemDto }) {
               {item.type === 'LOST' ? 'Lost' : 'Found'}
             </span>
             <Badge tone={status.tone}>{status.label}</Badge>
+            {item.isSample && <Badge tone="muted">Sample post</Badge>}
             <span className="text-xs text-gray-500">{CATEGORY_LABELS[item.category]}</span>
           </div>
           <h1 className="mt-3 font-display text-3xl font-bold text-gray-900">{item.title}</h1>
+          {item.isSample && (
+            <p className="mt-2 rounded-xl bg-gray-100 px-3 py-2 text-xs text-gray-600">
+              This is a sample post, part of the demo data that shows how the portal works. You can
+              claim it like a real one.
+            </p>
+          )}
           <p className="mt-4 whitespace-pre-line text-gray-700">{item.description}</p>
 
           <dl className="mt-6 space-y-2 text-sm text-gray-600">

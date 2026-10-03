@@ -23,6 +23,7 @@ import { ObjectIdGenerator } from './infrastructure/database/objectIds';
 import { BrevoEmailSender } from './infrastructure/email/BrevoEmailSender';
 import { ConsoleEmailSender } from './infrastructure/email/ConsoleEmailSender';
 import { FileEmailSender } from './infrastructure/email/FileEmailSender';
+import { SkipUndeliverableEmailSender } from './infrastructure/email/SkipUndeliverableEmailSender';
 import { createErrorReporter } from './infrastructure/observability/createErrorReporter';
 import { MongoOutbox } from './infrastructure/outbox/MongoOutbox';
 import { OutboxProcessor } from './infrastructure/outbox/OutboxProcessor';
@@ -52,6 +53,9 @@ import { ClaimController } from './modules/claims/claim.controller';
 import { ClaimService } from './modules/claims/claim.service';
 import { CloseClaimsOnItemRemoved } from './modules/claims/handlers/CloseClaimsOnItemRemoved';
 import { MongoClaimRepository } from './modules/claims/infrastructure/MongoClaimRepository';
+import { DemoClock } from './modules/demo/DemoClock';
+import { DemoSeeder } from './modules/demo/DemoSeeder';
+import { MongoDemoDataStore } from './modules/demo/infrastructure/MongoDemoDataStore';
 import { HealthController } from './modules/health/health.controller';
 import { HealthService } from './modules/health/health.service';
 import { MongoItemRepository } from './modules/items/infrastructure/MongoItemRepository';
@@ -104,6 +108,7 @@ export interface Container {
   services: {
     adminAccounts: AdminAccounts;
     claims: ClaimService;
+    demo: DemoSeeder;
     items: ItemService;
     audit: MongoAuditTrail;
   };
@@ -190,7 +195,9 @@ export async function buildContainer(
     errorReporter: overrides.errorReporter ?? createErrorReporter(env),
     ...overrides,
   };
-  const { clock, ids, keyValueStore, emailSender, passwordHasher, errorReporter } = providers;
+  const { clock, ids, keyValueStore, passwordHasher, errorReporter } = providers;
+  // Mail to reserved test domains (demo accounts) is never handed to the provider.
+  const emailSender = new SkipUndeliverableEmailSender(providers.emailSender, logger);
   // Every image is cleaned (metadata removed, resized, re-encoded) before any provider stores it.
   const storage = new SanitizingStorageProvider(providers.storage, new SharpImageProcessor());
 
@@ -283,6 +290,33 @@ export async function buildContainer(
     audit,
   });
 
+  // Sample data: claims are played through a ClaimService on its own clock, so the demo
+  // history is dated over past weeks.
+  const demoClock = new DemoClock();
+  const demo = new DemoSeeder({
+    universities: repositories.universities,
+    users: repositories.users,
+    items: repositories.items,
+    claims: new ClaimService({
+      claims: repositories.claims,
+      items: repositories.items,
+      users: repositories.users,
+      unitOfWork,
+      ids,
+      clock: demoClock,
+      generateHandoverCode: () => generateNumericCode(6),
+      logger,
+      audit,
+    }),
+    clock: demoClock,
+    store: new MongoDemoDataStore(connection),
+    storage,
+    passwords: passwordHasher,
+    ids,
+    logger,
+    universitySlug: 'rishihood',
+  });
+
   // Moderation and administration
   const moderationService = new ModerationService({
     reports: repositories.reports,
@@ -329,6 +363,15 @@ export async function buildContainer(
         intervalSeconds: 60 * 60,
         run: () => itemService.purgeRemovedPhotos(30),
       },
+      ...(env.DEMO_MODE
+        ? [
+            {
+              name: 'reset-demo-data',
+              intervalSeconds: 24 * 60 * 60,
+              run: () => demo.reset(clock.now()),
+            },
+          ]
+        : []),
       {
         name: 'prune-outbox',
         intervalSeconds: 24 * 60 * 60,
@@ -374,6 +417,7 @@ export async function buildContainer(
     },
     services: {
       adminAccounts,
+      demo,
       claims: claimService,
       items: itemService,
       audit,

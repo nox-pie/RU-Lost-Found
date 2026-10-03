@@ -26,6 +26,9 @@ services:
         value: https://ru-lost-found.vercel.app
       - key: WORKER_ENABLED
         value: 'true'
+      # Sample data for visitors (docs/demo-data.md). Set to 'false' before real users arrive.
+      - key: DEMO_MODE
+        value: 'true'
       - key: BCRYPT_ROUNDS
         value: '12'
       - key: APP_SECRET

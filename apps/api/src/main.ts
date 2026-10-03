@@ -76,6 +76,11 @@ async function start(env: Env, logger: Logger, errorReporter: ErrorReporter): Pr
   const database = await MongoDatabase.connect(env.MONGODB_URI, logger);
   const redis = env.REDIS_URL ? await RedisKeyValueStore.connect(env.REDIS_URL, logger) : undefined;
   const container = await buildContainer(env, logger, { database, redis }, { errorReporter });
+  if (env.DEMO_MODE) {
+    await container.services.demo.seed().catch((err: unknown) => {
+      logger.error({ err }, 'Could not create the demo data');
+    });
+  }
   // Not fatal: the API is useful without it, and the admin can be appointed by hand.
   await container.services.adminAccounts.ensure().catch((err: unknown) => {
     logger.error({ err }, 'Could not appoint the admins from ADMIN_EMAILS');

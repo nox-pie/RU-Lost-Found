@@ -30,6 +30,14 @@ function ItemCard({ item }: { item: ItemDto }) {
             <Badge tone={status.tone}>{status.label}</Badge>
           </span>
         )}
+        {item.isSample && (
+          <span
+            className="absolute bottom-3 left-3 rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm"
+            title="Sample data showing how the portal works"
+          >
+            Sample post
+          </span>
+        )}
       </div>
       <div className="flex flex-grow flex-col p-4">
         <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
