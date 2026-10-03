@@ -56,6 +56,23 @@ export function uniqueEmail(name: string, domain = 'rishihood.edu.in'): string {
   return `${name}.${test.info().project.name}.${Date.now().toString(36)}@${domain}`;
 }
 
+/**
+ * What the page shows right now, for failure messages: CI keeps only the error text, so a
+ * "waited for X" error should also say where the browser actually was.
+ */
+export async function describePage(page: Page): Promise<string> {
+  const read = (locator: ReturnType<Page['locator']>) =>
+    locator.allInnerTexts().then(
+      (texts) => texts.map((text) => text.trim()).join(' | ') || '-',
+      () => '?',
+    );
+  return [
+    `URL ${page.url()}`,
+    `headings: ${await read(page.locator('h1, h2'))}`,
+    `alerts: ${await read(page.locator('[role="alert"], [role="status"]'))}`,
+  ].join('; ');
+}
+
 /** Creates an account through the real three-step sign-up form. */
 export async function signUp(page: Page, person: { email: string; first: string; last: string }) {
   await page.goto('/signup');

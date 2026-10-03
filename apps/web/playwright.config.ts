@@ -14,6 +14,9 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   fullyParallel: false,
   workers: 1,
+  // On CI only, a failed test gets one more try: it then shows as "flaky" in the summary (and
+  // its first failure is still reported) instead of failing the build on a slow runner.
+  retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: webUrl,

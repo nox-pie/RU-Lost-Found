@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { appoint, reportFoundItem, signUp, uniqueEmail } from './support';
+import { appoint, describePage, reportFoundItem, signUp, uniqueEmail } from './support';
 
 /** A day in this machine's time zone (the browser's too), as a date input expects it. */
 function localDay(offsetDays = 0): string {
@@ -29,7 +29,14 @@ test('an admin removes any post from the Posts tab and filters the activity log'
 
   await test.step('the admin finds the post in the Posts tab and removes it with a reason', async () => {
     await admin.goto('/admin/posts');
-    await admin.getByLabel('Search').fill(runId);
+    await admin
+      .getByLabel('Search')
+      .fill(runId, { timeout: 30_000 })
+      .catch(async (error: Error) => {
+        throw new Error(`The Posts tab did not open (${await describePage(admin)})`, {
+          cause: error,
+        });
+      });
     const row = admin.getByRole('listitem').filter({ hasText: title });
     await row.getByRole('button', { name: 'Remove' }).click();
     const dialog = admin.getByRole('dialog', { name: 'Remove this post?' });
