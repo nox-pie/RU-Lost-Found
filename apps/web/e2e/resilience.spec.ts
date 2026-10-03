@@ -63,3 +63,19 @@ test('a form sent to a sleeping server explains the wait and is not sent twice',
   await expect(page.getByLabel('6-digit code')).toBeVisible();
   expect(codeRequests).toBe(2);
 });
+
+test('leaving a page while the session is being restored keeps you signed in', async ({ page }) => {
+  await signUp(page, { email: uniqueEmail('hasty'), first: 'Hasty', last: 'Clicker' });
+  // The session restore of the reloaded page is still on its way when the next page opens.
+  await page.route('**/api/v1/auth/refresh', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+    await route.continue().catch(() => undefined); // the page may be gone by then
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(300);
+  await page.unroute('**/api/v1/auth/refresh');
+
+  await page.goto('/profile');
+
+  await expect(page.getByRole('heading', { name: 'Your profile' })).toBeVisible();
+});

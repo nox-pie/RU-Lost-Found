@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml/badge.svg)](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
-![Tests](https://img.shields.io/badge/tests-378%20API%20%2B%2014%20end--to--end-success)
+![Tests](https://img.shields.io/badge/tests-378%20API%20%2B%2015%20end--to--end-success)
 ![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)
 
 The lost & found portal of **Rishihood University**: students report what they lost or found, prove an item is theirs, and get it back through a verified handover, without sharing phone numbers with strangers.

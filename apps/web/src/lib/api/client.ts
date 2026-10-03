@@ -94,6 +94,10 @@ export function onSessionExpired(listener: () => void): () => void {
 /**
  * Exchanges the refresh cookie for a new access token. Concurrent callers share one request:
  * the API rotates the refresh token on every use, so two parallel refreshes would race.
+ *
+ * Resolves to null only when the API refuses the session (401: signed out, expired, revoked).
+ * When the answer never arrives (no connection, the page being left mid-request, a server
+ * error) it throws instead: that says nothing about the session, which must be kept.
  */
 export function refreshSession(): Promise<AuthResponse | null> {
   refreshInFlight ??= (async () => {
@@ -103,15 +107,17 @@ export function refreshSession(): Promise<AuthResponse | null> {
       // A sleeping server must not look like a signed-out user. Retrying is safe: if the first
       // attempt was processed after all, the old token is still accepted for 30 seconds.
       if (isHostingError(res) && (await waitUntilAwake())) res = await refresh();
-      if (!res.ok) {
+      if (res.status === 401) {
         accessToken = null;
         return null;
       }
+      if (!res.ok) throw await toApiError(res);
       const body = (await res.json()) as AuthResponse;
       accessToken = body.accessToken;
       return body;
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(0, 'NETWORK_ERROR', 'Could not reach the server. Check your connection.');
     } finally {
       refreshInFlight = null;
     }

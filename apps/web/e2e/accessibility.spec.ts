@@ -7,6 +7,10 @@ import { expect, test, type Page } from '@playwright/test';
  * problems; keyboard use and screen-reader labels are also covered by the journeys, which find
  * everything by its accessible name.
  */
+// Colours are checked as they end up, not halfway through a transition (e.g. a nav link
+// fading from its active to its normal colour); the app turns transitions off for this setting.
+test.use({ reducedMotion: 'reduce' });
+
 async function expectNoViolations(page: Page, name: string) {
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

@@ -24,16 +24,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hasSessionHint()) return;
     let cancelled = false;
-    void refreshSession().then((session) => {
-      if (cancelled) return;
-      if (session) {
-        setUserState(session.user);
-        setStatus('authenticated');
-      } else {
-        setSessionHint(false);
-        setStatus('anonymous');
-      }
-    });
+    refreshSession().then(
+      (session) => {
+        if (cancelled) return;
+        if (session) {
+          setUserState(session.user);
+          setStatus('authenticated');
+        } else {
+          // The API refused the session: this device is signed out.
+          setSessionHint(false);
+          setStatus('anonymous');
+        }
+      },
+      () => {
+        // No answer (offline, page being left, server trouble): show the public pages for now,
+        // but keep the hint so the next visit tries again. The session may well be fine.
+        if (!cancelled) setStatus('anonymous');
+      },
+    );
     return () => {
       cancelled = true;
     };
