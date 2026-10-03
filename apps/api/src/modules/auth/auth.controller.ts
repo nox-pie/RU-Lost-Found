@@ -1,6 +1,8 @@
 import type { CookieOptions, Request, RequestHandler, Response } from 'express';
 import type {
   AuthResponse,
+  DemoSignInInput,
+  DemoStatusResponse,
   LoginInput,
   MessageResponse,
   RegisterInput,
@@ -90,6 +92,16 @@ export class AuthController {
     res.clearCookie(REFRESH_COOKIE, this.cookieOptions);
     const body: MessageResponse = { message: 'Your password has been changed. Please sign in.' };
     res.json(body);
+  };
+
+  demoStatus: RequestHandler = (_req, res) => {
+    const body: DemoStatusResponse = { enabled: this.auth.demoSignInEnabled };
+    res.json(body);
+  };
+
+  demoSignIn: RequestHandler = async (req, res) => {
+    const result = await this.auth.signInAsDemo(req.body as DemoSignInInput, clientOf(req));
+    this.sendSession(res, result);
   };
 
   private sendSession(res: Response, result: AuthResult): void {

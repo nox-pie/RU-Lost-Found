@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { Input } from '../../components/ui/Field';
 import { brand } from '../../brand/brand.config';
 
@@ -20,11 +21,13 @@ export function AuthLayout({
         aria-hidden
       />
       <div className="absolute inset-0 bg-black/20" aria-hidden />
-      <img
-        src={brand.images.logo}
-        alt={brand.organisation.name}
-        className="relative mb-6 w-48 rounded-xl bg-white p-3 shadow-md"
-      />
+      <Link to="/" className="relative mb-6" aria-label={`${brand.productName} home`}>
+        <img
+          src={brand.images.logo}
+          alt={brand.organisation.name}
+          className="w-48 rounded-xl bg-white p-3 shadow-md"
+        />
+      </Link>
       <main className="relative w-full max-w-md rounded-2xl border border-white/60 bg-surface/95 p-7 shadow-xl backdrop-blur-md sm:p-8">
         <h1 className="text-center font-display text-2xl font-bold text-gray-900 sm:text-3xl">
           {title}

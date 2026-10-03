@@ -4,6 +4,8 @@ import type {
   AuditEntryDto,
   AuthResponse,
   ClaimDto,
+  DemoPersonaKey,
+  DemoStatusResponse,
   FlagItemInput,
   ItemDto,
   MeDto,
@@ -35,6 +37,9 @@ export const authApi = {
   login: (email: string, password: string) =>
     api<AuthResponse>('/auth/login', { method: 'POST', json: { email, password } }),
   logout: () => api<void>('/auth/logout', { method: 'POST' }),
+  demoStatus: () => api<DemoStatusResponse>('/auth/demo'),
+  demoSignIn: (persona: DemoPersonaKey) =>
+    api<AuthResponse>('/auth/demo', { method: 'POST', json: { persona } }),
   resetPassword: (verificationToken: string, newPassword: string) =>
     api<MessageResponse>('/auth/password/reset', {
       method: 'POST',

@@ -256,6 +256,7 @@ export async function buildContainer(
     audit,
     loginThrottle: new LoginThrottle(keyValueStore),
     logger,
+    demoSignIn: env.DEMO_MODE,
   });
 
   // Users

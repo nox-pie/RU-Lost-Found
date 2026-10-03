@@ -114,7 +114,17 @@ export class User extends AggregateRoot {
     return this.props.updatedAt;
   }
 
+  /** Demo accounts are shared by every visitor, so nobody may change who they are. */
+  assertEditable(): void {
+    if (this.isDemo) {
+      throw new ForbiddenError(
+        'Demo accounts can’t be changed. Create your own account to set up a profile.',
+      );
+    }
+  }
+
   updateProfile(changes: Partial<EditableProfile>, now: Date): void {
+    this.assertEditable();
     const defined = Object.fromEntries(
       Object.entries(changes).filter(([, value]) => value !== undefined),
     ) as Partial<EditableProfile>;
@@ -124,6 +134,7 @@ export class User extends AggregateRoot {
 
   /** Returns the previous avatar so the caller can delete the old file. */
   changeAvatar(avatar: ImageRef, now: Date): ImageRef | null {
+    this.assertEditable();
     const previous = this.props.profile.avatar;
     this.props.profile = { ...this.props.profile, avatar };
     this.touch(now);
@@ -132,6 +143,7 @@ export class User extends AggregateRoot {
 
   /** Returns the removed avatar so the caller can delete the file. */
   removeAvatar(now: Date): ImageRef | null {
+    this.assertEditable();
     const previous = this.props.profile.avatar;
     if (previous) {
       this.props.profile = { ...this.props.profile, avatar: null };
@@ -141,6 +153,7 @@ export class User extends AggregateRoot {
   }
 
   changePassword(passwordHash: string, now: Date): void {
+    this.assertEditable();
     this.props.passwordHash = passwordHash;
     this.touch(now);
     this.record({ type: 'PasswordChanged', aggregateId: this.id, occurredAt: now, payload: {} });

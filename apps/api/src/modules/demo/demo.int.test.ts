@@ -56,6 +56,13 @@ describe('sample data', { timeout: 30_000 }, () => {
     expect(await feed('RESERVED')).toHaveLength(2);
   });
 
+  it('cannot be signed into unless the API runs in demo mode', async () => {
+    await demo().seed(T0);
+
+    expect((await api().get('/api/v1/auth/demo').expect(200)).body).toEqual({ enabled: false });
+    await api().post('/api/v1/auth/demo').send({ persona: 'asha.verma' }).expect(404);
+  });
+
   it('is created only once', async () => {
     await demo().seed(T0);
 

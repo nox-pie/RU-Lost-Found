@@ -10,6 +10,7 @@ import {
   changeRoleSchema,
   claimIdParamsSchema,
   createItemSchema,
+  demoSignInSchema,
   flagItemSchema,
   handoverSchema,
   itemIdParamsSchema,
@@ -173,6 +174,26 @@ export const OPERATIONS: Operation[] = [
     body: resetPasswordSchema,
     limited: true,
     ok: { 200: 'MessageResponse' },
+  },
+  {
+    method: 'get',
+    path: '/auth/demo',
+    tag: 'Auth',
+    summary: 'Whether one-click demo sign-in is offered',
+    access: 'public',
+    ok: { 200: 'DemoStatusResponse' },
+  },
+  {
+    method: 'post',
+    path: '/auth/demo',
+    tag: 'Auth',
+    summary: 'Sign in as a sample person (demo deployments only)',
+    description:
+      'Only the people in `DEMO_PERSONAS`, and only when the API runs with `DEMO_MODE=true` (404 otherwise). Sets the httpOnly refresh-token cookie.',
+    access: 'public',
+    body: demoSignInSchema,
+    limited: true,
+    ok: { 200: 'AuthResponse' },
   },
 
   // Users

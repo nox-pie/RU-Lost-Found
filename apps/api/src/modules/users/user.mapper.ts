@@ -17,5 +17,6 @@ export function toMeDto(user: User): MeDto {
     phone: profile.phone,
     avatarUrl: profile.avatar?.url ?? null,
     createdAt: user.createdAt.toISOString(),
+    isDemo: user.isDemo,
   };
 }

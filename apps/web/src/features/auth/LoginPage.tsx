@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Field';
 import { authApi } from '../../lib/api/endpoints';
 import { showFormError } from '../../lib/forms';
+import { DemoSignInLinks } from '../demo/DemoSignIn';
 import { AuthLayout } from './AuthLayout';
 import { useAuth } from './authContext';
 import { brand } from '../../brand/brand.config';
@@ -64,6 +65,7 @@ export default function LoginPage() {
           Create an account
         </Link>
       </p>
+      <DemoSignInLinks />
     </AuthLayout>
   );
 }

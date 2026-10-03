@@ -48,6 +48,7 @@ export class UserService {
       ]);
     }
     const user = await this.getById(userId);
+    user.assertEditable(); // before uploading, so a refused change leaves no file behind
     const uploaded = await this.storage.upload(image, 'avatars');
 
     let previous: ImageRef | null;

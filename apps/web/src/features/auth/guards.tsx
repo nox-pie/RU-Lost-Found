@@ -33,12 +33,16 @@ function SessionLoader() {
   );
 }
 
-/** Only for signed-in users; others are sent to sign in and brought back afterwards. */
-export function RequireAuth({ children }: { children: ReactNode }) {
+/**
+ * Only for signed-in users; others are sent to sign in and brought back afterwards. Signed-out
+ * visitors to the home page see `home` instead (the public landing page).
+ */
+export function RequireAuth({ children, home }: { children: ReactNode; home?: ReactNode }) {
   const { status } = useAuth();
   const location = useLocation();
   if (status === 'loading') return <SessionLoader />;
   if (status === 'anonymous') {
+    if (home && location.pathname === '/') return <>{home}</>;
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
   return <>{children}</>;

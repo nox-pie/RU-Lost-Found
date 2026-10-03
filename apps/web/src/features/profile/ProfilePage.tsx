@@ -13,6 +13,7 @@ import { usersApi } from '../../lib/api/endpoints';
 import { emptyToUndefined, showFormError } from '../../lib/forms';
 import { queryKeys } from '../../lib/queryClient';
 import { useAuth, useCurrentUser } from '../auth/authContext';
+import { DemoLimitNotice } from '../demo/DemoBanner';
 
 type ProfileInput = z.input<typeof profileFieldsSchema>;
 type Profile = z.output<typeof profileFieldsSchema>;
@@ -30,8 +31,16 @@ export default function ProfilePage() {
         Only your name and picture are shown to other students. Contact details are shared only when
         you approve or are approved for a claim.
       </p>
-      <AvatarSection user={user} onChange={setUser} />
-      <DetailsForm user={user} onSaved={setUser} />
+      {user.isDemo ? (
+        <div className="mt-8">
+          <DemoLimitNotice action="change their profile" />
+        </div>
+      ) : (
+        <>
+          <AvatarSection user={user} onChange={setUser} />
+          <DetailsForm user={user} onSaved={setUser} />
+        </>
+      )}
       <div className="mt-8 flex justify-end">
         <Button variant="outline" onClick={() => void signOut()}>
           <LogOut className="h-4 w-4" /> Sign out

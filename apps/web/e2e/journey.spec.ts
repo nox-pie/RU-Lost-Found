@@ -107,7 +107,14 @@ test('signing in again restores the session, and signing out ends it @mobile', a
     await page.getByRole('button', { name: 'Account menu' }).click();
     await page.getByRole('button', { name: 'Sign out' }).click();
   }
-  await expect(page).toHaveURL(/\/login$/);
+  // Signed out, the home page shows the public landing page.
+  await expect(
+    page.getByRole('heading', { name: 'Lost something on campus? Found something?' }),
+  ).toBeVisible();
+  await page
+    .getByRole('navigation', { name: 'Account' })
+    .getByRole('link', { name: 'Sign in' })
+    .click();
 
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(PASSWORD);

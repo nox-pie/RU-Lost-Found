@@ -34,9 +34,15 @@ export class ModerationService {
   constructor(private readonly deps: ModerationServiceDeps) {}
 
   async flag(actor: Actor, scope: TenantScope, itemId: string, input: FlagItemInput) {
-    const { items, reports, ids, clock } = this.deps;
+    const { items, reports, users, ids, clock } = this.deps;
     const item = await items.findById(scope, itemId);
     if (!item || item.status === 'REMOVED') throw new NotFoundError('Item');
+    // Demo accounts are open to anyone: they must not fill the admins' queue with real posts.
+    const people = await users.findByIds([actor.userId, item.reporterId]);
+    const isDemo = (id: string) => people.find((u) => u.id === id)?.isDemo ?? false;
+    if (isDemo(actor.userId) && !isDemo(item.reporterId)) {
+      throw new ForbiddenError('Demo accounts can only flag sample posts.');
+    }
 
     const report = ModerationReport.file({
       id: ids.next(),

@@ -18,6 +18,7 @@ export const queryClient = new QueryClient({
 export const queryKeys = {
   me: ['me'] as const,
   university: ['university'] as const,
+  demoStatus: ['demo-status'] as const,
   items: {
     all: ['items'] as const,
     list: (filters: object) => ['items', 'list', filters] as const,

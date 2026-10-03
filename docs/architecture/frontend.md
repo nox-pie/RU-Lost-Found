@@ -1,6 +1,6 @@
 # Frontend Architecture
 
-Status: Built and live · Last updated: 1 October 2026
+Status: Built and live · Last updated: 3 October 2026
 
 The web app is a React 18 single-page application (TypeScript, Vite, Tailwind CSS) organised **by feature**. It talks to the API only through one typed client, keeps server data in TanStack Query's cache, and validates forms with the **same Zod schemas the API uses** (from `packages/shared`), so the client and server can't disagree about what's valid.
 
@@ -20,14 +20,17 @@ apps/web/src/
 │   ├── forms.ts             # maps API field errors onto form inputs
 │   ├── format.ts            # labels, status colours, dates (en-IN)
 │   ├── hooks.ts             # useDebouncedValue (search as you type)
+│   ├── sessionHint.ts       # "signed in on this device" flag, so visitors aren't kept waiting
 │   └── monitoring.ts        # Sentry, loaded lazily and only when configured
 ├── components/
 │   ├── ui/                  # Button, Field (Input/Select/Textarea/Checkbox), Modal, ConfirmDialog, Spinner,
 │   │                        #   misc (Badge, Avatar, EmptyState, ErrorState, PageLoader)
-│   ├── layout/              # Header (nav, notifications, account menu), AppLayout, footer
+│   ├── layout/              # Header (nav, notifications, account menu), AppLayout, Footer
 │   ├── ErrorBoundary.tsx    # a crash shows a way out instead of a blank page, and is reported
 │   └── ServerWakeNotice.tsx # "Waking up the server…" while the API starts
 └── features/
+    ├── landing/             # public landing page for signed-out visitors
+    ├── demo/                # one-click sign-in as a sample student, demo banner and limits
     ├── auth/                # session provider, route guards, sign-in, 3-step sign-up and reset
     ├── items/               # browse/search, report dialog, item page, my items
     ├── claims/              # claim dialog, claim page (decision + handover), claims list
@@ -46,7 +49,7 @@ apps/web/src/
 | Concern       | Design                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Access token  | Kept **in memory only** (a module variable in `client.ts`), never in `localStorage`, so an injected script can't steal it from storage.                                                                                                                                                                                                                                                                                    |
-| Page reload   | On start-up `AuthProvider` calls `POST /auth/refresh`; the httpOnly cookie restores the session.                                                                                                                                                                                                                                                                                                                           |
+| Page reload   | On start-up `AuthProvider` calls `POST /auth/refresh`; the httpOnly cookie restores the session. It does so only if this device has signed in before (a `localStorage` flag holding no secret): a first-time visitor sees the landing page at once instead of waiting for a possibly sleeping API to say "not signed in".                                                                                                  |
 | Expired token | Any 401 triggers **one** refresh and a retry. Concurrent requests share a single refresh call (the API rotates the refresh token on every use, so parallel refreshes would race).                                                                                                                                                                                                                                          |
 | Session ended | If the refresh fails, listeners are told; the app clears its cache and returns to sign-in, then back to the page the user wanted.                                                                                                                                                                                                                                                                                          |
 | Cold start    | The free API instance sleeps after 15 quiet minutes, and the hosting layer answers 502/503/504 (HTML, not our JSON) while it starts. The app pings the API as soon as it opens, waits for its health check (up to 90 s) with a "Waking up the server…" notice, retries reads and the session restore by itself, and asks the person to resend a form instead of resending it automatically (it might have been processed). |
@@ -69,6 +72,7 @@ The Vite dev server proxies `/api` to the API, exactly like the Vercel rewrite i
 | Route                                   | Screen                                                                                                                                                                                     |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `/login`, `/signup`, `/forgot-password` | Sign-in; sign-up and reset as three steps: email → emailed code → details / new password                                                                                                   |
+| `/` (signed out)                        | Landing page: what the portal does, the three steps, a preview of sample posts, one-click demo sign-in (when the API runs with `DEMO_MODE`), sign-up                                       |
 | `/`                                     | Browse: search (debounced), All / Lost / Found / Returned tabs, category filter; filters live in the URL so a view can be shared                                                           |
 | `/items/:id`                            | Photos, details; the reporter sees claims and can remove the report; others can claim                                                                                                      |
 | `/my-items`                             | Everything the user reported                                                                                                                                                               |
@@ -93,7 +97,8 @@ Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `a
 - `e2e/start-api.mjs` starts MongoDB, seeds the university and runs the API with its background worker; emails are written to files (a local mail catcher), so tests read sign-up codes like a person would.
 - **Journey 1:** two students sign up → the finder reports a found item with a photo and a verification question → the owner searches, finds and claims it → the finder is notified, checks the answer and approves → the owner sees the code → the finder enters it → the item shows as returned.
 - **Moderation journey:** a student reports a fake post → an admin (appointed with the real `set-role` script) removes it with a reason → the poster is notified and the post is gone → the admin suspends the poster, whose session ends → the activity log shows the decisions.
-- **Journey 2** (desktop and a Pixel 7 phone): a visitor signs up with a Gmail address, the session survives a reload, sign-out ends it, sign-in brings it back.
+- **Journey 2** (desktop and a Pixel 7 phone): a visitor signs up with a Gmail address, the session survives a reload, sign-out returns to the landing page, sign-in brings the session back.
+- **Demo:** from the landing page a visitor signs in as Ravi with one click and claims the sample wallet, signs out, signs in as Asha and approves the claim; on a phone, a demo account sees that its profile can't be changed and is offered sign-up.
 - **Admin tools:** an admin removes a post from the Posts tab with a reason, then narrows the activity log to a day and to one person.
 - **Resilience:** with the hosting layer faked to answer 502, pages load by themselves once the server wakes up, and a form sent to a sleeping server explains the wait and is not sent twice.
 

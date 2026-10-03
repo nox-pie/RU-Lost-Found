@@ -96,6 +96,8 @@ export interface MeDto {
   phone: string | null;
   avatarUrl: string | null;
   createdAt: string;
+  /** A shared sample account (one-click demo sign-in); its profile can't be changed. */
+  isDemo: boolean;
 }
 
 export interface AuthResponse {

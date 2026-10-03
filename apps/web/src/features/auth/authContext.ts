@@ -8,7 +8,8 @@ export interface AuthContextValue {
   user: MeDto | null;
   /** Stores the session returned by login or register. */
   signIn: (session: AuthResponse) => void;
-  signOut: () => Promise<void>;
+  /** Ends the session and loads `to` (default: the home page). */
+  signOut: (to?: string) => Promise<void>;
   /** Replaces the cached profile after the user edits it. */
   setUser: (user: MeDto) => void;
 }

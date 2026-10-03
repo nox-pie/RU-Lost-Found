@@ -170,7 +170,8 @@ function ModerationActions({ item }: { item: ItemDto }) {
   const navigate = useNavigate();
   const [flagging, setFlagging] = useState(false);
   const [removing, setRemoving] = useState(false);
-  const canFlag = !item.isMine;
+  // Demo accounts are open to anyone, so they may only report sample posts (the API agrees).
+  const canFlag = !item.isMine && (!user.isDemo || item.isSample);
   const canRemove = isAdmin(user) && (!item.isMine || item.status === 'RESOLVED');
   if (!canFlag && !canRemove) return null;
 
@@ -207,6 +208,7 @@ function ModerationActions({ item }: { item: ItemDto }) {
 
 /** For the reporter: the claims on this item, and removing the report. */
 function ReporterActions({ item }: { item: ItemDto }) {
+  const user = useCurrentUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
@@ -243,7 +245,8 @@ function ReporterActions({ item }: { item: ItemDto }) {
           </p>
         )}
       </section>
-      {item.status !== 'RESOLVED' && (
+      {/* Sample posts are shared by every visitor, so demo accounts can't remove them. */}
+      {item.status !== 'RESOLVED' && !user.isDemo && (
         <Button variant="danger" onClick={() => setConfirming(true)}>
           <Trash2 className="h-4 w-4" /> Remove report
         </Button>

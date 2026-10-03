@@ -1,5 +1,6 @@
 import { Router, type Request } from 'express';
 import {
+  demoSignInSchema,
   loginSchema,
   registerSchema,
   requestOtpSchema,
@@ -26,6 +27,7 @@ const AUTH_RATE_LIMITS = {
   loginPerIp: { name: 'login-ip', limit: 120, windowSeconds: 15 * MINUTE },
   refreshPerIp: { name: 'refresh-ip', limit: 300, windowSeconds: MINUTE },
   resetPerIp: { name: 'reset-ip', limit: 30, windowSeconds: HOUR },
+  demoPerIp: { name: 'demo-ip', limit: 30, windowSeconds: HOUR },
 } satisfies Record<string, RateLimitRule>;
 
 const emailOf = (req: Request) => (req.body as { email?: string }).email;
@@ -76,6 +78,14 @@ export function createAuthRouter(
     validate({ body: resetPasswordSchema }),
     rateLimit(limiter, limits.resetPerIp),
     controller.resetPassword,
+  );
+  router.get('/demo', controller.demoStatus);
+  router.post(
+    '/demo',
+    sameSiteOnly,
+    validate({ body: demoSignInSchema }),
+    rateLimit(limiter, limits.demoPerIp),
+    controller.demoSignIn,
   );
 
   return router;

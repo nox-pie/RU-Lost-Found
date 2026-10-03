@@ -28,6 +28,8 @@ const env = {
   DEV_EMAIL_DIR: EMAIL_DIR,
   CORS_ORIGINS: `http://localhost:${E2E_WEB_PORT}`,
   APP_URL: `http://localhost:${E2E_WEB_PORT}`,
+  // Sample posts and one-click demo sign-in, as on the live site.
+  DEMO_MODE: 'true',
 };
 
 execFileSync('npx', ['tsx', 'src/scripts/seed.ts'], { cwd: apiDir, env, stdio: 'inherit' });

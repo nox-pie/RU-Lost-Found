@@ -5,6 +5,7 @@ import { PageLoader } from './components/ui/misc';
 import { PublicOnly, RequireAdmin, RequireAuth } from './features/auth/guards';
 
 // Each page is loaded on first visit, keeping the initial download small.
+const LandingPage = lazy(() => import('./features/landing/LandingPage'));
 const LoginPage = lazy(() => import('./features/auth/LoginPage'));
 const SignupPage = lazy(() => import('./features/auth/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('./features/auth/ForgotPasswordPage'));
@@ -52,7 +53,7 @@ export default function App() {
 
         <Route
           element={
-            <RequireAuth>
+            <RequireAuth home={<LandingPage />}>
               <AppLayout />
             </RequireAuth>
           }

@@ -46,8 +46,9 @@ test('an admin removes any post from the Posts tab and filters the activity log'
     await admin.goto('/admin/activity');
     const log = admin.getByRole('list');
 
-    await admin.getByLabel('From').fill(localDay(-1));
-    await admin.getByLabel('To').fill(localDay(-1));
+    // A year back: before any activity, including the sample data's (about eight weeks).
+    await admin.getByLabel('From').fill(localDay(-365));
+    await admin.getByLabel('To').fill(localDay(-365));
     await expect(admin.getByText('Nothing matches these filters')).toBeVisible();
 
     await admin.getByLabel('To').fill(localDay());

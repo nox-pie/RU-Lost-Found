@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type {
+  DemoSignInInput,
   LoginInput,
   RegisterInput,
   RequestOtpInput,
@@ -14,6 +15,8 @@ import type { EmailMessage, EmailSender } from '../../core/email/EmailSender';
 import {
   ConflictError,
   ForbiddenError,
+  NotFoundError,
+  ServiceBusyError,
   UnauthorizedError,
   ValidationError,
 } from '../../core/errors/AppError';
@@ -21,7 +24,7 @@ import type { Logger } from '../../core/logger/logger';
 import type { PasswordHasher } from '../../core/security/PasswordHasher';
 import type { TokenService } from '../../core/security/TokenService';
 import type { UniversityRepository } from '../universities/domain/UniversityRepository';
-import { User, normalizeEmail } from '../users/domain/User';
+import { DEMO_EMAIL_DOMAIN, User, normalizeEmail } from '../users/domain/User';
 import type { AdminAccounts } from '../users/AdminAccounts';
 import type { UserRepository } from '../users/domain/UserRepository';
 import type { AuthEmails } from './auth.emails';
@@ -52,6 +55,8 @@ export interface AuthServiceDeps {
   loginThrottle: LoginThrottle;
   logger: Logger;
   adminAccounts: AdminAccounts;
+  /** Visitors may sign in as a sample person with one click (DEMO_MODE). */
+  demoSignIn: boolean;
 }
 
 const INVALID_CREDENTIALS = 'Incorrect email or password.';
@@ -211,6 +216,36 @@ export class AuthService {
       );
     }
 
+    return this.signIn(user, client);
+  }
+
+  get demoSignInEnabled(): boolean {
+    return this.deps.demoSignIn;
+  }
+
+  /**
+   * One click to try the portal as a sample person, without an account. Only the demo accounts
+   * listed in DEMO_PERSONAS can be reached this way, and only while DEMO_MODE is on.
+   */
+  async signInAsDemo({ persona }: DemoSignInInput, client: ClientInfo): Promise<AuthResult> {
+    if (!this.deps.demoSignIn) throw new NotFoundError('Demo sign-in');
+    const user = await this.deps.users.findByEmail(`${persona}@${DEMO_EMAIL_DOMAIN}`);
+    // Briefly missing while the daily reset recreates the sample data.
+    if (!user) {
+      throw new ServiceBusyError(30, 'The demo is being reset. Please try again in a minute.');
+    }
+    if (!user.isActive) throw new ForbiddenError('This demo account is not available right now.');
+
+    await this.deps.audit.recordSafely({
+      action: 'LOGIN_SUCCEEDED',
+      actorId: user.id,
+      universityId: user.universityId,
+      targetType: 'USER',
+      targetId: user.id,
+      occurredAt: this.deps.clock.now(),
+      metadata: { demo: true },
+      ip: client.ip,
+    });
     return this.signIn(user, client);
   }
 

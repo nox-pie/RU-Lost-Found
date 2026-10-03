@@ -4,15 +4,29 @@ Before the portal has real users, it shows **sample data** so visitors (recruite
 
 Everything is created through the real domain and services: returned posts went through a real claim, approval and handover, so their history, notifications, activity-log entries and the admin statistics are exactly what real use produces. Sample posts can be claimed like real ones.
 
+## Trying it without an account
+
+Signed-out visitors see a **landing page** at `/`: what the portal does, the three steps (post, claim, hand over) and a preview of sample posts. Its **"Try it now"** section signs them in with one click as one of two sample students:
+
+| Person         | Role       | Suggested path                                                    |
+| -------------- | ---------- | ----------------------------------------------------------------- |
+| **Ravi Singh** | The owner  | Find the black bifold wallet in the feed and claim it             |
+| **Asha Verma** | The finder | Open her wallet post, compare the answer and approve Ravi's claim |
+
+Signing in as Ravi, claiming, signing out and approving as Asha shows the whole flow in about a minute. The sign-in page offers the same two buttons under the form.
+
+`POST /api/v1/auth/demo` with `{ "persona": "asha.verma" }` does the sign-in (a normal session with a refresh cookie). It accepts only the people listed in `DEMO_PERSONAS` (`packages/shared/src/demo.ts`), answers 404 unless `DEMO_MODE=true`, is rate limited per IP and refuses requests from other sites. `GET /api/v1/auth/demo` tells the web app whether to show the buttons.
+
 ## Safeguards
 
-| Concern                                   | How it is handled                                                                                                                                                                                                                                                     |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Visitors mistaking samples for real items | Every sample post shows a **"Sample post"** badge, and its page explains it                                                                                                                                                                                           |
-| Emails to people who don't exist          | Demo accounts use addresses on `demo.invalid`, a domain reserved for testing that can never receive mail. `SkipUndeliverableEmailSender` (a decorator around the email provider) drops mail to reserved domains, so Brevo's quota and sender reputation are untouched |
-| Demo activity tangling with real data     | Demo accounts can only claim sample posts. Removal deletes demo posts and everything tied to them, including real visitors' claims on sample posts and the notifications about them; real posts and accounts are never touched                                        |
-| Visitors changing the samples             | With `DEMO_MODE=true`, the API resets the sample data every 24 hours                                                                                                                                                                                                  |
-| Cloudinary usage                          | Sample photos are static files served by the web app from `/demo/`; they use no Cloudinary credits and no clean-up job deletes them                                                                                                                                   |
+| Concern                                   | How it is handled                                                                                                                                                                                                                                                                                                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Visitors mistaking samples for real items | Every sample post shows a **"Sample post"** badge, and its page explains it                                                                                                                                                                                                                                                                             |
+| Emails to people who don't exist          | Demo accounts use addresses on `demo.invalid`, a domain reserved for testing that can never receive mail. `SkipUndeliverableEmailSender` (a decorator around the email provider) drops mail to reserved domains, so Brevo's quota and sender reputation are untouched                                                                                   |
+| Demo activity tangling with real data     | Demo accounts can only claim sample posts. Removal deletes demo posts and everything tied to them, including real visitors' claims on sample posts and the notifications about them; real posts and accounts are never touched                                                                                                                          |
+| Anyone can use a demo account             | Demo accounts can't post new items (so no uploads), edit or remove the sample posts, change their profile or picture, or flag real posts. These rules live in the domain and services (`User.assertEditable`, `ItemService`, `ModerationService.flag`), so the API enforces them whatever the client does; the web app just hides what would be refused |
+| Visitors changing the samples             | With `DEMO_MODE=true`, the API resets the sample data every 24 hours                                                                                                                                                                                                                                                                                    |
+| Cloudinary usage                          | Sample photos are static files served by the web app from `/demo/`; they use no Cloudinary credits and no clean-up job deletes them                                                                                                                                                                                                                     |
 
 ## Commands
 

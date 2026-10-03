@@ -20,6 +20,8 @@ import { itemsApi } from '../../lib/api/endpoints';
 import { CATEGORY_LABELS, todayIso } from '../../lib/format';
 import { showFormError } from '../../lib/forms';
 import { queryKeys } from '../../lib/queryClient';
+import { useCurrentUser } from '../auth/authContext';
+import { DemoLimitNotice } from '../demo/DemoBanner';
 import { PhotoPicker } from './PhotoPicker';
 
 /** Same rules as the API's createItemSchema, shaped for the form. */
@@ -38,9 +40,15 @@ const reportSchema = z.object({
 type ReportForm = z.infer<typeof reportSchema>;
 
 export function ReportItemDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const user = useCurrentUser();
   return (
     <Modal open={open} onClose={onClose} title="Report an item" size="lg">
-      {open && <ReportItemForm onDone={onClose} />}
+      {open &&
+        (user.isDemo ? (
+          <DemoLimitNotice action="post new items" />
+        ) : (
+          <ReportItemForm onDone={onClose} />
+        ))}
     </Modal>
   );
 }

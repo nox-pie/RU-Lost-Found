@@ -11,11 +11,12 @@ import type { Actor } from '../../core/domain/Actor';
 import type { Clock } from '../../core/domain/Clock';
 import type { IdGenerator } from '../../core/domain/IdGenerator';
 import type { ImageRef } from '../../core/domain/ImageRef';
-import { NotFoundError, ValidationError } from '../../core/errors/AppError';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../core/errors/AppError';
 import type { Logger } from '../../core/logger/logger';
 import type { PageResult } from '../../core/persistence/Pagination';
 import type { TenantScope } from '../../core/persistence/Repository';
 import type { ImageUpload, StorageProvider } from '../../core/storage/StorageProvider';
+import type { User } from '../users/domain/User';
 import type { UserRepository } from '../users/domain/UserRepository';
 import { Item } from './domain/Item';
 import type { ItemRepository } from './domain/ItemRepository';
@@ -46,6 +47,7 @@ export class ItemService {
     input: CreateItemInput,
     photos: ImageUpload[],
   ): Promise<ItemView> {
+    const reporter = await this.assertMayChangePosts(actor);
     if (photos.length === 0) {
       throw new ValidationError('Add at least one photo of the item.', [
         { path: 'photos', message: 'At least one photo is required' },
@@ -79,7 +81,7 @@ export class ItemService {
         now: this.clock.now(),
       });
       await this.items.create(item);
-      return { item, reporter: (await this.users.findById(actor.userId)) ?? undefined };
+      return { item, reporter: reporter ?? undefined };
     } catch (error) {
       await this.deleteQuietly(uploaded);
       throw error;
@@ -137,6 +139,7 @@ export class ItemService {
     id: string,
     changes: UpdateItemInput,
   ): Promise<ItemView> {
+    await this.assertMayChangePosts(actor);
     const item = await this.requireVisible(scope, id);
     const { occurredOn, ...rest } = changes;
     item.edit(
@@ -154,6 +157,7 @@ export class ItemService {
    * Photos of removed items are deleted later by a scheduled clean-up.
    */
   async remove(actor: Actor, scope: TenantScope, id: string): Promise<void> {
+    await this.assertMayChangePosts(actor);
     const item = await this.requireVisible(scope, id);
     item.remove(actor, this.clock.now());
     await this.items.update(item);
@@ -192,6 +196,20 @@ export class ItemService {
     const reporters = await this.users.findByIds(items.map((item) => item.reporterId));
     const byId = new Map(reporters.map((user) => [user.id, user]));
     return items.map((item) => ({ item, reporter: byId.get(item.reporterId) }));
+  }
+
+  /**
+   * Anyone can sign in as a demo account, so it can't post (no uploads), and can't edit or
+   * remove the sample posts every other visitor relies on. Returns the acting user.
+   */
+  private async assertMayChangePosts(actor: Actor): Promise<User | null> {
+    const user = await this.users.findById(actor.userId);
+    if (user?.isDemo) {
+      throw new ForbiddenError(
+        'Demo accounts can’t post, edit or remove items. Create your own account to do that.',
+      );
+    }
+    return user;
   }
 
   private async deleteQuietly(images: ImageRef[]): Promise<void> {

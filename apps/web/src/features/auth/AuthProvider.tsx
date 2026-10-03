@@ -3,14 +3,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { onSessionExpired, refreshSession, setAccessToken } from '../../lib/api/client';
 import { authApi } from '../../lib/api/endpoints';
+import { hasSessionHint, setSessionHint } from '../../lib/sessionHint';
 import { AuthContext, type AuthContextValue, type Status } from './authContext';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState<Status>('loading');
+  // Someone who never signed in on this device sees the public pages straight away.
+  const [status, setStatus] = useState<Status>(() => (hasSessionHint() ? 'loading' : 'anonymous'));
   const [user, setUserState] = useState<MeDto | null>(null);
 
   const clearSession = useCallback(() => {
+    setSessionHint(false);
     setAccessToken(null);
     setUserState(null);
     setStatus('anonymous');
@@ -19,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // On load, the refresh cookie (if any) restores the session after a page reload.
   useEffect(() => {
+    if (!hasSessionHint()) return;
     let cancelled = false;
     void refreshSession().then((session) => {
       if (cancelled) return;
@@ -26,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserState(session.user);
         setStatus('authenticated');
       } else {
+        setSessionHint(false);
         setStatus('anonymous');
       }
     });
@@ -41,22 +46,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       user,
       signIn: (session) => {
+        setSessionHint(true);
         setAccessToken(session.accessToken);
         setUserState(session.user);
         setStatus('authenticated');
       },
-      signOut: async () => {
+      signOut: async (to = '/') => {
         try {
           await authApi.logout();
         } catch {
           // Signing out locally must always work; the server session expires on its own anyway.
-        } finally {
-          clearSession();
         }
+        // A full page load: nothing of the session survives in memory, and the guards can't
+        // redirect to sign-in first (signing out on purpose leads home, to the landing page).
+        setSessionHint(false);
+        setAccessToken(null);
+        window.location.assign(to);
       },
       setUser: setUserState,
     }),
-    [status, user, clearSession],
+    [status, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
