@@ -92,6 +92,34 @@ export const listItemsQuerySchema = z
   })
   .strict();
 
+/**
+ * The tabs of the browse page: which posts each shows. Shared, so the lists (filters sent by the
+ * web app) and the counts (computed by the API) can't disagree.
+ */
+export const FEED_TABS = {
+  all: { statuses: ['OPEN', 'RESERVED'] },
+  lost: { type: 'LOST', statuses: ['OPEN'] },
+  found: { type: 'FOUND', statuses: ['OPEN'] },
+  returned: { statuses: ['RESOLVED'] },
+} as const satisfies Record<
+  string,
+  { type?: ItemType; statuses: readonly (typeof LISTABLE_ITEM_STATUSES)[number][] }
+>;
+
+export type FeedTab = keyof typeof FEED_TABS;
+
+/** How many posts each browse tab has for a search and category. */
+export type ItemCountsDto = Record<FeedTab, number>;
+
+export const itemCountsQuerySchema = z
+  .object({
+    q: z.string().trim().min(1).max(100).optional(),
+    category: z.enum(ITEM_CATEGORIES).optional(),
+  })
+  .strict();
+
+export type ItemCountsQuery = z.infer<typeof itemCountsQuerySchema>;
+
 export const pageQuerySchema = z
   .object({
     cursor: z.string().max(200).optional(),

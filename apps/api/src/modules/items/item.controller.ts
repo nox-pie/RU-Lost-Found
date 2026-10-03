@@ -1,6 +1,8 @@
 import type { Request, RequestHandler } from 'express';
 import type {
   CreateItemInput,
+  ItemCountsDto,
+  ItemCountsQuery,
   ItemDto,
   ListItemsQuery,
   Page,
@@ -20,6 +22,14 @@ export class ItemController {
   list: RequestHandler = async (req, res) => {
     const page = await this.items.search(scopeOf(req), req.query as unknown as ListItemsQuery);
     res.json(this.toPage(page, authOf(req).userId));
+  };
+
+  counts: RequestHandler = async (req, res) => {
+    const body: ItemCountsDto = await this.items.countByTab(
+      scopeOf(req),
+      req.query as unknown as ItemCountsQuery,
+    );
+    res.json(body);
   };
 
   listMine: RequestHandler = async (req, res) => {

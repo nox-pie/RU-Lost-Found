@@ -13,7 +13,19 @@ export interface ItemSearchCriteria {
   reporterId?: string;
 }
 
+/** How many listable items there are of one type in one status. */
+export interface ItemTally {
+  type: ItemType;
+  status: ItemStatus;
+  count: number;
+}
+
 export interface ItemRepository extends Repository<Item> {
+  /** Listable items (open, reserved, returned) matching the text and category, by type and status. */
+  tally(
+    scope: TenantScope,
+    criteria: Pick<ItemSearchCriteria, 'text' | 'category'>,
+  ): Promise<ItemTally[]>;
   findById(scope: TenantScope, id: string, tx?: TransactionContext): Promise<Item | null>;
   /** Items with these ids in the university (unknown ids are skipped). */
   findByIds(scope: TenantScope, ids: readonly string[]): Promise<Item[]>;

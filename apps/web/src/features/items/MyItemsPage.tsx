@@ -2,10 +2,10 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { PackageOpen } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../../components/ui/Button';
-import { EmptyState, ErrorState, PageLoader } from '../../components/ui/misc';
+import { EmptyState, ErrorState } from '../../components/ui/misc';
 import { itemsApi } from '../../lib/api/endpoints';
 import { queryKeys } from '../../lib/queryClient';
-import { ItemGrid } from './ItemCard';
+import { ItemGrid, ItemGridSkeleton } from './ItemCard';
 import { ReportItemDialog } from './ReportItemDialog';
 
 export default function MyItemsPage() {
@@ -30,7 +30,7 @@ export default function MyItemsPage() {
         <Button onClick={() => setReporting(true)}>Report an item</Button>
       </div>
       {query.isPending ? (
-        <PageLoader />
+        <ItemGridSkeleton />
       ) : query.isError ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       ) : items.length === 0 ? (

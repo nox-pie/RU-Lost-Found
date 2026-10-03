@@ -2,6 +2,7 @@ import {
   ITEM_CATEGORIES,
   ITEM_STATUSES,
   ITEM_TYPES,
+  LISTABLE_ITEM_STATUSES,
   type ItemCategory,
   type ItemStatus,
   type ItemType,
@@ -35,7 +36,7 @@ import {
   subdocumentOptions,
 } from '../../../infrastructure/database/schemas';
 import { Item, type VerificationQuestion } from '../domain/Item';
-import type { ItemRepository, ItemSearchCriteria } from '../domain/ItemRepository';
+import type { ItemRepository, ItemSearchCriteria, ItemTally } from '../domain/ItemRepository';
 
 interface ItemDocument extends VersionedDocument {
   universityId: Types.ObjectId;
@@ -117,6 +118,27 @@ export class MongoItemRepository
       { status: 'REMOVED', updatedAt: { $lt: before }, 'images.0': { $exists: true } },
       { sort: { updatedAt: 1 }, limit },
     );
+  }
+
+  async tally(
+    scope: TenantScope,
+    criteria: Pick<ItemSearchCriteria, 'text' | 'category'>,
+  ): Promise<ItemTally[]> {
+    const match: DocumentFilter = {
+      universityId: toObjectId(scope.universityId),
+      status: { $in: [...LISTABLE_ITEM_STATUSES] },
+    };
+    if (criteria.category) match.category = criteria.category;
+    // A $text match must be the first stage of the pipeline.
+    if (criteria.text) match.$text = { $search: criteria.text };
+    const rows = await this.model.aggregate<{
+      _id: { type: ItemType; status: ItemStatus };
+      count: number;
+    }>([
+      { $match: match },
+      { $group: { _id: { type: '$type', status: '$status' }, count: { $sum: 1 } } },
+    ]);
+    return rows.map((row) => ({ type: row._id.type, status: row._id.status, count: row.count }));
   }
 
   async search(

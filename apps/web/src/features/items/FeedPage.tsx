@@ -1,30 +1,34 @@
-import { ITEM_CATEGORIES, type ItemCategory } from '@ru-lost-found/shared';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { FEED_TABS, ITEM_CATEGORIES, type FeedTab, type ItemCategory } from '@ru-lost-found/shared';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { PackageSearch, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/Button';
-import { EmptyState, ErrorState, PageLoader } from '../../components/ui/misc';
+import { EmptyState, ErrorState } from '../../components/ui/misc';
 import { itemsApi, type ItemFilters } from '../../lib/api/endpoints';
 import { CATEGORY_LABELS } from '../../lib/format';
 import { useDebouncedValue } from '../../lib/hooks';
 import { queryKeys } from '../../lib/queryClient';
-import { ItemGrid } from './ItemCard';
+import { ItemGrid, ItemGridSkeleton } from './ItemCard';
 import { ReportItemDialog } from './ReportItemDialog';
 
-const TABS = [
-  { id: 'all', label: 'All', filters: {} },
-  { id: 'lost', label: 'Lost', filters: { type: 'LOST', status: 'OPEN' } },
-  { id: 'found', label: 'Found', filters: { type: 'FOUND', status: 'OPEN' } },
-  { id: 'returned', label: 'Returned', filters: { status: 'RESOLVED' } },
-] as const satisfies readonly { id: string; label: string; filters: ItemFilters }[];
+const TABS: readonly { id: FeedTab; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'lost', label: 'Lost' },
+  { id: 'found', label: 'Found' },
+  { id: 'returned', label: 'Returned' },
+];
 
-type TabId = (typeof TABS)[number]['id'];
+/** The list filters of a tab, from the definition the API also counts with. */
+function tabFilters(tab: FeedTab): ItemFilters {
+  const definition: { type?: 'LOST' | 'FOUND'; statuses: readonly string[] } = FEED_TABS[tab];
+  return { type: definition.type, status: definition.statuses.join(',') };
+}
 
 export default function FeedPage() {
   // Filters live in the URL, so a filtered view can be shared or bookmarked.
   const [params, setParams] = useSearchParams();
-  const tab = (TABS.find((t) => t.id === params.get('tab'))?.id ?? 'all') as TabId;
+  const tab = TABS.find((t) => t.id === params.get('tab'))?.id ?? 'all';
   const category = (params.get('category') ?? '') as ItemCategory | '';
   const [search, setSearch] = useState(params.get('q') ?? '');
   const q = useDebouncedValue(search.trim());
@@ -41,11 +45,11 @@ export default function FeedPage() {
       { replace: true },
     );
 
-  const filters: ItemFilters = {
-    ...TABS.find((t) => t.id === tab)?.filters,
+  const searchFilters = {
     ...(category ? { category } : {}),
     ...(q ? { q } : {}),
   };
+  const filters: ItemFilters = { ...tabFilters(tab), ...searchFilters };
 
   const query = useInfiniteQuery({
     queryKey: queryKeys.items.list(filters),
@@ -54,6 +58,13 @@ export default function FeedPage() {
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
   const items = query.data?.pages.flatMap((page) => page.data) ?? [];
+  // Tab counts for the same search and category (a separate, cheap query; the list keeps its
+  // cursor pagination).
+  const counts = useQuery({
+    queryKey: queryKeys.items.counts(searchFilters),
+    queryFn: () => itemsApi.counts(searchFilters),
+  });
+  const total = counts.data?.[tab];
 
   return (
     <>
@@ -96,6 +107,13 @@ export default function FeedPage() {
                 className={`rounded-full px-5 py-2 text-sm font-medium transition ${tab === t.id ? 'bg-primary text-white shadow' : 'bg-white text-gray-600 shadow-sm hover:bg-gray-50'}`}
               >
                 {t.label}
+                {counts.data && (
+                  <span
+                    className={`ml-1.5 tabular-nums ${tab === t.id ? 'text-white/80' : 'text-gray-400'}`}
+                  >
+                    {counts.data[t.id]}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -116,7 +134,7 @@ export default function FeedPage() {
       </section>
 
       {query.isPending ? (
-        <PageLoader label="Loading items…" />
+        <ItemGridSkeleton />
       ) : query.isError ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       ) : items.length === 0 ? (
@@ -128,8 +146,13 @@ export default function FeedPage() {
       ) : (
         <>
           <ItemGrid items={items} />
+          {total !== undefined && (
+            <p className="mt-8 text-center text-sm text-gray-500" aria-live="polite">
+              Showing {Math.min(items.length, total)} of {total}
+            </p>
+          )}
           {query.hasNextPage && (
-            <div className="mt-10 flex justify-center">
+            <div className="mt-4 flex justify-center">
               <Button
                 variant="outline"
                 size="lg"

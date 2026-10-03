@@ -59,7 +59,8 @@ The Vite dev server proxies `/api` to the API, exactly like the Vercel rewrite i
 ## 3. Data layer (TanStack Query)
 
 - **Server state lives in the cache, not in components.** Pages read with `useQuery` / `useInfiniteQuery` and change data with `useMutation`; after a change the affected keys are invalidated (`queryKeys` defines every key in one place).
-- **Cursor pagination → "Load more".** `useInfiniteQuery` passes the API's `nextCursor` back as `cursor`.
+- **Cursor pagination → "Load more".** `useInfiniteQuery` passes the API's `nextCursor` back as `cursor`. Cursors stay fast and stable while new posts arrive, but can't say how many there are, so a separate cheap query (`GET /items/counts`, one aggregation) gives each tab its count and the "Showing 12 of 17" line. Both use `FEED_TABS` from `packages/shared`, so counts and lists can't disagree.
+- **Skeletons, not spinners,** while the first page of posts loads: grey cards shaped like the real ones.
 - **Freshness without a reload:** notifications poll every 60 s and on window focus; a claim page polls every 15 s while a handover is pending, so each person sees the other's actions.
 - **Retries** (up to 2) for network and server errors, never for 4xx answers. A sleeping API (502/503/504 from the hosting layer) is handled in the API client itself (see Cold start).
 

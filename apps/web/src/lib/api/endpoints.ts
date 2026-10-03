@@ -7,6 +7,7 @@ import type {
   DemoPersonaKey,
   DemoStatusResponse,
   FlagItemInput,
+  ItemCountsDto,
   ItemDto,
   MeDto,
   MessageResponse,
@@ -70,6 +71,8 @@ export interface ItemFilters {
 export const itemsApi = {
   list: (filters: ItemFilters, cursor?: string) =>
     api<Page<ItemDto>>('/items', { query: { ...filters, cursor, limit: 12 } }),
+  counts: (filters: Pick<ItemFilters, 'q' | 'category'>) =>
+    api<ItemCountsDto>('/items/counts', { query: { ...filters } }),
   mine: (cursor?: string) => api<Page<ItemDto>>('/items/mine', { query: { cursor, limit: 12 } }),
   get: (id: string) => api<ItemDto>(`/items/${id}`),
   create: (form: FormData) => api<ItemDto>('/items', { method: 'POST', form }),

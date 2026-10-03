@@ -1,4 +1,4 @@
-import { MAX_PHOTO_BYTES } from '@ru-lost-found/shared';
+import { FEED_TABS, MAX_PHOTO_BYTES } from '@ru-lost-found/shared';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { T0, minutesAfter } from '../../testing/builders';
@@ -224,6 +224,25 @@ describe('searching items', () => {
     expect(await ids('?status=OPEN,RESOLVED&category=KEYS')).toEqual([resolved, keys]);
     expect(await ids('?q=key')).toEqual([keys]);
     expect(await ids('?q=hostel')).toEqual([keys]);
+  });
+
+  it('counts the posts of each browse tab, matching what each tab lists', async () => {
+    await reportAt(1, { type: 'LOST', category: 'WALLET', title: 'Brown leather wallet' });
+    await reportAt(2, { category: 'KEYS', title: 'Bunch of keys' });
+    await setStatus(await reportAt(3, { category: 'BOTTLE', title: 'Steel bottle' }), 'RESERVED');
+    await setStatus(await reportAt(4, { category: 'KEYS', title: 'Car key' }), 'RESOLVED');
+    const get = async (path: string) =>
+      (await api().get(`/api/v1/items${path}`).set('Authorization', ravi.bearer).expect(200)).body;
+
+    expect(await get('/counts')).toEqual({ all: 3, lost: 1, found: 1, returned: 1 });
+    expect(await get('/counts?category=KEYS')).toEqual({ all: 1, lost: 0, found: 1, returned: 1 });
+    expect(await get('/counts?q=wallet')).toEqual({ all: 1, lost: 1, found: 0, returned: 0 });
+    const counts = await get('/counts');
+    for (const [tab, filter] of Object.entries(FEED_TABS)) {
+      const type = 'type' in filter ? `&type=${filter.type}` : '';
+      const listed = await get(`?limit=50&status=${filter.statuses.join(',')}${type}`);
+      expect(listed.data, tab).toHaveLength(counts[tab]);
+    }
   });
 
   it('pages through results with a cursor, without repeats or gaps', async () => {

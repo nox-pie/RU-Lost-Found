@@ -22,6 +22,7 @@ export const queryKeys = {
   items: {
     all: ['items'] as const,
     list: (filters: object) => ['items', 'list', filters] as const,
+    counts: (filters: object) => ['items', 'counts', filters] as const,
     mine: ['items', 'mine'] as const,
     detail: (id: string) => ['items', 'detail', id] as const,
   },

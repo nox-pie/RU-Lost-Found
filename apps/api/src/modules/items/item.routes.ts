@@ -3,6 +3,7 @@ import {
   MAX_ITEM_PHOTOS,
   MAX_PHOTO_BYTES,
   createItemSchema,
+  itemCountsQuerySchema,
   itemIdParamsSchema,
   listItemsQuerySchema,
   pageQuerySchema,
@@ -27,6 +28,7 @@ export function createItemRouter(
 
   router.get('/', validate({ query: listItemsQuerySchema }), controller.list);
   router.get('/mine', validate({ query: pageQuerySchema }), controller.listMine);
+  router.get('/counts', validate({ query: itemCountsQuerySchema }), controller.counts);
   router.post(
     '/',
     rateLimit(limiter, ITEM_RATE_LIMITS.reportsPerUser, (req) => req.auth?.userId),

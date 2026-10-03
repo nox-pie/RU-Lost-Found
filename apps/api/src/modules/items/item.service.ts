@@ -1,8 +1,13 @@
 import {
+  FEED_TABS,
   ITEM_STATUSES,
   LISTABLE_ITEM_STATUSES,
   type ListAdminItemsQuery,
   type CreateItemInput,
+  type ItemCountsDto,
+  type ItemCountsQuery,
+  type ItemStatus,
+  type ItemType,
   type ListItemsQuery,
   type PageQuery,
   type UpdateItemInput,
@@ -102,6 +107,21 @@ export class ItemService {
       { cursor: query.cursor, limit: query.limit },
     );
     return { items: await this.withReporters(page.items), nextCursor: page.nextCursor };
+  }
+
+  /** How many posts each browse tab shows for this search (see FEED_TABS). */
+  async countByTab(scope: TenantScope, query: ItemCountsQuery): Promise<ItemCountsDto> {
+    const tallies = await this.items.tally(scope, { text: query.q, category: query.category });
+    const count = (tab: { type?: ItemType; statuses: readonly ItemStatus[] }) =>
+      tallies
+        .filter((t) => (!tab.type || t.type === tab.type) && tab.statuses.includes(t.status))
+        .reduce((sum, t) => sum + t.count, 0);
+    return {
+      all: count(FEED_TABS.all),
+      lost: count(FEED_TABS.lost),
+      found: count(FEED_TABS.found),
+      returned: count(FEED_TABS.returned),
+    };
   }
 
   /** Every post of the university, removed ones included (admin "Posts" tab). */
