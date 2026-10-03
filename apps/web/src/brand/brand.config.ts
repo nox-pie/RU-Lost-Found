@@ -30,8 +30,8 @@ export interface Brand {
   organisation: {
     name: string;
     location: string;
-    /** Postal address, shown in the footer. */
-    address: string;
+    /** Opens the organisation on a map (Google Maps), from the footer. */
+    mapUrl: string;
     /** The organisation's own website, linked from the footer. */
     website: string;
   };
@@ -87,7 +87,7 @@ export const brand: Brand = {
   organisation: {
     name: 'Rishihood University',
     location: 'Sonipat, Haryana',
-    address: 'NH-44 (GT Road), Delhi NCR, Sonipat, Haryana 131021',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Rishihood+University+Sonipat+Haryana',
     website: 'https://rishihood.edu.in',
   },
   tagline:
@@ -110,7 +110,7 @@ export const brand: Brand = {
   },
   colors: {
     primary: { DEFAULT: '#C62835', light: '#FF6B6B', dark: '#A8232B', contrast: '#FFFFFF' },
-    secondary: { DEFAULT: '#F4A261', light: '#FFB085', dark: '#E67E22', contrast: '#3A1D05' },
+    secondary: { DEFAULT: '#C4500A', light: '#F4A261', dark: '#A3420A', contrast: '#FFFFFF' },
     surface: '#fcf1e8',
   },
 };

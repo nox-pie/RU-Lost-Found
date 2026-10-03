@@ -1,110 +1,65 @@
 import { ExternalLink, Heart, Mail, MapPin } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
 import { brand } from '../../brand/brand.config';
-import { useAuth } from '../../features/auth/authContext';
-
-/** Where the footer's links lead, depending on whether the visitor is signed in. */
-const LINKS = {
-  signedIn: [
-    { to: '/', label: 'Browse items' },
-    { to: '/my-items', label: 'My items' },
-    { to: '/claims', label: 'Claims' },
-    { to: '/profile', label: 'Profile' },
-  ],
-  signedOut: [
-    { to: '/#how-it-works', label: 'How it works' },
-    { to: '/#demo', label: 'Try the demo' },
-    { to: '/login', label: 'Sign in' },
-    { to: '/signup', label: 'Create an account' },
-  ],
-};
 
 export function Footer() {
-  const { status } = useAuth();
-  const links = status === 'authenticated' ? LINKS.signedIn : LINKS.signedOut;
   const { organisation } = brand;
 
   return (
     <footer className="bg-primary-dark text-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 pb-10 pt-14 sm:px-6 md:grid-cols-12">
-        <div className="md:col-span-5">
+      <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-9 sm:px-6 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-10">
+        <div className="text-center md:text-left">
           <img
             src={brand.images.logoOnDark}
             alt={organisation.name}
-            width={160}
-            height={58}
+            width={130}
+            height={48}
             loading="lazy"
-            className="h-12 w-auto"
+            className="mx-auto h-10 w-auto md:mx-0"
           />
-          <p className="mt-5 font-display text-2xl font-bold">{brand.productName}</p>
-          <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/90">{brand.tagline}</p>
+          <p className="mt-3 font-display text-xl font-bold">{brand.productName}</p>
+          <p className="mx-auto mt-1 max-w-xs text-sm leading-relaxed text-white/90 md:mx-0">
+            {brand.tagline}
+          </p>
         </div>
 
-        <FooterColumn title="Explore" className="md:col-span-3">
-          <ul className="space-y-2.5">
-            {links.map((link) => (
-              <li key={link.to}>
-                <Link
-                  to={link.to}
-                  className="text-sm text-white/90 hover:text-white hover:underline"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </FooterColumn>
-
-        <FooterColumn title="Contact" className="md:col-span-4">
-          <ul className="space-y-3 text-sm text-white/90">
-            <li className="flex gap-2.5">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              <span>
-                {organisation.name}
-                <br />
-                {organisation.address}
-              </span>
-            </li>
-            <li>
-              <a
-                href={`mailto:${brand.contactEmail}`}
-                className="flex gap-2.5 break-all hover:text-white hover:underline"
-              >
-                <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                {brand.contactEmail}
-              </a>
-            </li>
-            <li>
-              <a
-                href={organisation.website}
-                target="_blank"
-                rel="noreferrer"
-                className="flex gap-2.5 hover:text-white hover:underline"
-              >
-                <ExternalLink className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                {organisation.website.replace(/^https?:\/\//, '')}
-                <span className="sr-only">(opens in a new tab)</span>
-              </a>
-            </li>
-          </ul>
-        </FooterColumn>
-      </div>
-
-      {/* The campus drawing on its own band: nothing is drawn on top of it. */}
-      <div className="mx-auto max-w-5xl px-4 sm:px-6" aria-hidden>
+        {/* The campus drawing has its own column: nothing is drawn on top of it. */}
         <img
           src={brand.images.footerArt}
           alt=""
+          aria-hidden
           width={1280}
           height={344}
           loading="lazy"
-          className="mx-auto w-full select-none opacity-90"
+          className="order-last mx-auto w-full max-w-xs select-none opacity-90 md:order-none md:w-[22rem] md:max-w-none lg:w-[35rem]"
         />
+
+        <ul className="space-y-2.5 text-sm text-white/90 md:justify-self-end">
+          <FooterLink
+            href={organisation.mapUrl}
+            icon={<MapPin className="h-4 w-4 shrink-0" />}
+            external
+          >
+            {organisation.name}, {organisation.location}
+          </FooterLink>
+          <FooterLink
+            href={`mailto:${brand.contactEmail}`}
+            icon={<Mail className="h-4 w-4 shrink-0" />}
+          >
+            <span className="break-all">{brand.contactEmail}</span>
+          </FooterLink>
+          <FooterLink
+            href={organisation.website}
+            icon={<ExternalLink className="h-4 w-4 shrink-0" />}
+            external
+          >
+            {organisation.website.replace(/^https?:\/\//, '')}
+          </FooterLink>
+        </ul>
       </div>
 
       <div className="border-t border-white/20">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-sm text-white/90 sm:flex-row sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-1.5 px-4 py-4 text-sm text-white/90 sm:flex-row sm:px-6">
           <span>
             © {new Date().getFullYear()} {brand.productName} · {organisation.name}
           </span>
@@ -120,21 +75,32 @@ export function Footer() {
   );
 }
 
-function FooterColumn({
-  title,
-  className,
+function FooterLink({
+  href,
+  icon,
+  external = false,
   children,
 }: {
-  title: string;
-  className?: string;
+  href: string;
+  icon: ReactNode;
+  external?: boolean;
   children: ReactNode;
 }) {
   return (
-    <div className={className}>
-      <h2 className="mb-4 font-sans text-xs font-semibold uppercase tracking-widest text-white/85">
-        {title}
-      </h2>
-      {children}
-    </div>
+    <li>
+      <a
+        href={href}
+        {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
+        className="flex items-start justify-center gap-2.5 hover:text-white hover:underline md:justify-start"
+      >
+        <span className="mt-0.5" aria-hidden>
+          {icon}
+        </span>
+        <span>
+          {children}
+          {external && <span className="sr-only"> (opens in a new tab)</span>}
+        </span>
+      </a>
+    </li>
   );
 }
