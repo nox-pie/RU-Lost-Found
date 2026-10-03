@@ -1,6 +1,6 @@
 # Backend Architecture
 
-Status: Built and live · Last updated: 2 October 2026
+Status: Built and live · Last updated: 3 October 2026
 
 The backend is a **modular monolith** written in TypeScript on Node.js and Express 5. Each business capability lives in its own module. Business modules (auth, users, items, claims, moderation, notifications) are split into the same layers: routes, controller, service, repository and domain; small modules (health, audit, universities) have only the layers they need. Infrastructure (MongoDB, Redis, Cloudinary, email) sits behind interfaces, so any provider can be swapped without touching business logic.
 
@@ -658,19 +658,21 @@ A newer push cancels the older run on the same branch; the MongoDB test binary a
 
 ---
 
-## 16. Architecture Decision Records (to be written in `docs/adr/`)
+## 16. Architecture Decision Records
 
-1. Modular monolith over microservices
-2. TypeScript for the backend
-3. Layered architecture with a rich domain model
-4. Manual dependency injection via a composition root
-5. MongoDB with transactions (not a relational database)
-6. Transactional outbox instead of a message broker
-7. Refresh-token rotation with httpOnly cookies
-8. Cursor-based pagination
-9. Claim lifecycle as a state machine
-10. Monorepo with a shared schema package
-11. One branded deployment per organisation on a multi-tenant codebase
+The reasoning behind the main decisions, with the alternatives that were considered, is in [`docs/adr/`](../adr/README.md):
+
+1. [Modular monolith over microservices](../adr/0001-modular-monolith.md)
+2. [TypeScript for the backend](../adr/0002-typescript.md)
+3. [Layered architecture with a rich domain model](../adr/0003-rich-domain-model.md)
+4. [Manual dependency injection via a composition root](../adr/0004-manual-dependency-injection.md)
+5. [MongoDB with transactions (not a relational database)](../adr/0005-mongodb-with-transactions.md)
+6. [Transactional outbox instead of a message broker](../adr/0006-transactional-outbox.md)
+7. [Refresh-token rotation with httpOnly cookies](../adr/0007-refresh-token-rotation.md)
+8. [Cursor-based pagination](../adr/0008-cursor-pagination.md)
+9. [Claim lifecycle as a state machine](../adr/0009-claim-state-machine.md)
+10. [Monorepo with a shared schema package](../adr/0010-monorepo-shared-schemas.md)
+11. [One branded deployment per organisation on a multi-tenant codebase](../adr/0011-branded-deployment-per-organisation.md)
 
 ---
 
