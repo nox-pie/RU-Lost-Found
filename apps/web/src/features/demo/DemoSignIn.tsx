@@ -54,13 +54,14 @@ export function DemoPersonaCards() {
             className="flex flex-col rounded-3xl bg-white p-7 text-left shadow-2xl ring-1 ring-white/10 transition duration-300 hover:-translate-y-1"
           >
             <div className="flex items-start justify-between gap-3">
-              <span
-                className={`flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold ${finder ? 'bg-secondary-light/25 text-secondary-dark' : 'bg-primary/10 text-primary'}`}
-                aria-hidden
-              >
-                {persona.firstName[0]}
-                {persona.lastName[0]}
-              </span>
+              <img
+                src={persona.avatarUrl}
+                alt=""
+                width={64}
+                height={64}
+                loading="lazy"
+                className={`h-16 w-16 rounded-full object-cover ring-4 ${finder ? 'ring-secondary-light/50' : 'ring-primary/20'}`}
+              />
               <span
                 className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${finder ? 'bg-secondary text-secondary-contrast' : 'bg-primary text-primary-contrast'}`}
               >
@@ -71,14 +72,14 @@ export function DemoPersonaCards() {
               {persona.firstName} {persona.lastName}
             </h3>
             <p className="mt-2 text-gray-700">{persona.story}</p>
-            <p className="mt-4 flex gap-2 rounded-2xl bg-gray-50 p-3 text-sm text-gray-600">
+            <p className="mb-6 mt-4 flex gap-2 rounded-2xl bg-gray-50 p-3 text-sm text-gray-600">
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
               {persona.tryThis}
             </p>
             <Button
               size="lg"
               variant={finder ? 'secondary' : 'primary'}
-              className="mt-6 w-full"
+              className="mt-auto w-full"
               loading={demo.checking || demo.startingAs === persona.key}
               disabled={demo.startingAs !== undefined}
               onClick={() => demo.start(persona.key)}

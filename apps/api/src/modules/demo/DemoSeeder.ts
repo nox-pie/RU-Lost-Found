@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { Actor } from '../../core/domain/Actor';
+import type { ImageRef } from '../../core/domain/ImageRef';
 import type { IdGenerator } from '../../core/domain/IdGenerator';
 import type { Logger } from '../../core/logger/logger';
 import type { PasswordHasher } from '../../core/security/PasswordHasher';
@@ -23,6 +24,14 @@ import { SAMPLE_PHOTO_PREFIX } from './infrastructure/MongoDemoDataStore';
 export const DEMO_RESET_INTERVAL_SECONDS = 60 * 60;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** A sample picture, served by the web app; its id starts with demo/ so it is never deleted. */
+function samplePicture(url: string): ImageRef {
+  return {
+    url,
+    publicId: `${SAMPLE_PHOTO_PREFIX}${url.replace(/^\/demo\//, '').replace(/\.\w+$/, '')}`,
+  };
+}
 const HOUR_MS = 60 * 60 * 1000;
 
 export interface DemoSeederDeps {
@@ -91,6 +100,7 @@ export class DemoSeeder {
       [...people.values()].map((user) => user.id),
       { keepAccounts: true },
     );
+    await this.restorePictures(people, now);
     await this.createPosts(await this.university(), people, now);
     this.deps.logger.info({ removed, posts: DEMO_POSTS.length }, 'Demo data reset');
     return { people: people.size, posts: DEMO_POSTS.length };
@@ -136,10 +146,23 @@ export class DemoSeeder {
         },
         now: new Date(now.getTime() - (oldest - index) * DAY_MS),
       });
+      if (person.avatar) user.useSamplePicture(samplePicture(person.avatar), now);
       await users.create(user);
       people.set(person.key, user);
     }
     return people;
+  }
+
+  /** Accounts kept by a reset get their sample pictures back (or for the first time). */
+  private async restorePictures(people: ReadonlyMap<string, User>, now: Date): Promise<void> {
+    for (const person of DEMO_PEOPLE) {
+      const user = people.get(person.key);
+      if (!user || !person.avatar) continue;
+      const picture = samplePicture(person.avatar);
+      if (user.profile.avatar?.publicId === picture.publicId) continue;
+      user.useSamplePicture(picture, now);
+      await this.deps.users.update(user);
+    }
   }
 
   private async createPosts(

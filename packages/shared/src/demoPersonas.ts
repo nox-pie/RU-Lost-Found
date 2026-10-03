@@ -9,6 +9,7 @@ export const DEMO_PERSONAS = [
     firstName: 'Asha',
     lastName: 'Verma',
     role: 'The finder',
+    avatarUrl: '/demo/people/asha.webp',
     story: 'Found a black wallet in the library and posted it.',
     tryThis: 'Review the claims on her post and approve the right owner.',
   },
@@ -17,7 +18,8 @@ export const DEMO_PERSONAS = [
     firstName: 'Ravi',
     lastName: 'Singh',
     role: 'The owner',
-    story: 'Lost his wallet somewhere on campus.',
+    avatarUrl: '/demo/people/ravi.webp',
+    story: 'Lost his black wallet on campus last night, maybe in the library.',
     tryThis: 'Find the wallet in the feed and claim it by answering Asha’s question.',
   },
 ] as const;

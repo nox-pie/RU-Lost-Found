@@ -36,6 +36,17 @@ describe('User', () => {
     expect(user.profile.avatar).toEqual(second);
   });
 
+  it('gives demo accounts a sample picture they can’t change, and real accounts none', () => {
+    const demo = aUser({ email: 'asha.verma@demo.invalid' });
+    const picture = { url: '/demo/people/asha.webp', publicId: 'demo/people/asha' };
+
+    demo.useSamplePicture(picture, T0);
+
+    expect(demo.profile.avatar).toEqual(picture);
+    expect(() => demo.removeAvatar(T0)).toThrow(/Demo accounts/);
+    expect(() => aUser().useSamplePicture(picture, T0)).toThrow(/Only demo accounts/);
+  });
+
   it('can be suspended and reactivated by an admin, but not twice in a row', () => {
     const user = aUser();
     user.pullEvents();

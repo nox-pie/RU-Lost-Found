@@ -13,11 +13,25 @@ export interface DemoPerson {
   firstName: string;
   lastName: string;
   year: number;
+  /** A profile picture served by the web app (public/demo/people), for the one-click personas. */
+  avatar?: string;
 }
 
 export const DEMO_PEOPLE: readonly DemoPerson[] = [
-  { key: 'asha.verma', firstName: 'Asha', lastName: 'Verma', year: 2 },
-  { key: 'ravi.singh', firstName: 'Ravi', lastName: 'Singh', year: 3 },
+  {
+    key: 'asha.verma',
+    firstName: 'Asha',
+    lastName: 'Verma',
+    year: 2,
+    avatar: '/demo/people/asha.webp',
+  },
+  {
+    key: 'ravi.singh',
+    firstName: 'Ravi',
+    lastName: 'Singh',
+    year: 3,
+    avatar: '/demo/people/ravi.webp',
+  },
   { key: 'kabir.rao', firstName: 'Kabir', lastName: 'Rao', year: 1 },
   { key: 'meera.iyer', firstName: 'Meera', lastName: 'Iyer', year: 4 },
   { key: 'ananya.gupta', firstName: 'Ananya', lastName: 'Gupta', year: 2 },

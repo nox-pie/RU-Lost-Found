@@ -110,7 +110,7 @@ export const brand: Brand = {
   },
   colors: {
     primary: { DEFAULT: '#C62835', light: '#FF6B6B', dark: '#A8232B', contrast: '#FFFFFF' },
-    secondary: { DEFAULT: '#C4500A', light: '#F4A261', dark: '#A3420A', contrast: '#FFFFFF' },
+    secondary: { DEFAULT: '#FFA500', light: '#FFC14D', dark: '#E69500', contrast: '#3A1D05' },
     surface: '#fcf1e8',
   },
 };

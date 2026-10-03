@@ -80,3 +80,12 @@ All sample photos are **CC0 / public domain** (no attribution required), found t
 | `textbook.jpg`            | Books Reading                     | Aaron Burden         | stocksnap (CC0) | [source](https://stocksnap.io/photo/books-reading-CN63QSUO8C)                                    |
 | `white-phone.jpg`         | Smartphone Mobile                 | Negative Space       | stocksnap (CC0) | [source](https://stocksnap.io/photo/smartphone-mobile-O4V3KXZI1T)                                |
 | `camera-backpack.jpg`     | Backpack Gear                     | Lukasz Kowalewski    | stocksnap (CC0) | [source](https://stocksnap.io/photo/backpack-gear-4MT4167LN3)                                    |
+
+**Profile pictures** of the two one-click demo students (`apps/web/public/demo/people/`, 256 px crops, stored on the accounts as sample pictures that visitors can't change), also **CC0** from StockSnap through Openverse:
+
+| File        | Person     | Title        | Creator     | Link                                                         |
+| ----------- | ---------- | ------------ | ----------- | ------------------------------------------------------------ |
+| `asha.webp` | Asha Verma | Woman Mobile | Bruce Mars  | [source](https://stocksnap.io/photo/woman-mobile-Q93BUD2Z3Z) |
+| `ravi.webp` | Ravi Singh | People Man   | Warren Wong | [source](https://stocksnap.io/photo/people-man-7ZGVCPQ3N7)   |
+
+The people in these photos are not Asha and Ravi: the names, stories and accounts are fictional, and every demo account is marked as such in the app.

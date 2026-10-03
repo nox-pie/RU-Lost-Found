@@ -141,6 +141,17 @@ export class User extends AggregateRoot {
     return previous;
   }
 
+  /**
+   * Gives a demo account its sample picture (the demo seeder does this; visitors signed in as
+   * the account still can't change it). Real accounts change their picture with changeAvatar.
+   */
+  useSamplePicture(avatar: ImageRef, now: Date): void {
+    if (!this.isDemo) throw new ForbiddenError('Only demo accounts have sample pictures.');
+    if (this.props.profile.avatar?.publicId === avatar.publicId) return;
+    this.props.profile = { ...this.props.profile, avatar };
+    this.touch(now);
+  }
+
   /** Returns the removed avatar so the caller can delete the file. */
   removeAvatar(now: Date): ImageRef | null {
     this.assertEditable();

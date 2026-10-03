@@ -47,7 +47,12 @@ describe('one-click demo sign-in', { timeout: 30_000 }, () => {
     const res = await signInAs('asha.verma');
 
     expect(res.status).toBe(200);
-    expect(res.body.user).toMatchObject({ firstName: 'Asha', lastName: 'Verma', isDemo: true });
+    expect(res.body.user).toMatchObject({
+      firstName: 'Asha',
+      lastName: 'Verma',
+      isDemo: true,
+      avatarUrl: '/demo/people/asha.webp',
+    });
     expect(String(res.headers['set-cookie'])).toContain('rlf_refresh=');
     await api()
       .get('/api/v1/users/me')
@@ -59,7 +64,8 @@ describe('one-click demo sign-in', { timeout: 30_000 }, () => {
     await t.container.services.demo.seed(T0);
 
     for (const persona of DEMO_PERSONAS) {
-      expect(DEMO_PEOPLE.map((p) => p.key)).toContain(persona.key);
+      // The landing page shows the same picture the account has.
+      expect(DEMO_PEOPLE.find((p) => p.key === persona.key)?.avatar).toBe(persona.avatarUrl);
       expect((await signInAs(persona.key)).status).toBe(200);
     }
     expect((await signInAs('kabir.rao')).status).toBe(400);
@@ -117,6 +123,19 @@ describe('the hourly reset', { timeout: 30_000 }, () => {
     const claims = await api().get('/api/v1/claims/mine').set('Authorization', ravi.bearer);
     expect(claims.body.data).toEqual([]);
     expect(await samplePost(ravi, 'Black bifold wallet')).not.toBe(wallet); // a fresh post
+  });
+
+  it('gives kept accounts their sample pictures back', async () => {
+    await t.container.services.demo.seed(T0);
+    await t.connection
+      .collection('users')
+      .updateOne({ email: 'ravi.singh@demo.invalid' }, { $set: { 'profile.avatar': null } });
+
+    await t.container.services.demo.reset(T0);
+
+    const ravi = await signInAs('ravi.singh');
+    expect(ravi.body.user.avatarUrl).toBe('/demo/people/ravi.webp');
+    expect(t.storage.deleted).toEqual([]); // sample pictures are never deleted from storage
   });
 
   it('rebuilds everything when a demo account was suspended', async () => {

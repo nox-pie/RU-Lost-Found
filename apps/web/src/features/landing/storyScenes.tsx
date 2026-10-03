@@ -1,4 +1,4 @@
-import type { ItemDto } from '@ru-lost-found/shared';
+import { DEMO_PERSONAS, type ItemDto } from '@ru-lost-found/shared';
 import { Bell, Check, CheckCircle2, MessageCircleQuestion, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '../../components/ui/Button';
@@ -23,6 +23,7 @@ export interface Scene {
 }
 
 const CODE = '482193';
+const [ASHA_PICTURE, RAVI_PICTURE] = DEMO_PERSONAS.map((persona) => persona.avatarUrl);
 
 /** The part of `text` typed by `t`, starting at `start`, `perSecond` characters a second. */
 function typed(text: string, t: number, start: number, perSecond = 14): string {
@@ -224,7 +225,9 @@ const approveScene: Scene = {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Asha</p>
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <Avatar name="Asha Verma" url={ASHA_PICTURE} size="sm" /> Asha
+            </p>
             <span className="relative text-gray-600">
               <Bell className="h-5 w-5" />
               {notified && !opened && (
@@ -237,7 +240,7 @@ const approveScene: Scene = {
           {opened ? (
             <div className="space-y-2.5 animate-fade-in">
               <div className="flex items-center gap-2.5">
-                <Avatar name="Ravi Singh" url={null} size="sm" />
+                <Avatar name="Ravi Singh" url={RAVI_PICTURE} size="sm" />
                 <p className="text-sm font-medium text-gray-900">Ravi Singh</p>
                 <span className="ml-auto">
                   {approved ? (
@@ -262,7 +265,9 @@ const approveScene: Scene = {
           )}
         </div>
         <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Ravi</p>
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <Avatar name="Ravi Singh" url={RAVI_PICTURE} size="sm" /> Ravi
+          </p>
           <p className="text-sm font-medium text-gray-900">Your handover code</p>
           <div className="flex gap-1.5">
             {CODE.split('').map((digit, i) => (

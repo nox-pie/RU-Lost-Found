@@ -16,7 +16,7 @@ Running a deployment for another organisation needs a licence from the copyright
 
 Colours are hex values (`#1d4ed8`). The API rejects anything else, because the colours are placed inside email markup.
 
-**Colours must stay readable:** each colour has a `contrast` value, the colour of text placed on it (white on the dark red and on the deep orange), which needs a contrast of at least 4.5:1 against it ([WCAG AA](https://webaim.org/resources/contrastchecker/)). `primary` is also used as text on light backgrounds, so it needs 4.5:1 against white and the `surface` colour too. The accessibility e2e test fails if a colour doesn't.
+**Colours must stay readable:** each colour has a `contrast` value, the colour of text placed on it (white on the dark red, dark brown on the orange), which needs a contrast of at least 4.5:1 against it ([WCAG AA](https://webaim.org/resources/contrastchecker/)). `primary` is also used as text on light backgrounds, so it needs 4.5:1 against white and the `surface` colour too. The accessibility e2e test fails if a colour doesn't.
 
 ## Steps for a new deployment
 
