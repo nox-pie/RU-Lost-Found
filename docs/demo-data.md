@@ -39,7 +39,7 @@ npm run demo -- remove    # delete all of it
 
 Against production, add `--env-file=.env.production` through `npx tsx --env-file=.env.production src/scripts/demo.ts <command>` (see [deployment.md](deployment.md#where-configuration-lives)).
 
-**`DEMO_MODE`** (API setting, default `false`): when `true`, the API creates the sample data at start-up if it is missing and resets it every hour (`DEMO_RESET_INTERVAL_SECONDS`).
+**`DEMO_MODE`** (API setting, default `false`): when `true`, the API creates the sample data at start-up if it is missing (if it exists, the demo accounts only get any profile picture they lack, so a new picture shows right after a deploy) and resets it every hour (`DEMO_RESET_INTERVAL_SECONDS`).
 
 ## Before real users arrive
 

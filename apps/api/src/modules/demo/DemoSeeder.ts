@@ -66,9 +66,17 @@ export class DemoSeeder {
     return (await this.deps.store.findDemoUserIds()).length > 0;
   }
 
-  /** Creates the sample data unless it is already there. */
+  /**
+   * Creates the sample data unless it is already there (run at every start-up). When it is,
+   * the demo accounts still get any sample picture they lack, so a new picture shows at once
+   * after a deploy instead of at the next hourly reset.
+   */
   async seed(now: Date = new Date()): Promise<DemoSeedResult | null> {
-    if (await this.isSeeded()) return null;
+    if (await this.isSeeded()) {
+      const people = await this.existingPeople();
+      if (people) await this.restorePictures(people, now);
+      return null;
+    }
     const university = await this.university();
     const people = await this.createPeople(university, now);
     await this.createPosts(university, people, now);

@@ -8,7 +8,7 @@ import { MongoDatabase } from '../infrastructure/database/MongoDatabase';
 /**
  * The sample data visitors see (docs/demo-data.md):
  *
- *   npm run demo -- seed     # create it (skipped if it already exists)
+ *   npm run demo -- seed     # create it (if it exists: only add missing sample pictures)
  *   npm run demo -- reset    # back to the original sample data
  *   npm run demo -- remove   # delete it all (also set DEMO_MODE=false on the API)
  *

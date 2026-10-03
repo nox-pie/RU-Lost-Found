@@ -71,6 +71,20 @@ describe('sample data', { timeout: 30_000 }, () => {
     expect(await feed()).toHaveLength(DEMO_POSTS.length);
   });
 
+  it('gives existing demo accounts their sample pictures at start-up', async () => {
+    await demo().seed(T0);
+    await t.connection
+      .collection('users')
+      .updateMany({ email: /@demo\.invalid$/ }, { $set: { 'profile.avatar': null } });
+
+    await demo().seed(T0); // what every start-up runs
+
+    const asha = await t.connection
+      .collection('users')
+      .findOne({ email: 'asha.verma@demo.invalid' });
+    expect(asha?.profile.avatar.url).toBe('/demo/people/asha.webp');
+  });
+
   it('marks only sample posts as samples', async () => {
     await demo().seed(T0);
     const real = await reportItem(t, visitor, { title: 'Real black phone' });
