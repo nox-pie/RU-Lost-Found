@@ -115,7 +115,7 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
           {(['LOST', 'FOUND'] as const).map((value) => (
             <label
               key={value}
-              className={`cursor-pointer rounded-lg py-2 text-center text-sm font-medium transition ${type === value ? (value === 'LOST' ? 'bg-primary text-white shadow' : 'bg-secondary text-white shadow') : 'text-gray-600'}`}
+              className={`cursor-pointer rounded-lg py-2 text-center text-sm font-medium transition ${type === value ? (value === 'LOST' ? 'bg-primary text-white shadow' : 'bg-secondary text-secondary-contrast shadow') : 'text-gray-600'}`}
             >
               <input type="radio" value={value} className="sr-only" {...register('type')} />
               {value === 'LOST' ? 'I lost something' : 'I found something'}

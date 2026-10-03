@@ -21,7 +21,7 @@ function ItemCard({ item }: { item: ItemDto }) {
           />
         )}
         <span
-          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow ${item.type === 'LOST' ? 'bg-primary' : 'bg-secondary'}`}
+          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow ${item.type === 'LOST' ? 'bg-primary text-primary-contrast' : 'bg-secondary text-secondary-contrast'}`}
         >
           {item.type === 'LOST' ? 'Lost' : 'Found'}
         </span>

@@ -41,7 +41,7 @@ function TopBar() {
     <header className="header-solid shadow-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-secondary-light bg-white p-1.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-secondary bg-white p-1.5">
             <img src={brand.images.symbol} alt="" className="h-full w-full object-contain" />
           </span>
           <span className="truncate font-display text-lg font-bold text-white sm:text-xl">
@@ -155,7 +155,7 @@ function SamplePosts() {
                 className="h-full w-full object-cover"
               />
               <span
-                className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow ${post.type === 'LOST' ? 'bg-primary' : 'bg-secondary'}`}
+                className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow ${post.type === 'LOST' ? 'bg-primary text-primary-contrast' : 'bg-secondary text-secondary-contrast'}`}
               >
                 {post.type === 'LOST' ? 'Lost' : 'Found'}
               </span>

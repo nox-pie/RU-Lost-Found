@@ -14,6 +14,8 @@ export type ColorScale = {
   DEFAULT: string;
   light: string;
   dark: string;
+  /** Text and icons placed on DEFAULT (and its shades): white on a dark colour, dark on a light one. */
+  contrast: string;
 };
 
 export interface Brand {
@@ -52,9 +54,10 @@ export interface Brand {
     appIcons: { small: string; large: string; maskable: string; apple: string };
   };
   /**
-   * White text sits on `primary` and `secondary`, and both are used as text on light
-   * backgrounds, so each needs a contrast of at least 4.5:1 against white and the surface
-   * (WCAG AA; the accessibility e2e test checks it). `light` shades are decorative only.
+   * Text on a colour uses its `contrast` value, which needs at least 4.5:1 against DEFAULT and
+   * its shades (WCAG AA; the accessibility e2e test checks it). `primary` is also used as text
+   * on light backgrounds, so it needs 4.5:1 against white and the surface too; `secondary` is
+   * used only as a background and for decoration.
    */
   colors: {
     /** Header, buttons, links. */
@@ -91,8 +94,8 @@ export const brand: Brand = {
     },
   },
   colors: {
-    primary: { DEFAULT: '#C62835', light: '#FF6B6B', dark: '#A8232B' },
-    secondary: { DEFAULT: '#A9530F', light: '#F4A261', dark: '#8A430C' },
+    primary: { DEFAULT: '#C62835', light: '#FF6B6B', dark: '#A8232B', contrast: '#FFFFFF' },
+    secondary: { DEFAULT: '#F4A261', light: '#FFB085', dark: '#E67E22', contrast: '#3A1D05' },
     surface: '#fcf1e8',
   },
 };

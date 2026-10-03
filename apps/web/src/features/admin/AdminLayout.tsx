@@ -37,7 +37,7 @@ export default function AdminLayout() {
           >
             {tab.label}
             {tab.to === '/admin/reports' && openReports > 0 && (
-              <span className="rounded-full bg-secondary px-2 text-xs font-semibold text-white">
+              <span className="rounded-full bg-secondary px-2 text-xs font-semibold text-secondary-contrast">
                 {openReports}
               </span>
             )}
