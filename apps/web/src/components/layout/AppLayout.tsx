@@ -1,11 +1,12 @@
 import { Outlet } from 'react-router';
 import { DemoBanner } from '../../features/demo/DemoBanner';
+import { BottomNav } from './BottomNav';
 import { Footer } from './Footer';
 import { Header } from './Header';
 
 export function AppLayout() {
   return (
-    <div className="flex min-h-screen flex-col bg-surface">
+    <div className="flex min-h-screen flex-col bg-surface pb-16 md:pb-0">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2"
@@ -18,6 +19,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <Footer />
+      <BottomNav />
     </div>
   );
 }

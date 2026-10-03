@@ -131,25 +131,24 @@ export function Header() {
           className="border-t border-white/20 px-4 pb-4 pt-2 md:hidden animate-slide-down"
           aria-label="Mobile"
         >
-          {[...links, { to: '/profile', label: 'Profile', end: false }].map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={link.end}
-              className={({ isActive }) =>
-                `block rounded-xl px-3 py-2.5 text-base font-medium ${isActive ? 'bg-white text-primary' : 'text-white'}`
-              }
-            >
-              {link.label}
-            </NavLink>
-          ))}
-          <button
-            type="button"
-            onClick={() => setReporting(true)}
-            className="mt-2 block w-full rounded-xl bg-white px-3 py-2.5 text-left font-semibold text-primary"
-          >
-            + Report an item
-          </button>
+          <p className="px-3 pb-2 pt-1 text-sm text-white/80">
+            {user.firstName} {user.lastName}
+          </p>
+          {/* Browse, My items, Claims, Profile and Report are in the bottom bar on phones. */}
+          {links
+            .filter((link) => link.to === '/admin')
+            .map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.end}
+                className={({ isActive }) =>
+                  `block rounded-xl px-3 py-2.5 text-base font-medium ${isActive ? 'bg-white text-primary' : 'text-white'}`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
           <button
             type="button"
             onClick={() => void signOut()}

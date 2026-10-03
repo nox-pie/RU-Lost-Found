@@ -25,7 +25,7 @@ apps/web/src/
 ├── components/
 │   ├── ui/                  # Button, Field (Input/Select/Textarea/Checkbox), Modal, ConfirmDialog, Spinner,
 │   │                        #   misc (Badge, Avatar, EmptyState, ErrorState, PageLoader)
-│   ├── layout/              # Header (nav, notifications, account menu), AppLayout, Footer
+│   ├── layout/              # Header (nav, notifications, account menu), BottomNav (phones), AppLayout, Footer
 │   ├── ErrorBoundary.tsx    # a crash shows a way out instead of a blank page, and is reported
 │   └── ServerWakeNotice.tsx # "Waking up the server…" while the API starts
 └── features/
