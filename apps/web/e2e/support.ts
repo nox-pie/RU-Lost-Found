@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -73,6 +73,20 @@ export async function describePage(page: Page): Promise<string> {
   ].join('; ');
 }
 
+/**
+ * Picks an option in one of the app's dropdowns, as a person would: open it by its label, then
+ * click the option (the list opens in a layer outside forms and dialogs, hence `page`).
+ */
+export async function choose(
+  page: Page,
+  label: string,
+  option: string,
+  within: Page | Locator = page,
+) {
+  await within.getByRole('button', { name: label }).click();
+  await page.getByRole('option', { name: option, exact: true }).click();
+}
+
 /** Creates an account through the real three-step sign-up form. */
 export async function signUp(page: Page, person: { email: string; first: string; last: string }) {
   await page.goto('/signup');
@@ -85,9 +99,9 @@ export async function signUp(page: Page, person: { email: string; first: string;
   await expect(page.getByText('Email verified · Rishihood University')).toBeVisible();
   await page.getByLabel('First name').fill(person.first);
   await page.getByLabel('Last name').fill(person.last);
-  await page.getByLabel('Year').selectOption('2');
+  await choose(page, 'Year', 'Year 2');
   await page.getByLabel('Enrollment no.').fill('NST23001');
-  await page.getByLabel('School').selectOption('Newton School of Technology');
+  await choose(page, 'School', 'Newton School of Technology');
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Create account' }).click();
 
@@ -120,7 +134,7 @@ export async function reportFoundItem(page: Page, title: string) {
   await dialog.locator('input[type=file]').setInputFiles(FIXTURE_PHOTO);
   await expect(dialog.getByRole('img', { name: 'Photo 1' })).toBeVisible();
   await dialog.getByLabel('Item name').fill(title);
-  await dialog.getByLabel('Category').selectOption('ELECTRONICS');
+  await choose(page, 'Category', 'Electronics', dialog);
   await dialog.getByLabel('Description').fill('Brand new, message me for the price.');
   await dialog.getByLabel('Where did you find it?').fill('Library');
   await dialog.getByRole('button', { name: 'Publish report' }).click();

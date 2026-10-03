@@ -1,12 +1,13 @@
-import { FEED_TABS, ITEM_CATEGORIES, type FeedTab, type ItemCategory } from '@ru-lost-found/shared';
+import { FEED_TABS, type FeedTab, type ItemCategory } from '@ru-lost-found/shared';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { PackageSearch, Plus, Search } from 'lucide-react';
+import { LayoutGrid, PackageSearch, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/Button';
+import { Dropdown } from '../../components/ui/Dropdown';
 import { EmptyState, ErrorState } from '../../components/ui/misc';
 import { itemsApi, type ItemFilters } from '../../lib/api/endpoints';
-import { CATEGORY_LABELS } from '../../lib/format';
+import { CATEGORY_OPTIONS } from '../../lib/categories';
 import { useDebouncedValue } from '../../lib/hooks';
 import { queryKeys } from '../../lib/queryClient';
 import { ItemGrid, ItemGridSkeleton } from './ItemCard';
@@ -117,19 +118,18 @@ export default function FeedPage() {
               </button>
             ))}
           </div>
-          <select
+          <Dropdown<ItemCategory | ''>
+            label="Category"
+            hideLabel
+            look="pill"
+            className="w-52"
             value={category}
-            onChange={(event) => setParam('category', event.target.value)}
-            aria-label="Category"
-            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
-          >
-            <option value="">All categories</option>
-            {ITEM_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_LABELS[c]}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setParam('category', value)}
+            options={[
+              { value: '', label: 'All categories', icon: LayoutGrid },
+              ...CATEGORY_OPTIONS,
+            ]}
+          />
         </div>
       </section>
 

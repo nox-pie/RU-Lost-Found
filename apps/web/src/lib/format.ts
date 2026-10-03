@@ -119,3 +119,9 @@ export function todayIso(): string {
   const offset = now.getTimezoneOffset() * 60_000;
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
+
+/** Years of study offered on the sign-up and profile forms. */
+export const YEAR_OPTIONS = [1, 2, 3, 4, 5].map((year) => ({
+  value: String(year),
+  label: `Year ${year}`,
+}));

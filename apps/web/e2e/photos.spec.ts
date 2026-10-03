@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
-import { signUp, uniqueEmail } from './support';
+import { choose, signUp, uniqueEmail } from './support';
 
 /** A 12-megapixel camera-style photo of random noise: well over the 5 MB upload limit. */
 async function bigPhoto(): Promise<Buffer> {
@@ -31,7 +31,7 @@ test('a large phone photo is made smaller on the device and accepted', async ({ 
   await expect(dialog.getByRole('alert')).toHaveCount(0);
 
   await dialog.getByLabel('Item name').fill('Grey umbrella');
-  await dialog.getByLabel('Category').selectOption('OTHER');
+  await choose(page, 'Category', 'Other', dialog);
   await dialog.getByLabel('Description').fill('A grey folding umbrella left by the stairs.');
   await dialog.getByLabel('Where did you find it?').fill('Main stairs');
   await dialog.getByRole('button', { name: 'Publish report' }).click();

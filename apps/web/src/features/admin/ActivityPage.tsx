@@ -9,7 +9,8 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { History, X } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/Button';
-import { Input, Select } from '../../components/ui/Field';
+import { Dropdown } from '../../components/ui/Dropdown';
+import { Input } from '../../components/ui/Field';
 import { Avatar, EmptyState, ErrorState, PageLoader } from '../../components/ui/misc';
 import { adminApi, type ActivityFilters } from '../../lib/api/endpoints';
 import {
@@ -110,18 +111,15 @@ export default function ActivityPage() {
         Click a name to see everything that person did.
       </p>
       <div className="mt-4 grid gap-3 rounded-2xl bg-white p-4 shadow-sm sm:grid-cols-3">
-        <Select
+        <Dropdown
           label="Show"
           value={action}
-          onChange={(event) => update({ action: event.target.value })}
-        >
-          <option value="">Everything</option>
-          {AUDIT_ACTIONS.map((a) => (
-            <option key={a} value={a}>
-              {AUDIT_ACTION_LABELS[a]}
-            </option>
-          ))}
-        </Select>
+          onChange={(value) => update({ action: value })}
+          options={[
+            { value: '', label: 'Everything' },
+            ...AUDIT_ACTIONS.map((a) => ({ value: a, label: AUDIT_ACTION_LABELS[a] })),
+          ]}
+        />
         <Input
           label="From"
           type="date"

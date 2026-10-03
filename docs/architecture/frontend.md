@@ -24,7 +24,7 @@ apps/web/src/
 │   ├── sessionHint.ts       # "signed in on this device" flag, so visitors aren't kept waiting
 │   └── monitoring.ts        # Sentry, loaded lazily and only when configured
 ├── components/
-│   ├── ui/                  # Button, Field (Input/Select/Textarea/Checkbox), Modal, ConfirmDialog, Spinner,
+│   ├── ui/                  # Button, Field (Input/Textarea/Checkbox), Dropdown (themed, Headless UI), Modal, ConfirmDialog, Spinner,
 │   │                        #   misc (Badge, Avatar, EmptyState, ErrorState, PageLoader)
 │   ├── layout/              # Header (nav, notifications, account menu), BottomNav (phones), AppLayout, Footer
 │   ├── ErrorBoundary.tsx    # a crash shows a way out instead of a blank page, and is reported
@@ -99,6 +99,8 @@ Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `a
 **Checked automatically:** the e2e suite runs [axe-core](https://github.com/dequelabs/axe-core) (WCAG 2.1 A and AA rules) on the landing, sign-in, browse, item (also scrolled, when the header turns translucent), claims, claim and profile pages, on a desktop and a phone; CI fails on any violation. The first run found only colour contrast problems, fixed at the source: the brand red was darkened slightly (`#C62835`) so white text on it and red text on light backgrounds reach 4.5:1, text on the light orange (`#F4A261`, the Found tags) is dark brown instead of white (7.5:1; each brand colour now names its text colour, `contrast`), the two lightest text greys were darkened one step in the Tailwind theme, the footer and translucent header got stronger text, and avatar initials got an opaque base.
 
 **Lighthouse** (landing page, production build, simulated mid-range phone on slow 4G, 3 October 2026): Performance 87–88, Accessibility 100, Best practices 100, SEO 100. What moved Performance from 67: fonts self-hosted (no render-blocking stylesheet), the signed-in layout and the forms' libraries (zod, react-hook-form) kept out of the first download (388 → 302 KB; `packages/shared` is marked side-effect free so unused schemas are dropped), small WebP hero photos with the first one fetched at high priority, and the sign-in background as a JPEG (558 → 223 KB).
+
+**Dropdowns:** one themed `Dropdown` (on [Headless UI](https://headlessui.com)'s Listbox) replaces the browser's unstyled lists everywhere: brand colours, a check on the current option, icons for item categories; keyboard (arrows, Home/End, type-ahead, Esc) and screen readers work as with a native one. Forms connect it through react-hook-form's `Controller`; e2e tests pick options with `choose()` like a person would.
 
 **Item and claim pages:** photos open full size (arrow keys or a swipe between photos, Esc to close); a Share button uses the phone's share sheet or copies the link; a claim shows its progress (sent → approved → handed over, or where it stopped).
 

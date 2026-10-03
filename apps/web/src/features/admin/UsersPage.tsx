@@ -6,7 +6,8 @@ import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { Input, Select, Textarea } from '../../components/ui/Field';
+import { Dropdown } from '../../components/ui/Dropdown';
+import { Input, Textarea } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
 import { Avatar, Badge, EmptyState, ErrorState, PageLoader } from '../../components/ui/misc';
 import { adminApi, type UserFilters } from '../../lib/api/endpoints';
@@ -23,7 +24,7 @@ export default function UsersPage() {
   const me = useCurrentUser();
   const [text, setText] = useState('');
   const [role, setRole] = useState<Role | ''>('');
-  const [status, setStatus] = useState<UserFilters['status'] | ''>('');
+  const [status, setStatus] = useState<NonNullable<UserFilters['status']> | ''>('');
   const q = useDebouncedValue(text.trim(), 300);
   const filters: UserFilters = {
     q: q || undefined,
@@ -50,27 +51,25 @@ export default function UsersPage() {
           placeholder="Name or email"
           maxLength={100}
         />
-        <Select
+        <Dropdown<Role | ''>
           label="Role"
           value={role}
-          onChange={(event) => setRole(event.target.value as Role | '')}
-        >
-          <option value="">All roles</option>
-          {ROLES.map((r) => (
-            <option key={r} value={r}>
-              {ROLE_LABELS[r]}
-            </option>
-          ))}
-        </Select>
-        <Select
+          onChange={setRole}
+          options={[
+            { value: '', label: 'All roles' },
+            ...ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] })),
+          ]}
+        />
+        <Dropdown<NonNullable<UserFilters['status']> | ''>
           label="Status"
           value={status}
-          onChange={(event) => setStatus(event.target.value as UserFilters['status'] | '')}
-        >
-          <option value="">Everyone</option>
-          <option value="ACTIVE">Active</option>
-          <option value="SUSPENDED">Suspended</option>
-        </Select>
+          onChange={setStatus}
+          options={[
+            { value: '', label: 'Everyone' },
+            { value: 'ACTIVE', label: 'Active' },
+            { value: 'SUSPENDED', label: 'Suspended' },
+          ]}
+        />
       </div>
 
       <div className="mt-6">
@@ -158,22 +157,19 @@ function UserRow({ user, me }: { user: AdminUserDto; me: MeDto }) {
 
       {manageable ? (
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-          <label className="sr-only" htmlFor={`role-${user.id}`}>
-            Role of {name}
-          </label>
-          <select
-            id={`role-${user.id}`}
+          <Dropdown<Role>
+            label={`Role of ${name}`}
+            hideLabel
+            look="pill"
+            className="w-44"
             value={user.role}
             disabled={changeRole.isPending}
-            onChange={(event) => changeRole.mutate(event.target.value as Role)}
-            className="h-8 rounded-xl border border-gray-300 bg-white px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
-          >
-            {ROLES.filter((r) => ROLE_RANK[r] <= ROLE_RANK[me.role]).map((r) => (
-              <option key={r} value={r}>
-                {ROLE_LABELS[r]}
-              </option>
-            ))}
-          </select>
+            onChange={(role) => changeRole.mutate(role)}
+            options={ROLES.filter((r) => ROLE_RANK[r] <= ROLE_RANK[me.role]).map((r) => ({
+              value: r,
+              label: ROLE_LABELS[r],
+            }))}
+          />
           {user.status === 'ACTIVE' ? (
             <Button variant="danger" size="sm" onClick={() => setSuspending(true)}>
               Suspend

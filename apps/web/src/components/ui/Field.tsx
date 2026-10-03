@@ -3,7 +3,6 @@ import {
   useId,
   type InputHTMLAttributes,
   type ReactNode,
-  type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from 'react';
 
@@ -81,28 +80,6 @@ export const Textarea = forwardRef<
         className={`${CONTROL} ${error ? 'border-red-400' : 'border-gray-300'} ${className}`}
         {...rest}
       />
-    </FieldShell>
-  );
-});
-
-export const Select = forwardRef<
-  HTMLSelectElement,
-  Common & SelectHTMLAttributes<HTMLSelectElement>
->(function Select({ label, error, hint, className = '', id, children, ...rest }, ref) {
-  const generated = useId();
-  const inputId = id ?? generated;
-  return (
-    <FieldShell id={inputId} label={label} error={error} hint={hint}>
-      <select
-        ref={ref}
-        id={inputId}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(inputId, error, hint)}
-        className={`${CONTROL} ${error ? 'border-red-400' : 'border-gray-300'} ${className}`}
-        {...rest}
-      >
-        {children}
-      </select>
     </FieldShell>
   );
 });

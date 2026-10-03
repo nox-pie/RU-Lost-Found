@@ -4,7 +4,8 @@ import { PackageOpen, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { Button } from '../../components/ui/Button';
-import { Input, Select } from '../../components/ui/Field';
+import { Dropdown } from '../../components/ui/Dropdown';
+import { Input } from '../../components/ui/Field';
 import { Badge, EmptyState, ErrorState, PageLoader } from '../../components/ui/misc';
 import { adminApi, type AdminItemFilters } from '../../lib/api/endpoints';
 import { CATEGORY_LABELS, ITEM_STATUS, timeAgo } from '../../lib/format';
@@ -43,22 +44,28 @@ export default function PostsPage() {
           placeholder="Title, place or description"
           maxLength={100}
         />
-        <Select label="Status" value={status} onChange={(event) => setStatus(event.target.value)}>
-          <option value="">Every status</option>
-          <option value="OPEN">Open</option>
-          <option value="RESERVED">Handover arranged</option>
-          <option value="RESOLVED">Returned</option>
-          <option value="REMOVED">Removed</option>
-        </Select>
-        <Select
+        <Dropdown
+          label="Status"
+          value={status}
+          onChange={setStatus}
+          options={[
+            { value: '', label: 'Every status' },
+            { value: 'OPEN', label: 'Open' },
+            { value: 'RESERVED', label: 'Handover arranged' },
+            { value: 'RESOLVED', label: 'Returned' },
+            { value: 'REMOVED', label: 'Removed' },
+          ]}
+        />
+        <Dropdown<'' | 'LOST' | 'FOUND'>
           label="Type"
           value={type}
-          onChange={(event) => setType(event.target.value as '' | 'LOST' | 'FOUND')}
-        >
-          <option value="">Lost and found</option>
-          <option value="LOST">Lost</option>
-          <option value="FOUND">Found</option>
-        </Select>
+          onChange={setType}
+          options={[
+            { value: '', label: 'Lost and found' },
+            { value: 'LOST', label: 'Lost' },
+            { value: 'FOUND', label: 'Found' },
+          ]}
+        />
       </div>
 
       <div className="mt-6">

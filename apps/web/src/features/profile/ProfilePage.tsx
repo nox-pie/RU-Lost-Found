@@ -3,11 +3,13 @@ import { profileFieldsSchema, type MeDto } from '@ru-lost-found/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Camera, LogOut, Trash2 } from 'lucide-react';
 import { useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import { Button } from '../../components/ui/Button';
-import { Input, Select } from '../../components/ui/Field';
+import { Dropdown } from '../../components/ui/Dropdown';
+import { YEAR_OPTIONS } from '../../lib/format';
+import { Input } from '../../components/ui/Field';
 import { Avatar } from '../../components/ui/misc';
 import { usersApi } from '../../lib/api/endpoints';
 import { emptyToUndefined, showFormError } from '../../lib/forms';
@@ -133,6 +135,7 @@ function DetailsForm({ user, onSaved }: { user: MeDto; onSaved: (user: MeDto) =>
   });
   const {
     register,
+    control,
     handleSubmit,
     setError,
     reset,
@@ -173,30 +176,40 @@ function DetailsForm({ user, onSaved }: { user: MeDto; onSaved: (user: MeDto) =>
         <Input label="Last name" error={errors.lastName?.message} {...register('lastName')} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Select label="Year" error={errors.year?.message} {...register('year')}>
-          {[1, 2, 3, 4, 5].map((year) => (
-            <option key={year} value={year}>
-              Year {year}
-            </option>
-          ))}
-        </Select>
+        <Controller
+          name="year"
+          control={control}
+          render={({ field }) => (
+            <Dropdown
+              label="Year"
+              value={field.value === undefined ? '' : String(field.value)}
+              onChange={(value) => field.onChange(Number(value))}
+              onBlur={field.onBlur}
+              options={YEAR_OPTIONS}
+              error={errors.year?.message}
+            />
+          )}
+        />
         <Input
           label="Enrollment no."
           error={errors.enrollmentNumber?.message}
           {...register('enrollmentNumber')}
         />
       </div>
-      <Select
-        label={university.data ? `School · ${university.data.name}` : 'School'}
-        error={errors.school?.message}
-        {...register('school')}
-      >
-        {schools.map((school) => (
-          <option key={school} value={school}>
-            {school}
-          </option>
-        ))}
-      </Select>
+      <Controller
+        name="school"
+        control={control}
+        render={({ field }) => (
+          <Dropdown
+            label={university.data ? `School · ${university.data.name}` : 'School'}
+            value={field.value ?? ''}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            options={schools.map((school) => ({ value: school, label: school }))}
+            error={errors.school?.message}
+          />
+        )}
+      />
       <Input
         label="Phone (optional)"
         type="tel"

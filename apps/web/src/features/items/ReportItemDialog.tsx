@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ITEM_CATEGORIES,
+  type ItemCategory,
   MAX_ITEM_PHOTOS,
   MAX_PHOTO_BYTES,
   MAX_VERIFICATION_QUESTIONS,
@@ -9,20 +10,22 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '../../components/ui/Button';
-import { Checkbox, Input, Select, Textarea } from '../../components/ui/Field';
+import { Checkbox, Input, Textarea } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
 import { itemsApi } from '../../lib/api/endpoints';
-import { CATEGORY_LABELS, todayIso } from '../../lib/format';
+import { todayIso } from '../../lib/format';
 import { showFormError } from '../../lib/forms';
 import { queryKeys } from '../../lib/queryClient';
 import { useCurrentUser } from '../auth/authContext';
 import { DemoLimitNotice } from '../demo/DemoBanner';
 import { PhotoPicker } from './PhotoPicker';
+import { Dropdown } from '../../components/ui/Dropdown';
+import { CATEGORY_OPTIONS } from '../../lib/categories';
 
 /** Same rules as the API's createItemSchema, shaped for the form. */
 const reportSchema = z.object({
@@ -142,21 +145,20 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
           error={errors.title?.message}
           {...register('title')}
         />
-        <Select
-          label="Category"
-          defaultValue=""
-          error={errors.category?.message}
-          {...register('category')}
-        >
-          <option value="" disabled>
-            Choose…
-          </option>
-          {ITEM_CATEGORIES.map((category) => (
-            <option key={category} value={category}>
-              {CATEGORY_LABELS[category]}
-            </option>
-          ))}
-        </Select>
+        <Controller
+          name="category"
+          control={control}
+          render={({ field }) => (
+            <Dropdown<ItemCategory | ''>
+              label="Category"
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              options={CATEGORY_OPTIONS}
+              error={errors.category?.message}
+            />
+          )}
+        />
       </div>
 
       <Textarea

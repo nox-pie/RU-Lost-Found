@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { appoint, describePage, reportFoundItem, signUp, uniqueEmail } from './support';
+import { appoint, choose, describePage, reportFoundItem, signUp, uniqueEmail } from './support';
 
 /** A day in this machine's time zone (the browser's too), as a date input expects it. */
 function localDay(offsetDays = 0): string {
@@ -44,7 +44,7 @@ test('an admin removes any post from the Posts tab and filters the activity log'
     await dialog.getByRole('button', { name: 'Remove post' }).click();
     await expect(admin.getByText('The post was removed.')).toBeVisible();
 
-    await admin.getByLabel('Status').selectOption('REMOVED');
+    await choose(admin, 'Status', 'Removed');
     await expect(row.getByText('Removed')).toBeVisible();
     await expect(row.getByRole('button', { name: 'Remove' })).toHaveCount(0);
   });

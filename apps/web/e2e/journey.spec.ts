@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { FIXTURE_PHOTO, PASSWORD, signUp, uniqueEmail } from './support';
+import { FIXTURE_PHOTO, PASSWORD, choose, signUp, uniqueEmail } from './support';
 
 /**
  * The core product journey, end to end in a real browser:
@@ -25,7 +25,7 @@ test('a found item gets back to its owner through a verified handover', async ({
     await dialog.locator('input[type=file]').setInputFiles(FIXTURE_PHOTO);
     await expect(dialog.getByRole('img', { name: 'Photo 1' })).toBeVisible();
     await dialog.getByLabel('Item name').fill('Bunch of keys');
-    await dialog.getByLabel('Category').selectOption('KEYS');
+    await choose(finder, 'Category', 'Keys', dialog);
     await dialog.getByLabel('Description').fill('Three keys on a red ring with a small torch.');
     await dialog.getByLabel('Where did you find it?').fill('Canteen');
     await dialog.getByRole('button', { name: 'Add a question' }).click();
