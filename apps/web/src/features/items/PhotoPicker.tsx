@@ -1,7 +1,10 @@
-import { ImagePlus, X } from 'lucide-react';
+import { Camera, ImagePlus, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
+import { Spinner } from '../../components/ui/Spinner';
+import { UPLOADABLE_TYPES, prepareImage } from '../../lib/images';
 
-const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp'];
+/** Phones and tablets: offer the camera directly. */
+const hasTouchScreen = () => window.matchMedia?.('(pointer: coarse)').matches ?? false;
 
 interface PhotoPickerProps {
   files: File[];
@@ -11,32 +14,45 @@ interface PhotoPickerProps {
   error?: string;
 }
 
-/** Drag-and-drop or tap to add photos, with previews; checks type and size before upload. */
+/**
+ * Drag-and-drop, choose or (on phones) take photos, with previews. Each photo is shrunk on the
+ * device first (see prepareImage), then checked against the size limit.
+ */
 export function PhotoPicker({ files, onChange, max, maxBytes, error }: PhotoPickerProps) {
   const input = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const canCapture = useMemo(hasTouchScreen, []);
   const [problem, setProblem] = useState<string>();
   const previews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
   useEffect(() => () => previews.forEach((url) => URL.revokeObjectURL(url)), [previews]);
 
-  function add(list: FileList | null) {
-    if (!list) return;
+  async function add(list: FileList | null) {
+    const incoming = Array.from(list ?? []);
+    if (incoming.length === 0) return;
     setProblem(undefined);
+    setPreparing(true);
     const next = [...files];
-    for (const file of Array.from(list)) {
-      if (!ACCEPTED.includes(file.type)) {
-        setProblem(`${file.name} is not a JPEG, PNG or WebP image.`);
-        continue;
+    try {
+      for (const file of incoming) {
+        if (next.length >= max) {
+          setProblem(`You can add up to ${max} photos.`);
+          break;
+        }
+        const prepared = await prepareImage(file);
+        if (!prepared) {
+          setProblem(`${file.name} can't be read as a photo. Use a JPEG, PNG or WebP image.`);
+          continue;
+        }
+        if (prepared.size > maxBytes) {
+          setProblem(`${file.name} is larger than ${Math.round(maxBytes / 1024 / 1024)} MB.`);
+          continue;
+        }
+        next.push(prepared);
       }
-      if (file.size > maxBytes) {
-        setProblem(`${file.name} is larger than ${Math.round(maxBytes / 1024 / 1024)} MB.`);
-        continue;
-      }
-      if (next.length >= max) {
-        setProblem(`You can add up to ${max} photos.`);
-        break;
-      }
-      next.push(file);
+    } finally {
+      setPreparing(false);
     }
     onChange(next);
   }
@@ -44,7 +60,7 @@ export function PhotoPicker({ files, onChange, max, maxBytes, error }: PhotoPick
   const onDrop = (event: DragEvent) => {
     event.preventDefault();
     setDragging(false);
-    add(event.dataTransfer.files);
+    void add(event.dataTransfer.files);
   };
 
   const message = problem ?? error;
@@ -75,7 +91,26 @@ export function PhotoPicker({ files, onChange, max, maxBytes, error }: PhotoPick
             </button>
           </div>
         ))}
-        {files.length < max && (
+        {preparing && (
+          <div
+            className="flex aspect-square flex-col items-center justify-center rounded-xl bg-gray-50 text-xs text-gray-500"
+            role="status"
+          >
+            <Spinner className="mb-1 h-5 w-5 text-primary" />
+            Preparing…
+          </div>
+        )}
+        {files.length < max && !preparing && canCapture && (
+          <button
+            type="button"
+            onClick={() => camera.current?.click()}
+            className={`flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed text-xs text-gray-500 transition ${message ? 'border-red-300' : 'border-gray-300 hover:border-primary hover:text-primary'}`}
+          >
+            <Camera className="mb-1 h-6 w-6" />
+            Take photo
+          </button>
+        )}
+        {files.length < max && !preparing && (
           <button
             type="button"
             onClick={() => input.current?.click()}
@@ -88,29 +123,44 @@ export function PhotoPicker({ files, onChange, max, maxBytes, error }: PhotoPick
             className={`flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed text-xs text-gray-500 transition ${dragging ? 'border-primary bg-primary/5' : message ? 'border-red-300' : 'border-gray-300 hover:border-primary hover:text-primary'}`}
           >
             <ImagePlus className="mb-1 h-6 w-6" />
-            Add photo
+            {canCapture ? 'Choose photo' : 'Add photo'}
           </button>
         )}
       </div>
       <input
         ref={input}
         type="file"
-        accept={ACCEPTED.join(',')}
+        accept={UPLOADABLE_TYPES.join(',')}
         multiple
         className="hidden"
         onChange={(event) => {
-          add(event.target.files);
+          void add(event.target.files);
           event.target.value = '';
         }}
       />
+      {canCapture && (
+        <input
+          ref={camera}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          aria-hidden
+          tabIndex={-1}
+          onChange={(event) => {
+            void add(event.target.files);
+            event.target.value = '';
+          }}
+        />
+      )}
       {message ? (
         <p role="alert" className="mt-1 text-sm text-red-600">
           {message}
         </p>
       ) : (
         <p className="mt-1 text-xs text-gray-500">
-          JPEG, PNG or WebP, up to {Math.round(maxBytes / 1024 / 1024)} MB each. Location data is
-          removed from photos automatically.
+          JPEG, PNG or WebP. Large photos are made smaller on your device before upload, and
+          location data is removed.
         </p>
       )}
     </div>

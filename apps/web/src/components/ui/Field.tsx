@@ -107,14 +107,15 @@ export const Select = forwardRef<
   );
 });
 
-export function Checkbox({
-  label,
-  ...rest
-}: { label: ReactNode } & InputHTMLAttributes<HTMLInputElement>) {
+export const Checkbox = forwardRef<
+  HTMLInputElement,
+  { label: ReactNode } & InputHTMLAttributes<HTMLInputElement>
+>(function Checkbox({ label, ...rest }, ref) {
   const id = useId();
   return (
     <label htmlFor={id} className="flex cursor-pointer items-start gap-2 text-sm text-gray-700">
       <input
+        ref={ref}
         id={id}
         type="checkbox"
         className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
@@ -123,4 +124,4 @@ export function Checkbox({
       <span>{label}</span>
     </label>
   );
-}
+});

@@ -20,6 +20,7 @@ apps/web/src/
 │   ├── forms.ts             # maps API field errors onto form inputs
 │   ├── format.ts            # labels, status colours, dates (en-IN)
 │   ├── hooks.ts             # useDebouncedValue (search as you type)
+│   ├── images.ts            # shrinks photos on the device before upload
 │   ├── sessionHint.ts       # "signed in on this device" flag, so visitors aren't kept waiting
 │   └── monitoring.ts        # Sentry, loaded lazily and only when configured
 ├── components/
@@ -100,6 +101,7 @@ Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `a
 - **Moderation journey:** a student reports a fake post → an admin (appointed with the real `set-role` script) removes it with a reason → the poster is notified and the post is gone → the admin suspends the poster, whose session ends → the activity log shows the decisions.
 - **Journey 2** (desktop and a Pixel 7 phone): a visitor signs up with a Gmail address, the session survives a reload, sign-out returns to the landing page, sign-in brings the session back.
 - **Demo:** from the landing page a visitor signs in as Ravi with one click and claims the sample wallet, signs out, signs in as Asha and approves the claim; on a phone, a demo account sees that its profile can't be changed and is offered sign-up.
+- **Photos:** a 12-megapixel photo over the 5 MB limit is shrunk in the browser, accepted and sent at a fraction of its size; on a phone the report form offers the camera.
 - **Admin tools:** an admin removes a post from the Posts tab with a reason, then narrows the activity log to a day and to one person.
 - **Resilience:** with the hosting layer faked to answer 502, pages load by themselves once the server wakes up, and a form sent to a sleeping server explains the wait and is not sent twice.
 
