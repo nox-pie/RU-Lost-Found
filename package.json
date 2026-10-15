@@ -25,6 +25,6 @@
     "e2e": "npm run e2e -w @ru-lost-found/web"
   },
   "devDependencies": {
-    "prettier": "^3.3.3"
+    "prettier": "^3.9.10"
   }
 }
