@@ -27,19 +27,35 @@ import { PhotoPicker } from './PhotoPicker';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { CATEGORY_OPTIONS } from '../../lib/categories';
 
+const questionSchema = z.string().trim().min(5, 'At least 5 characters').max(150);
+
 /** Same rules as the API's createItemSchema, shaped for the form. */
-const reportSchema = z.object({
-  type: z.enum(['LOST', 'FOUND']),
-  category: z.enum(ITEM_CATEGORIES, { message: 'Choose a category' }),
-  title: z.string().trim().min(3, 'Title must be at least 3 characters').max(80),
-  description: z.string().trim().min(10, 'Describe the item in at least 10 characters').max(1000),
-  location: z.string().trim().min(2, 'Enter where it was lost or found').max(100),
-  occurredOn: dateOnlySchema,
-  heldAtSecurityDesk: z.boolean(),
-  questions: z
-    .array(z.object({ text: z.string().trim().min(5, 'At least 5 characters').max(150) }))
-    .max(MAX_VERIFICATION_QUESTIONS),
-});
+const reportSchema = z
+  .object({
+    type: z.enum(['LOST', 'FOUND']),
+    category: z.enum(ITEM_CATEGORIES, { message: 'Choose a category' }),
+    title: z.string().trim().min(3, 'Title must be at least 3 characters').max(80),
+    description: z.string().trim().min(10, 'Describe the item in at least 10 characters').max(1000),
+    location: z.string().trim().min(2, 'Enter where it was lost or found').max(100),
+    occurredOn: dateOnlySchema,
+    heldAtSecurityDesk: z.boolean(),
+    questions: z.array(z.object({ text: z.string() })).max(MAX_VERIFICATION_QUESTIONS),
+  })
+  .superRefine((form, ctx) => {
+    // Questions are only sent with found items, so only then are they checked: a question added
+    // before switching to "I lost something" is hidden, and must not block the form unseen.
+    if (form.type !== 'FOUND') return;
+    form.questions.forEach((question, index) => {
+      const result = questionSchema.safeParse(question.text);
+      if (!result.success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['questions', index, 'text'],
+          message: result.error.issues[0]?.message ?? 'Check this question',
+        });
+      }
+    });
+  });
 type ReportForm = z.infer<typeof reportSchema>;
 
 export function ReportItemDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -95,7 +111,7 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
     form.append('occurredOn', values.occurredOn);
     form.append('heldAtSecurityDesk', String(values.heldAtSecurityDesk));
     if (values.type === 'FOUND') {
-      values.questions.forEach((question) => form.append('questions', question.text));
+      values.questions.forEach((question) => form.append('questions', question.text.trim()));
     }
     photos.forEach((photo) => form.append('photos', photo));
 
