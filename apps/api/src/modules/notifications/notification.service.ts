@@ -39,25 +39,29 @@ export class NotificationService {
     const recipient = await this.users.findById(input.userId);
     if (!recipient) return;
 
-    await this.notifications.add(
-      Notification.create({
-        id: this.ids.next(),
-        userId: recipient.id,
-        universityId: recipient.universityId,
-        type: input.type,
-        title: input.title,
-        body: input.body,
-        claimId: input.claimId ?? null,
-        itemId: input.itemId ?? null,
-        sourceEventId: input.sourceEventId,
-        createdAt: this.clock.now(),
-      }),
-    );
+    const created = Notification.create({
+      id: this.ids.next(),
+      userId: recipient.id,
+      universityId: recipient.universityId,
+      type: input.type,
+      title: input.title,
+      body: input.body,
+      claimId: input.claimId ?? null,
+      itemId: input.itemId ?? null,
+      sourceEventId: input.sourceEventId,
+      createdAt: this.clock.now(),
+    });
+    // A retried event finds the notification an earlier attempt stored.
+    const notification = (await this.notifications.add(created))
+      ? created
+      : ((await this.notifications.findBySourceEvent(input.sourceEventId, recipient.id)) ??
+        created);
 
-    // Sent even if the in-app notification already existed: that happens when an earlier attempt
-    // stored it but failed to send the email, so the email is still owed.
-    if (input.email && recipient.isActive) {
+    // The email is owed once: when an earlier attempt stored the notification but the email
+    // failed, it is sent now; when it already went out, a retry for someone else skips it.
+    if (input.email && recipient.isActive && !notification.emailedAt) {
       await this.emailSender.send(input.email(recipient));
+      await this.notifications.markEmailed(notification.id, this.clock.now());
     }
   }
 
