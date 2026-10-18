@@ -127,6 +127,13 @@ export const pageQuerySchema = z
   })
   .strict();
 
+/** Security desk console: found items handed in at the desk, optionally matching words. */
+export const deskItemsQuerySchema = pageQuerySchema.extend({
+  q: z.string().trim().min(1).max(100).optional(),
+});
+
+export type DeskItemsQuery = z.infer<typeof deskItemsQuerySchema>;
+
 export type CreateItemInput = z.infer<typeof createItemSchema>;
 export type UpdateItemInput = z.infer<typeof updateItemSchema>;
 export type ListItemsQuery = z.infer<typeof listItemsQuerySchema>;

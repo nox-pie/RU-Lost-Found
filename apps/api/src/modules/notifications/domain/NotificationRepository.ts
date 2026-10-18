@@ -17,4 +17,6 @@ export interface NotificationRepository {
   countUnread(userId: string): Promise<number>;
   /** Marks the given notifications (or all when `ids` is undefined) as read. Returns how many changed. */
   markRead(userId: string, ids: readonly string[] | undefined, now: Date): Promise<number>;
+  /** Deletes all of a user's notifications (their account was deleted). */
+  deleteAllForUser(userId: string): Promise<number>;
 }

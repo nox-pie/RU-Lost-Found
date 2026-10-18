@@ -10,6 +10,8 @@ export interface UserRepository extends Repository<User> {
   findByEmail(email: string, tx?: TransactionContext): Promise<User | null>;
   /** Users with these ids (unknown ids are skipped). */
   findByIds(ids: readonly string[]): Promise<User[]>;
+  /** Deletes the account for good (see AccountService.deleteAccount). */
+  delete(user: User, tx?: TransactionContext): Promise<void>;
   /** A university's users, newest first (admin screen). */
   search(
     scope: TenantScope,

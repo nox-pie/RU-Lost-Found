@@ -2,24 +2,11 @@ import type { RequestHandler } from 'express';
 import type {
   ListNotificationsQuery,
   MarkNotificationsReadInput,
-  NotificationDto,
   NotificationPage,
 } from '@ru-lost-found/shared';
 import { authOf } from '../../core/http/auth';
-import type { Notification } from './domain/Notification';
+import { toNotificationDto } from './notification.mapper';
 import type { NotificationService } from './notification.service';
-
-function toNotificationDto(notification: Notification): NotificationDto {
-  return {
-    id: notification.id,
-    type: notification.type,
-    title: notification.title,
-    body: notification.body,
-    link: { claimId: notification.claimId, itemId: notification.itemId },
-    read: notification.isRead,
-    createdAt: notification.createdAt.toISOString(),
-  };
-}
 
 export class NotificationController {
   constructor(private readonly notifications: NotificationService) {}

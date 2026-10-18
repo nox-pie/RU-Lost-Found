@@ -1,6 +1,7 @@
 import type { Request, RequestHandler } from 'express';
 import type {
   CreateItemInput,
+  DeskItemsQuery,
   ItemCountsDto,
   ItemCountsQuery,
   ItemDto,
@@ -39,6 +40,11 @@ export class ItemController {
       req.query as unknown as PageQuery,
     );
     res.json(this.toPage(page, authOf(req).userId));
+  };
+
+  listAtDesk: RequestHandler = async (req, res) => {
+    const query = req.query as unknown as DeskItemsQuery;
+    res.json(this.toPage(await this.items.listAtDesk(scopeOf(req), query), authOf(req).userId));
   };
 
   create: RequestHandler = async (req, res) => {

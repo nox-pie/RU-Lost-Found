@@ -171,6 +171,16 @@ describe('demo accounts', { timeout: 30_000 }, () => {
       .set('Authorization', asha.bearer)
       .attach('avatar', fakeJpeg(), 'me.jpg')
       .expect(403);
+    await api()
+      .post('/api/v1/auth/password/change')
+      .set('Authorization', asha.bearer)
+      .send({ currentPassword: 'anything-1', newPassword: 'taken-over-42' })
+      .expect(403);
+    await api()
+      .delete('/api/v1/account')
+      .set('Authorization', asha.bearer)
+      .send({ password: 'anything-1' })
+      .expect(403);
 
     expect(t.storage.stored.size).toBe(0);
   });

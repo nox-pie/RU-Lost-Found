@@ -104,6 +104,18 @@ export abstract class MongoRepository<
     entity.markPersisted(nextVersion);
   }
 
+  /**
+   * Deletes the record for good, with the same version check as `update`. Events the entity
+   * recorded (e.g. for the activity log) are stored in the same transaction.
+   */
+  async delete(entity: TEntity, tx?: TransactionContext): Promise<void> {
+    const { _id } = this.toDocument(entity);
+    await this.write(entity, tx, async (session) => {
+      const result = await this.model.deleteOne({ _id, version: entity.version }, { session });
+      if (result.deletedCount === 0) throw new ConcurrencyError();
+    });
+  }
+
   /** Runs the write and stores the entity's pending events atomically with it. */
   private async write(
     entity: TEntity,

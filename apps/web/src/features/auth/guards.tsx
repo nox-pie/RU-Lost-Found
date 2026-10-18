@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { Spinner } from '../../components/ui/Spinner';
-import { isAdmin, useAuth } from './authContext';
+import { isAdmin, isStaff, useAuth } from './authContext';
 import { brand } from '../../brand/brand.config';
 
 /**
@@ -52,6 +52,13 @@ export function RequireAuth({ children, home }: { children: ReactNode; home?: Re
 export function RequireAdmin({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   if (!user || !isAdmin(user)) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+/** The security desk console; anyone else is sent back to browsing. Must be inside <RequireAuth>. */
+export function RequireStaff({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  if (!user || !isStaff(user)) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 

@@ -12,6 +12,7 @@ type Mapping = {
 const MAPPINGS: Record<string, Mapping> = {
   UserRegistered: { action: 'USER_REGISTERED', targetType: 'USER', actor: 'aggregate' },
   PasswordChanged: { action: 'PASSWORD_CHANGED', targetType: 'USER', actor: 'aggregate' },
+  AccountDeleted: { action: 'ACCOUNT_DELETED', targetType: 'USER', actor: 'aggregate' },
   ItemReported: { action: 'ITEM_REPORTED', targetType: 'ITEM', actor: 'reporterId' },
   ItemRemoved: { action: 'ITEM_REMOVED', targetType: 'ITEM', actor: 'removedBy' },
   ClaimRequested: { action: 'CLAIM_SUBMITTED', targetType: 'CLAIM', actor: 'actorId' },

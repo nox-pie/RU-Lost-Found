@@ -5,6 +5,8 @@ import type { UserRepository } from '../../users/domain/UserRepository';
 import type { NotificationEmails } from '../notification.emails';
 
 const suspendedPayload = z.object({ reason: z.string() });
+/** Older events have no `via`; they were all resets. */
+const passwordPayload = z.object({ via: z.enum(['RESET', 'SETTINGS']).default('RESET') });
 
 /**
  * Account notices by email: a password change (in case it wasn't them), and an admin
@@ -55,13 +57,16 @@ export class AccountSecurityHandler implements EventHandler {
       return;
     }
 
+    const { via } = passwordPayload.parse(event.payload);
     await this.emailSender.send(
       this.emails.compose({
         ...to,
         subject: 'Your password was changed',
         heading: 'Your password was changed',
         paragraphs: [
-          'The password of your account was just changed, and you were signed out on every device.',
+          via === 'SETTINGS'
+            ? 'The password of your account was just changed in your profile, and you were signed out on your other devices.'
+            : 'The password of your account was just changed, and you were signed out on every device.',
           'If this was you, no action is needed. If it wasn’t, reset your password now and contact the administrators.',
         ],
         action: { label: 'Reset password', path: '/forgot-password' },

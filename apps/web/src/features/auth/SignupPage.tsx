@@ -161,6 +161,17 @@ function DetailsStep({
       <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>
         Create account
       </Button>
+      <p className="text-center text-xs text-gray-500">
+        By creating an account you agree to the{' '}
+        <Link to="/terms" target="_blank" className="font-medium text-primary hover:underline">
+          terms of use
+        </Link>{' '}
+        and the{' '}
+        <Link to="/privacy" target="_blank" className="font-medium text-primary hover:underline">
+          privacy policy
+        </Link>
+        .
+      </p>
     </form>
   );
 }

@@ -4,6 +4,7 @@ import {
   LISTABLE_ITEM_STATUSES,
   type ListAdminItemsQuery,
   type CreateItemInput,
+  type DeskItemsQuery,
   type ItemCountsDto,
   type ItemCountsQuery,
   type ItemStatus,
@@ -148,6 +149,19 @@ export class ItemService {
     const page = await this.items.search(
       scope,
       { reporterId: actor.userId, statuses: LISTABLE_ITEM_STATUSES },
+      { cursor: query.cursor, limit: query.limit },
+    );
+    return { items: await this.withReporters(page.items), nextCursor: page.nextCursor };
+  }
+
+  /**
+   * Security desk console: found items handed in at the desk that haven't gone back to their
+   * owner yet (open, or reserved for an approved claim). Staff only (checked by the route).
+   */
+  async listAtDesk(scope: TenantScope, query: DeskItemsQuery): Promise<PageResult<ItemView>> {
+    const page = await this.items.search(
+      scope,
+      { text: query.q, type: 'FOUND', heldAtSecurityDesk: true, statuses: ['OPEN', 'RESERVED'] },
       { cursor: query.cursor, limit: query.limit },
     );
     return { items: await this.withReporters(page.items), nextCursor: page.nextCursor };

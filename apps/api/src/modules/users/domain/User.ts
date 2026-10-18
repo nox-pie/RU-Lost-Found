@@ -163,11 +163,35 @@ export class User extends AggregateRoot {
     return previous;
   }
 
-  changePassword(passwordHash: string, now: Date): void {
+  /**
+   * `via` says how: a reset by email code signs out every device, a change in the settings keeps
+   * the device it was made on signed in (the notice email tells them apart).
+   */
+  changePassword(passwordHash: string, now: Date, via: 'RESET' | 'SETTINGS' = 'RESET'): void {
     this.assertEditable();
     this.props.passwordHash = passwordHash;
     this.touch(now);
-    this.record({ type: 'PasswordChanged', aggregateId: this.id, occurredAt: now, payload: {} });
+    this.record({
+      type: 'PasswordChanged',
+      aggregateId: this.id,
+      occurredAt: now,
+      payload: { via },
+    });
+  }
+
+  /**
+   * The person deletes their account; the repository then deletes the record. Records the event
+   * for the activity log, and returns the picture so the caller can delete the file.
+   */
+  close(now: Date): ImageRef | null {
+    this.assertEditable();
+    this.record({
+      type: 'AccountDeleted',
+      aggregateId: this.id,
+      occurredAt: now,
+      payload: { universityId: this.universityId },
+    });
+    return this.props.profile.avatar;
   }
 
   /** An admin gives this user another role. Recording the same role again changes nothing. */

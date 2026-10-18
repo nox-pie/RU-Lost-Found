@@ -121,6 +121,10 @@ claimSchema.index({ universityId: 1, itemId: 1, createdAt: 1 }, { name: 'by_item
 claimSchema.index({ universityId: 1, claimantId: 1, createdAt: -1 }, { name: 'by_claimant' });
 claimSchema.index({ universityId: 1, reporterId: 1, createdAt: -1 }, { name: 'by_reporter' });
 claimSchema.index({ status: 1, 'handover.deadline': 1 }, { name: 'overdue' });
+claimSchema.index(
+  { universityId: 1, status: 1, createdAt: -1, _id: -1 },
+  { name: 'by_status' }, // the security desk's list of handovers waiting
+);
 // Database-level guarantees behind the domain rules (they hold even under concurrent requests):
 claimSchema.index(
   { itemId: 1, claimantId: 1 },

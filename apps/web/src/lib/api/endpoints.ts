@@ -1,4 +1,5 @@
 import type {
+  AccountExportDto,
   AdminUserDto,
   AuditAction,
   AuditEntryDto,
@@ -41,6 +42,12 @@ export const authApi = {
   demoStatus: () => api<DemoStatusResponse>('/auth/demo'),
   demoSignIn: (persona: DemoPersonaKey) =>
     api<AuthResponse>('/auth/demo', { method: 'POST', json: { persona } }),
+  /** Signs out every other device; the answer is this device's new session. */
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api<AuthResponse>('/auth/password/change', {
+      method: 'POST',
+      json: { currentPassword, newPassword },
+    }),
   resetPassword: (verificationToken: string, newPassword: string) =>
     api<MessageResponse>('/auth/password/reset', {
       method: 'POST',
@@ -59,6 +66,11 @@ export const usersApi = {
   },
   removeAvatar: () => api<MeDto>('/users/me/avatar', { method: 'DELETE' }),
   university: () => api<UniversityDto>('/universities/current'),
+};
+
+export const accountApi = {
+  exportData: () => api<AccountExportDto>('/account/export'),
+  remove: (password: string) => api<void>('/account', { method: 'DELETE', json: { password } }),
 };
 
 export interface ItemFilters {
@@ -111,6 +123,14 @@ export const claimsApi = {
     api<ClaimDto>(`/claims/${id}/handover`, { method: 'POST', json: { code } }),
   handoverAsStaff: (id: string) =>
     api<ClaimDto>(`/claims/${id}/handover/staff`, { method: 'POST', json: {} }),
+};
+
+/** The security desk console (desk staff and admins). */
+export const deskApi = {
+  handovers: (cursor?: string) =>
+    api<Page<ClaimDto>>('/desk/handovers', { query: { cursor, limit: 20 } }),
+  items: (q: string | undefined, cursor?: string) =>
+    api<Page<ItemDto>>('/desk/items', { query: { q, cursor, limit: 20 } }),
 };
 
 export const notificationsApi = {

@@ -1,6 +1,15 @@
 import type { ClaimDto, ItemDto } from '@ru-lost-found/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Expand, Flag, MapPin, ShieldCheck, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Calendar,
+  Expand,
+  Flag,
+  MapPin,
+  Pencil,
+  ShieldCheck,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -12,6 +21,7 @@ import { CATEGORY_LABELS, CLAIM_STATUS, ITEM_STATUS, formatDay, timeAgo } from '
 import { queryKeys } from '../../lib/queryClient';
 import { isAdmin, useCurrentUser } from '../auth/authContext';
 import { ClaimDialog } from '../claims/ClaimDialog';
+import { EditItemDialog } from './EditItemDialog';
 import { FlagItemDialog } from '../moderation/FlagItemDialog';
 import { RemovePostDialog } from '../moderation/RemovePostDialog';
 import { PhotoLightbox } from './PhotoLightbox';
@@ -230,12 +240,13 @@ function ModerationActions({ item }: { item: ItemDto }) {
   );
 }
 
-/** For the reporter: the claims on this item, and removing the report. */
+/** For the reporter: the claims on this item, editing and removing the report. */
 function ReporterActions({ item }: { item: ItemDto }) {
   const user = useCurrentUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
+  const [editing, setEditing] = useState(false);
   const claims = useQuery({
     queryKey: queryKeys.claims.forItem(item.id),
     queryFn: () => claimsApi.forItem(item.id),
@@ -271,12 +282,23 @@ function ReporterActions({ item }: { item: ItemDto }) {
           </p>
         )}
       </section>
-      {/* Sample posts are shared by every visitor, so demo accounts can't remove them. */}
-      {item.status !== 'RESOLVED' && !user.isDemo && (
-        <Button variant="danger" onClick={() => setConfirming(true)}>
-          <Trash2 className="h-4 w-4" /> Remove report
-        </Button>
+      {/* Sample posts are shared by every visitor, so demo accounts can't change them. */}
+      {!user.isDemo && (
+        <div className="flex flex-wrap gap-2">
+          {/* Only open posts can be edited: once a claim is approved, the claimant relies on them. */}
+          {item.status === 'OPEN' && (
+            <Button variant="outline" onClick={() => setEditing(true)}>
+              <Pencil className="h-4 w-4" /> Edit post
+            </Button>
+          )}
+          {item.status !== 'RESOLVED' && (
+            <Button variant="danger" onClick={() => setConfirming(true)}>
+              <Trash2 className="h-4 w-4" /> Remove report
+            </Button>
+          )}
+        </div>
       )}
+      <EditItemDialog item={item} open={editing} onClose={() => setEditing(false)} />
       <ConfirmDialog
         open={confirming}
         title="Remove this report?"

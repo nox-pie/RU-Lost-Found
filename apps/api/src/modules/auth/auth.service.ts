@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type {
+  ChangePasswordInput,
   DemoSignInInput,
   LoginInput,
   RegisterInput,
@@ -289,6 +290,36 @@ export class AuthService {
     user.changePassword(await passwords.hash(newPassword), clock.now());
     await users.update(user);
     await sessions.endAll(user.id, 'PASSWORD_CHANGED');
+  }
+
+  /**
+   * A signed-in user who knows their password sets a new one. Every session ends, and this
+   * device gets a fresh one so it stays signed in. Wrong current passwords count as failed
+   * sign-ins, so a stolen access token can't be used to guess the password.
+   */
+  async changePassword(
+    userId: string,
+    { currentPassword, newPassword }: ChangePasswordInput,
+    client: ClientInfo,
+  ): Promise<AuthResult> {
+    const { users, passwords, sessions, clock, loginThrottle } = this.deps;
+    const user = await users.findById(userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedError('Your session has ended. Please sign in again.');
+    }
+    user.assertEditable();
+    await loginThrottle.assertAllowed(user.email, client.ip);
+    if (!(await passwords.verify(currentPassword, user.passwordHash))) {
+      await loginThrottle.recordFailure(user.email, client.ip);
+      throw new ValidationError('Your current password is incorrect.', [
+        { path: 'body.currentPassword', message: 'Your current password is incorrect' },
+      ]);
+    }
+
+    user.changePassword(await passwords.hash(newPassword), clock.now(), 'SETTINGS');
+    await users.update(user);
+    await sessions.endAll(user.id, 'PASSWORD_CHANGED');
+    return this.signIn(user, client);
   }
 
   private async signIn(user: User, client: ClientInfo): Promise<AuthResult> {

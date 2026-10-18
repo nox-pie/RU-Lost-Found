@@ -82,6 +82,11 @@ export class MongoSessionRepository
     return this.endMany({ userId: toObjectId(userId) }, reason, now);
   }
 
+  async deleteAllForUser(userId: string): Promise<number> {
+    const result = await this.model.deleteMany({ userId: toObjectId(userId) });
+    return result.deletedCount;
+  }
+
   private async endMany(
     filter: Record<string, unknown>,
     reason: SessionEndReason,

@@ -8,9 +8,11 @@ import { requestLogger } from './core/http/middleware/requestLogger';
 import { createDocsRouter } from './docs/docs.routes';
 import { buildOpenApiDocument } from './docs/openapi';
 import { limitWrites, noStore, securityHeaders } from './core/http/middleware/security';
+import { createAccountRouter } from './modules/account/account.routes';
 import { createAdminRouter } from './modules/admin/admin.routes';
 import { createAuthRouter } from './modules/auth/auth.routes';
 import { createClaimRouter } from './modules/claims/claim.routes';
+import { createDeskRouter } from './modules/desk/desk.routes';
 import { createHealthRouter } from './modules/health/health.routes';
 import { createItemRouter } from './modules/items/item.routes';
 import { createModerationRouter } from './modules/moderation/moderation.routes';
@@ -50,13 +52,28 @@ export function createApp(container: Container): Express {
     );
   }
   api.use(limitWrites(middleware.rateLimiter));
-  api.use('/auth', createAuthRouter(controllers.auth, middleware.rateLimiter, env.CORS_ORIGINS));
+  api.use(
+    '/auth',
+    createAuthRouter(
+      controllers.auth,
+      middleware.rateLimiter,
+      env.CORS_ORIGINS,
+      middleware.authenticate,
+    ),
+  );
   api.use(
     '/users',
     createUserRouter(controllers.users, {
       authenticate: middleware.authenticate,
       limiter: middleware.rateLimiter,
       uploadSlot: middleware.uploadSlot,
+    }),
+  );
+  api.use(
+    '/account',
+    createAccountRouter(controllers.account, {
+      authenticate: middleware.authenticate,
+      limiter: middleware.rateLimiter,
     }),
   );
   api.use(
@@ -86,6 +103,15 @@ export function createApp(container: Container): Express {
       moderation: controllers.moderation,
       authenticate: middleware.authenticate,
       requireAdmin: middleware.requireAdmin,
+    }),
+  );
+  api.use(
+    '/desk',
+    createDeskRouter({
+      claims: controllers.claims,
+      items: controllers.items,
+      authenticate: middleware.authenticate,
+      requireStaff: middleware.requireStaff,
     }),
   );
   if (container.localUploads) {

@@ -1,6 +1,7 @@
 import type { CookieOptions, Request, RequestHandler, Response } from 'express';
 import type {
   AuthResponse,
+  ChangePasswordInput,
   DemoSignInInput,
   DemoStatusResponse,
   LoginInput,
@@ -11,6 +12,7 @@ import type {
   VerifyOtpInput,
 } from '@ru-lost-found/shared';
 import { UnauthorizedError } from '../../core/errors/AppError';
+import { authOf } from '../../core/http/auth';
 import { toMeDto } from '../users/user.mapper';
 import type { AuthResult, AuthService } from './auth.service';
 import type { ClientInfo } from './SessionManager';
@@ -92,6 +94,16 @@ export class AuthController {
     res.clearCookie(REFRESH_COOKIE, this.cookieOptions);
     const body: MessageResponse = { message: 'Your password has been changed. Please sign in.' };
     res.json(body);
+  };
+
+  /** Answers like a sign-in: this device's old session ended, so it gets a new one. */
+  changePassword: RequestHandler = async (req, res) => {
+    const result = await this.auth.changePassword(
+      authOf(req).userId,
+      req.body as ChangePasswordInput,
+      clientOf(req),
+    );
+    this.sendSession(res, result);
   };
 
   demoStatus: RequestHandler = (_req, res) => {

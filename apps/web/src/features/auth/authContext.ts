@@ -30,8 +30,14 @@ export function useCurrentUser(): MeDto {
 }
 
 const ADMIN_ROLES: readonly Role[] = ['UNIVERSITY_ADMIN', 'PLATFORM_ADMIN'];
+const STAFF_ROLES: readonly Role[] = ['SECURITY_DESK', ...ADMIN_ROLES];
 
 /** Admins see the admin area. The API checks again on every request; this only shapes the UI. */
 export function isAdmin(user: Pick<MeDto, 'role'>): boolean {
   return ADMIN_ROLES.includes(user.role);
+}
+
+/** Security desk staff and admins see the desk console. */
+export function isStaff(user: Pick<MeDto, 'role'>): boolean {
+  return STAFF_ROLES.includes(user.role);
 }

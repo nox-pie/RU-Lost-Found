@@ -7,10 +7,13 @@ import {
 import {
   ERROR_CODES,
   approveClaimSchema,
+  changePasswordSchema,
   changeRoleSchema,
   claimIdParamsSchema,
   createItemSchema,
+  deleteAccountSchema,
   demoSignInSchema,
+  deskItemsQuerySchema,
   flagItemSchema,
   itemCountsQuerySchema,
   handoverSchema,
@@ -176,6 +179,18 @@ export const OPERATIONS: Operation[] = [
     body: resetPasswordSchema,
     limited: true,
     ok: { 200: 'MessageResponse' },
+  },
+  {
+    method: 'post',
+    path: '/auth/password/change',
+    tag: 'Auth',
+    summary: 'Change the password while signed in',
+    description:
+      'Needs the current password (wrong ones count as failed sign-ins). Signs out every other device; this one gets a new session and refresh cookie.',
+    access: 'user',
+    body: changePasswordSchema,
+    limited: true,
+    ok: { 200: 'AuthResponse' },
   },
   {
     method: 'get',
@@ -421,6 +436,54 @@ export const OPERATIONS: Operation[] = [
     access: 'staff',
     params: claimIdParamsSchema,
     ok: { 200: 'ClaimDto' },
+  },
+
+  // Account
+  {
+    method: 'get',
+    path: '/account/export',
+    tag: 'Account',
+    summary: 'Download my data',
+    description:
+      'Everything the account holds (profile, posts, claims made and received, notifications) as a JSON file download.',
+    access: 'user',
+    limited: true,
+    ok: { 200: 'AccountExportDto' },
+  },
+  {
+    method: 'delete',
+    path: '/account',
+    tag: 'Account',
+    summary: 'Delete my account',
+    description:
+      'Needs the password. Withdraws active claims, removes open posts, then deletes the person, their sessions, notifications and picture. Finished handovers stay, shown as "Former member". Demo accounts are refused.',
+    access: 'user',
+    body: deleteAccountSchema,
+    limited: true,
+    ok: { 204: 'Account deleted' },
+  },
+
+  // Security desk
+  {
+    method: 'get',
+    path: '/desk/handovers',
+    tag: 'Security desk',
+    summary: 'Approved claims waiting for their handover',
+    description:
+      'Every approved claim of the university, newest first, without handover codes or contact details. Desk staff and admins, by the role stored now.',
+    access: 'staff',
+    query: pageQuerySchema,
+    ok: { 200: `${PAGE} T = ClaimDto` },
+  },
+  {
+    method: 'get',
+    path: '/desk/items',
+    tag: 'Security desk',
+    summary: 'Found items held at the security desk',
+    description: 'Open or reserved found items handed in at the desk, newest first.',
+    access: 'staff',
+    query: deskItemsQuerySchema,
+    ok: { 200: `${PAGE} T = ItemDto` },
   },
 
   // Notifications

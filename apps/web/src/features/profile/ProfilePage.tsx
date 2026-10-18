@@ -17,6 +17,7 @@ import { prepareImage } from '../../lib/images';
 import { queryKeys } from '../../lib/queryClient';
 import { useAuth, useCurrentUser } from '../auth/authContext';
 import { DemoLimitNotice } from '../demo/DemoBanner';
+import { AccountSettings } from './AccountSettings';
 
 type ProfileInput = z.input<typeof profileFieldsSchema>;
 type Profile = z.output<typeof profileFieldsSchema>;
@@ -44,6 +45,7 @@ export default function ProfilePage() {
         <>
           <AvatarSection user={user} onChange={setUser} />
           <DetailsForm user={user} onSaved={setUser} />
+          <AccountSettings user={user} />
         </>
       )}
       <div className="mt-8 flex justify-end">

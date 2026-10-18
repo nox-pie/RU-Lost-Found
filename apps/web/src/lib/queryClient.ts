@@ -25,6 +25,8 @@ export const queryKeys = {
     counts: (filters: object) => ['items', 'counts', filters] as const,
     mine: ['items', 'mine'] as const,
     detail: (id: string) => ['items', 'detail', id] as const,
+    /** Security desk console: found items held at the desk. */
+    desk: (q: string) => ['items', 'desk', q] as const,
   },
   claims: {
     all: ['claims'] as const,
@@ -34,6 +36,8 @@ export const queryKeys = {
     mineOnItem: (itemId: string) => ['claims', 'mine', 'item', itemId] as const,
     received: (status: string) => ['claims', 'received', status] as const,
     detail: (id: string) => ['claims', 'detail', id] as const,
+    /** Security desk console: approved claims waiting for their handover. */
+    desk: ['claims', 'desk'] as const,
   },
   notifications: ['notifications'] as const,
   admin: {
