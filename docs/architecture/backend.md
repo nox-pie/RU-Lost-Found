@@ -111,7 +111,7 @@ apps/api/src/
 │   ├── audit/                    # Audit log (audit_logs) and the handler that fills it
 │   └── health/                   # live / ready / client checks
 ├── docs/                         # OpenAPI document and Swagger UI
-├── scripts/                      # seed, set-role, migrate-legacy
+├── scripts/                      # seed, set-role, demo
 └── testing/                      # Test helpers: test app, builders, fakes
 ```
 

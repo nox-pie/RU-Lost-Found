@@ -1,6 +1,6 @@
 # Deployment runbook
 
-How the product runs in production, how to deploy this version next to the first one, switch over, check it, and switch back if needed. Every service is on a free tier; section 7 lists what to upgrade first.
+How the product runs in production, how to deploy it from scratch and how to check a deploy. Every service is on a free tier; section 7 lists what to upgrade first.
 
 ## 1. Production setup
 
@@ -32,13 +32,13 @@ A new developer copies `apps/api/.env.example` to `apps/api/.env` and is ready (
 
 ## 2. Before the first deploy
 
-| Service       | What to set up                                                                                                                                                                                                   |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| MongoDB Atlas | In the existing cluster, nothing to create: the API creates database `ru-lost-found-v2` and its indexes on start. Use a database user with access to it (and read access to the old database for the migration). |
-| Upstash       | A Redis database (free tier). Copy the `rediss://` URL.                                                                                                                                                          |
-| Brevo         | Verify the sender address used as `EMAIL_FROM_ADDRESS`; create an API key.                                                                                                                                       |
-| Cloudinary    | The existing account (old images stay where they are).                                                                                                                                                           |
-| Sentry        | Two projects: Node (API) and React (web). Copy both DSNs.                                                                                                                                                        |
+| Service       | What to set up                                                                                                                                                 |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MongoDB Atlas | A cluster (M0 is enough); nothing else to create: the API creates database `ru-lost-found-v2` and its indexes on start. Use a database user with access to it. |
+| Upstash       | A Redis database (free tier). Copy the `rediss://` URL.                                                                                                        |
+| Brevo         | Verify the sender address used as `EMAIL_FROM_ADDRESS`; create an API key.                                                                                     |
+| Cloudinary    | An account; copy the cloud name, API key and secret.                                                                                                           |
+| Sentry        | Two projects: Node (API) and React (web). Copy both DSNs.                                                                                                      |
 
 ## 3. Deploy the API (Render)
 
@@ -50,7 +50,7 @@ A new developer copies `apps/api/.env.example` to `apps/api/.env` and is ready (
 
 The API refuses to start in production if a required setting is missing or invalid, and its log names every problem at once.
 
-## 4. Data: university, first admin, old accounts
+## 4. Data: university and first admin
 
 Render's free plan has no shell, so these run from a laptop against the production database. Use the production `MONGODB_URI`; `APP_SECRET` can be any 32+ character value here (these scripts don't use it).
 
@@ -59,37 +59,31 @@ cd apps/api
 export MONGODB_URI='mongodb+srv://…/ru-lost-found-v2' APP_SECRET='any-32-characters-long-value-here'
 
 npm run seed                                               # the university (seed/universities.json); rerun after editing it
-
-export LEGACY_MONGODB_URI='mongodb+srv://…/<old database>'
-npm run migrate-legacy                                     # dry run: prints what would happen
-npm run migrate-legacy -- --apply                          # copies accounts and items
-
 npm run set-role -- your.email@rishihood.edu.in PLATFORM_ADMIN     # only if ADMIN_EMAILS isn't set
 ```
 
 **Admins:** the owners' emails go in the Render setting `ADMIN_EMAILS` (comma-separated). The API makes those accounts platform admins when it starts, or as soon as they sign up, so a fresh deployment needs no manual step. The actual addresses are kept in the dashboard because the repository is public.
 
-The migration keeps ids and passwords (people sign in as before), never writes to the old database, sends no emails and can be run again safely. It does not copy the old "claimed by" contact notes (personal data). Inside the Docker image the same scripts are `node dist/scripts/<name>.js`.
+Inside the Docker image the same scripts are `node dist/scripts/<name>.js`.
 
-## 5. Switch the web app over (Vercel)
+## 5. Deploy the web app (Vercel)
 
-1. Vercel project → **Settings → Build and Deployment**: Root Directory `apps/web`, framework Vite, "Include files outside the root directory" on (the app imports `packages/shared`). The first version's frontend folder no longer exists in this version of the repository, so this setting must be in place before this version is deployed.
+1. Vercel project → **Settings → Build and Deployment**: Root Directory `apps/web`, framework Vite, "Include files outside the root directory" on (the app imports `packages/shared`).
 2. Environment variable `VITE_SENTRY_DSN` (the React project's DSN).
-3. In `apps/web/vercel.json`, point the `/api/:path*` rewrite at `https://ru-lost-found-api.onrender.com/api/:path*`, then deploy. **This is the switch-over.**
+3. `apps/web/vercel.json` rewrites `/api/:path*` to `https://ru-lost-found-api.onrender.com/api/:path*`; change it if the API lives elsewhere.
 
-## 6. After switching over
+Pushes to `main` deploy both the web app (Vercel) and the API (Render, `autoDeploy`).
+
+## 6. After a deploy
 
 | Check                                | How                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sign-in with an old account          | Use an account from the first version: same email and password                                                                                                                                                                                                                                                                                                                                                                                                |
 | The whole flow                       | Post an item with a photo, claim it from a second account, approve, hand over with the code                                                                                                                                                                                                                                                                                                                                                                   |
 | Real client IPs (`TRUST_PROXY_HOPS`) | Open `https://ru-lost-found.vercel.app/api/v1/health/client`: `ip` must be **your** public address (compare with a "what is my IP" site). `forwardedFor` lists the chain, nearest proxy last; `TRUST_PROXY_HOPS` is the number of entries after your address, plus one for the direct peer. Too low and everyone shares a proxy's rate-limit bucket; too high and clients could fake their IP. The sign-ins in Admin → Activity then show real addresses too. |
 | Emails                               | The sign-up code arrives from the Brevo sender; links point at `APP_URL`                                                                                                                                                                                                                                                                                                                                                                                      |
 | Error tracking                       | Sentry → Releases shows the deployed commit, and Issues stays empty                                                                                                                                                                                                                                                                                                                                                                                           |
 | Uptime                               | UptimeRobot: HTTP monitor on `/api/v1/health/live` every 5 min (alerts + keeps the free instance awake); a second monitor on `/api/v1/health/ready` for alerts only (database or Redis down)                                                                                                                                                                                                                                                                  |
 | Security headers                     | `curl -sI https://ru-lost-found.vercel.app/` shows `Content-Security-Policy`; the browser console shows no "Refused to…" messages                                                                                                                                                                                                                                                                                                                             |
-
-**Switching back:** point the rewrite in `vercel.json` back at `https://ru-lost-found.onrender.com` and redeploy the web app. The first version keeps running untouched, but anything created in this version since the switch won't be there. Keep the old service for two weeks, then delete it.
 
 ## 7. Free tiers and what to upgrade first
 

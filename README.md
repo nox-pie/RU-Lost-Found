@@ -117,7 +117,7 @@ npm run set-role -w @ru-lost-found/api -- you@rishihood.edu.in UNIVERSITY_ADMIN 
 - [Architecture decisions](docs/adr/README.md): 11 records of the main choices, the alternatives and the trade-offs
 - [Demo data](docs/demo-data.md): the sample posts visitors see, their safeguards and how to remove them
 - [External services](docs/services.md): every service used (MongoDB Atlas, Upstash, Render, Vercel, Cloudinary, Brevo, Sentry, UptimeRobot), its limits, settings and how to rotate keys
-- [Deployment runbook](docs/deployment.md): production setup, switch-over and rollback, free-tier limits
+- [Deployment runbook](docs/deployment.md): production setup, deploying from scratch, checks after a deploy, free-tier limits
 - [Load test](docs/load-test.md): method, results, and the bottleneck it found
 - [Branding](docs/branding.md): running the portal for another organisation
 

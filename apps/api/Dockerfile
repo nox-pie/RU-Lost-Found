@@ -35,5 +35,5 @@ EXPOSE 5001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||5001)+'/api/v1/health/live').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
 # Other entry points: dist/worker.js, dist/scripts/seed.js, dist/scripts/set-role.js,
-# dist/scripts/migrate-legacy.js
+# dist/scripts/demo.js
 CMD ["node", "dist/main.js"]
