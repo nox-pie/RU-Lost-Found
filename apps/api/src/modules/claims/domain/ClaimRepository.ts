@@ -17,14 +17,6 @@ export interface ClaimRepository extends Repository<Claim> {
   /** REQUESTED or APPROVED claims on an item, oldest first. */
   findActiveByItem(scope: TenantScope, itemId: string, tx?: TransactionContext): Promise<Claim[]>;
 
-  /** The claimant's REQUESTED or APPROVED claim on an item, if any. */
-  findActiveByItemAndClaimant(
-    scope: TenantScope,
-    itemId: string,
-    claimantId: string,
-    tx?: TransactionContext,
-  ): Promise<Claim | null>;
-
   /** Newest first. */
   search(
     scope: TenantScope,
