@@ -50,7 +50,15 @@ export function createApp(container: Container): Express {
     );
   }
   api.use(limitWrites(middleware.rateLimiter));
-  api.use('/auth', createAuthRouter(controllers.auth, middleware.rateLimiter, env.CORS_ORIGINS));
+  api.use(
+    '/auth',
+    createAuthRouter(
+      controllers.auth,
+      middleware.rateLimiter,
+      env.CORS_ORIGINS,
+      middleware.authenticate,
+    ),
+  );
   api.use(
     '/users',
     createUserRouter(controllers.users, {

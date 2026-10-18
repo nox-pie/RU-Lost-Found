@@ -68,6 +68,17 @@ export const resetPasswordSchema = z
   .object({ verificationToken: z.string().min(1), newPassword: passwordSchema })
   .strict();
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Enter your current password').max(200),
+    newPassword: passwordSchema,
+  })
+  .strict()
+  .refine((value) => value.newPassword !== value.currentPassword, {
+    path: ['newPassword'],
+    message: 'Choose a password different from your current one',
+  });
+
 export const updateProfileSchema = profileFieldsSchema
   .partial()
   .strict()
@@ -80,6 +91,7 @@ export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
 /** The signed-in user's own profile. */

@@ -7,6 +7,7 @@ import {
 import {
   ERROR_CODES,
   approveClaimSchema,
+  changePasswordSchema,
   changeRoleSchema,
   claimIdParamsSchema,
   createItemSchema,
@@ -176,6 +177,18 @@ export const OPERATIONS: Operation[] = [
     body: resetPasswordSchema,
     limited: true,
     ok: { 200: 'MessageResponse' },
+  },
+  {
+    method: 'post',
+    path: '/auth/password/change',
+    tag: 'Auth',
+    summary: 'Change the password while signed in',
+    description:
+      'Needs the current password (wrong ones count as failed sign-ins). Signs out every other device; this one gets a new session and refresh cookie.',
+    access: 'user',
+    body: changePasswordSchema,
+    limited: true,
+    ok: { 200: 'AuthResponse' },
   },
   {
     method: 'get',

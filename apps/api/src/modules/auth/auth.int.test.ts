@@ -535,6 +535,87 @@ describe('password reset', () => {
   });
 });
 
+describe('password change while signed in', () => {
+  const NEW_PASSWORD = 'a-brand-new-pass-7';
+  const change = (accessToken: string, body: object) =>
+    api()
+      .post('/api/v1/auth/password/change')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send(body);
+
+  it('keeps this device signed in and signs out every other device', async () => {
+    const { accessToken, cookie: thisDevice } = await signUp();
+    const otherDevice = refreshCookie(
+      await api().post('/api/v1/auth/login').send({ email: EMAIL, password: PASSWORD }).expect(200),
+    );
+
+    const res = await change(accessToken, {
+      currentPassword: PASSWORD,
+      newPassword: NEW_PASSWORD,
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ accessToken: expect.any(String), user: { email: EMAIL } });
+    const stillHere = refreshCookie(res);
+    expect((await api().post('/api/v1/auth/refresh').set('Cookie', stillHere)).status).toBe(200);
+    expect((await api().post('/api/v1/auth/refresh').set('Cookie', thisDevice)).status).toBe(401);
+    expect((await api().post('/api/v1/auth/refresh').set('Cookie', otherDevice)).status).toBe(401);
+    expect(
+      (await api().post('/api/v1/auth/login').send({ email: EMAIL, password: PASSWORD })).status,
+    ).toBe(401);
+    expect(
+      (await api().post('/api/v1/auth/login').send({ email: EMAIL, password: NEW_PASSWORD }))
+        .status,
+    ).toBe(200);
+
+    // The notice says this device stayed signed in.
+    await t.container.worker.drain();
+    const notice = t.email.to(EMAIL).find((m) => m.subject === 'Your password was changed');
+    expect(notice?.text).toContain('signed out on your other devices');
+  });
+
+  it('needs the current password, and counts wrong ones like failed sign-ins', async () => {
+    const { accessToken } = await signUp();
+
+    const wrong = await change(accessToken, {
+      currentPassword: 'not-my-password-1',
+      newPassword: NEW_PASSWORD,
+    });
+    expect(wrong.status).toBe(400);
+    expect(wrong.body.error.details).toEqual([
+      { path: 'body.currentPassword', message: 'Your current password is incorrect' },
+    ]);
+
+    const { limit } = LOGIN_FAILURE_LIMITS.perAccountAndIp;
+    for (let i = 1; i < limit; i++) {
+      await change(accessToken, { currentPassword: 'guess-123', newPassword: NEW_PASSWORD });
+    }
+    const blocked = await change(accessToken, {
+      currentPassword: PASSWORD,
+      newPassword: NEW_PASSWORD,
+    });
+    expect(blocked.status).toBe(429);
+  });
+
+  it('asks for a new password that differs from the current one', async () => {
+    const { accessToken } = await signUp();
+
+    const res = await change(accessToken, { currentPassword: PASSWORD, newPassword: PASSWORD });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.details).toEqual([
+      { path: 'body.newPassword', message: 'Choose a password different from your current one' },
+    ]);
+  });
+
+  it('requires a signed-in user', async () => {
+    const res = await api()
+      .post('/api/v1/auth/password/change')
+      .send({ currentPassword: PASSWORD, newPassword: NEW_PASSWORD });
+    expect(res.status).toBe(401);
+  });
+});
+
 describe('university', () => {
   it('gives signed-in users their university and its schools', async () => {
     const { accessToken } = await signUp();
