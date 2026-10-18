@@ -31,6 +31,12 @@ const envSchema = z
      */
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).optional(),
 
+    /**
+     * General cap on requests that change data, per client IP and minute. Raise it if many people
+     * share one address (the end-to-end tests run every simulated person from one IP).
+     */
+    WRITE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(120),
+
     /** Public address of the web app, used for links in emails. */
     APP_URL: z
       .string()

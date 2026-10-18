@@ -54,3 +54,17 @@ test('demo accounts stay within the sample data @mobile', async ({ page }) => {
   await page.getByRole('note').getByRole('button', { name: 'Create your own account' }).click();
   await expect(page).toHaveURL(/\/signup$/);
 });
+
+test('with the demo switched off, the landing page shows no trace of it @mobile', async ({
+  page,
+}) => {
+  // As after launch: the API runs without DEMO_MODE.
+  await page.route('**/api/v1/auth/demo', (route) => route.fulfill({ json: { enabled: false } }));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: LANDING })).toBeVisible();
+
+  await expect(page.getByRole('link', { name: 'Create your account' }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: /Try the demo/ })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Be Ravi, or be Asha' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Try as/ })).toHaveCount(0);
+});

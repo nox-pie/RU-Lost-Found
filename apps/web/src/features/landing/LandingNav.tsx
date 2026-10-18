@@ -2,6 +2,7 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useState, type RefObject } from 'react';
 import { Link } from 'react-router';
 import { brand } from '../../brand/brand.config';
+import { useShowDemo } from '../demo/demoStatus';
 
 const SECTIONS = [
   { id: 'how-it-works', label: 'How it works' },
@@ -17,6 +18,8 @@ export function LandingNav({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
   const [overHero, setOverHero] = useState(true);
   const [current, setCurrent] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const showDemo = useShowDemo();
+  const sections = showDemo ? SECTIONS : SECTIONS.filter((section) => section.id !== 'demo');
 
   // Over the photo until its bottom comes close to the bar (64 px tall, plus a margin, so a
   // jump to the next section never leaves a strip of photo behind the bar).
@@ -67,7 +70,7 @@ export function LandingNav({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
 
         <nav aria-label="Main" className="flex shrink-0 items-center gap-1">
           <ul className="mr-2 hidden items-center gap-1 md:flex">
-            {SECTIONS.map((section) => (
+            {sections.map((section) => (
               <li key={section.id}>
                 <a
                   href={`#${section.id}`}
@@ -109,7 +112,7 @@ export function LandingNav({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
 
       {menuOpen && (
         <ul className="border-t border-black/5 px-4 pb-4 pt-2 md:hidden animate-slide-down">
-          {SECTIONS.map((section) => (
+          {sections.map((section) => (
             <li key={section.id}>
               <a
                 href={`#${section.id}`}

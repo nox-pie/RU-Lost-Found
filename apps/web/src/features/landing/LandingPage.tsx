@@ -5,6 +5,7 @@ import { Footer } from '../../components/layout/Footer';
 import { brand } from '../../brand/brand.config';
 import { useInView } from '../../lib/hooks';
 import { DemoPersonaCards } from '../demo/DemoSignIn';
+import { useShowDemo } from '../demo/demoStatus';
 import { LandingNav } from './LandingNav';
 import { Reveal, SectionHeading } from './Reveal';
 import { SampleCarousel } from './SampleCarousel';
@@ -56,6 +57,7 @@ function useScrollToHash() {
 }
 
 function Hero({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
+  const showDemo = useShowDemo();
   return (
     <section
       ref={heroRef}
@@ -89,12 +91,15 @@ function Hero({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
             the owner proves it is theirs, and the item is marked returned only when you meet.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-            <a
-              href="#demo"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-7 font-semibold text-white shadow-lg hover:bg-primary-dark"
-            >
-              Try the demo <ArrowRight className="h-4 w-4" />
-            </a>
+            {showDemo ? (
+              <a href="#demo" className={HERO_ACTION}>
+                Try the demo <ArrowRight className="h-4 w-4" />
+              </a>
+            ) : (
+              <Link to="/signup" className={HERO_ACTION}>
+                Create your account <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
             <a
               href="#how-it-works"
               className="inline-flex h-12 items-center justify-center rounded-full border border-white/70 bg-white/10 px-7 font-semibold text-white backdrop-blur-sm hover:bg-white/20"
@@ -108,6 +113,9 @@ function Hero({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
     </section>
   );
 }
+
+const HERO_ACTION =
+  'inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-7 font-semibold text-white shadow-lg hover:bg-primary-dark';
 
 function HowItWorks() {
   return (
@@ -131,6 +139,7 @@ function HowItWorks() {
 }
 
 function TryTheDemo() {
+  if (!useShowDemo()) return null;
   return (
     <section
       id="demo"

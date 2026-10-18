@@ -51,7 +51,7 @@ export function createApp(container: Container): Express {
       ),
     );
   }
-  api.use(limitWrites(middleware.rateLimiter));
+  api.use(limitWrites(middleware.rateLimiter, env.WRITE_LIMIT_PER_MINUTE));
   api.use(
     '/auth',
     createAuthRouter(

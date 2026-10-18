@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { WRITE_RATE_LIMIT } from './core/http/middleware/security';
+import { DEFAULT_WRITES_PER_MINUTE } from './core/http/middleware/security';
 import { minutesAfter } from './testing/builders';
 import { TEST_PASSWORD, reportItem, signUp, withRole, type SignedInUser } from './testing/signedIn';
 import { seedUniversity, useTestApp } from './testing/testApp';
@@ -51,7 +51,7 @@ describe('HTTP hardening', () => {
   });
 
   it('caps write requests per client, but not reads', async () => {
-    for (let i = 0; i < WRITE_RATE_LIMIT.limit; i++) {
+    for (let i = 0; i < DEFAULT_WRITES_PER_MINUTE; i++) {
       await api().post('/api/v1/auth/logout');
     }
 

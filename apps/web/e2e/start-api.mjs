@@ -30,6 +30,9 @@ const env = {
   APP_URL: `http://localhost:${E2E_WEB_PORT}`,
   // Sample posts and one-click demo sign-in, as on the live site.
   DEMO_MODE: 'true',
+  // Every simulated person shares this machine's IP; on its own, the per-IP write cap (120 a
+  // minute) would stop a fast run partway through.
+  WRITE_LIMIT_PER_MINUTE: '1000',
 };
 
 execFileSync('npx', ['tsx', 'src/scripts/seed.ts'], { cwd: apiDir, env, stdio: 'inherit' });

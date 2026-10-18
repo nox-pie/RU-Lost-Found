@@ -39,15 +39,20 @@ export function requireTrustedOrigin(trustedOrigins: readonly string[]): Request
   };
 }
 
-export const WRITE_RATE_LIMIT: RateLimitRule = { name: 'writes-ip', limit: 120, windowSeconds: 60 };
+/** The default of the WRITE_LIMIT_PER_MINUTE setting. */
+export const DEFAULT_WRITES_PER_MINUTE = 120;
 
 /**
  * A general per-IP cap on requests that change data. Reads are not counted: each check costs a
  * Redis command, and on the free tier those are metered, while reads are already bounded by
  * pagination limits. Endpoint-specific limits (login, codes, reports) still apply on top.
  */
-export function limitWrites(limiter: RateLimiter): RequestHandler {
-  const limited = rateLimit(limiter, WRITE_RATE_LIMIT);
+export function limitWrites(
+  limiter: RateLimiter,
+  perMinute: number = DEFAULT_WRITES_PER_MINUTE,
+): RequestHandler {
+  const rule: RateLimitRule = { name: 'writes-ip', limit: perMinute, windowSeconds: 60 };
+  const limited = rateLimit(limiter, rule);
   return (req, res, next) => {
     if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
       next();
