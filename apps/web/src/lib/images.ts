@@ -14,11 +14,14 @@ const JPEG_QUALITY = 0.85;
 export const UPLOADABLE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 /**
- * A JPEG at most 2000 px on its longest side, or the original file if it is already small and
- * in an accepted format. Anything the browser can decode (e.g. HEIC in Safari) becomes a JPEG.
- * Returns null if the file can't be read as an image.
+ * A JPEG at most `maxDimension` px (2000 by default) on its longest side, or the original file if
+ * it is already small and in an accepted format. Anything the browser can decode (e.g. HEIC in
+ * Safari) becomes a JPEG. Returns null if the file can't be read as an image.
  */
-export async function prepareImage(file: File): Promise<File | null> {
+export async function prepareImage(
+  file: File,
+  { maxDimension = MAX_DIMENSION }: { maxDimension?: number } = {},
+): Promise<File | null> {
   let bitmap: ImageBitmap;
   try {
     // 'from-image' applies the camera's rotation, so portrait photos stay upright.
@@ -30,11 +33,11 @@ export async function prepareImage(file: File): Promise<File | null> {
 
   try {
     const { width, height } = bitmap;
-    const fits = Math.max(width, height) <= MAX_DIMENSION;
+    const fits = Math.max(width, height) <= maxDimension;
     if (fits && file.size <= SMALL_ENOUGH_BYTES && UPLOADABLE_TYPES.includes(file.type)) {
       return file;
     }
-    const scale = Math.min(1, MAX_DIMENSION / Math.max(width, height));
+    const scale = Math.min(1, maxDimension / Math.max(width, height));
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale);
     canvas.height = Math.round(height * scale);
