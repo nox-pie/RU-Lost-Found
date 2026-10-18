@@ -47,7 +47,16 @@ export class JobScheduler {
 
   private async trigger(job: ScheduledJob): Promise<void> {
     if (this.running.has(job.name)) return;
-    const { count } = await this.leases.increment(`job-lease:${job.name}`, job.intervalSeconds);
+    let count: number;
+    try {
+      ({ count } = await this.leases.increment(`job-lease:${job.name}`, job.intervalSeconds));
+    } catch (err) {
+      // Runs from a timer: an error escaping here would be an unhandled rejection, which stops
+      // the process. Skip this turn instead; the next interval tries again.
+      this.logger.error({ err, job: job.name }, 'Could not take the job lease; skipping this run');
+      this.reporter.capture(err, { area: 'job', job: job.name });
+      return;
+    }
     if (count > 1) return; // another instance has this interval
 
     const run = (async () => {

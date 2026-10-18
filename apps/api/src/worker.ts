@@ -33,6 +33,13 @@ async function main(): Promise<void> {
   };
   process.on('SIGTERM', () => void stop('SIGTERM'));
   process.on('SIGINT', () => void stop('SIGINT'));
+  // Same policy as the API (main.ts): a bug that escapes every handler is logged, reported and
+  // ends the process cleanly, so the host restarts it in a known state.
+  process.on('unhandledRejection', (reason) => {
+    logger.fatal({ err: reason }, 'Unhandled promise rejection');
+    errorReporter.capture(reason, { area: 'process' });
+    void stop('unhandledRejection');
+  });
 }
 
 main().catch((err: unknown) => {
