@@ -2,6 +2,11 @@
 #   docker compose -f docker-compose.yml -f load/compose.load.yml up -d --build
 #   docker compose -f docker-compose.yml -f load/compose.load.yml run --rm k6
 services:
+  api:
+    # The same data every run: no sample posts or hourly demo reset.
+    environment:
+      DEMO_MODE: 'false'
+
   mongo:
     # Lets load/seed-load-data.mts write test data from the host.
     ports: ['127.0.0.1:27018:27017']
