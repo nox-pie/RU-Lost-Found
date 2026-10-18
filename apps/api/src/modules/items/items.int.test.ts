@@ -2,7 +2,14 @@ import { FEED_TABS, MAX_PHOTO_BYTES } from '@ru-lost-found/shared';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { T0, minutesAfter } from '../../testing/builders';
-import { fakeJpeg, fakePng, signUp, withRole, type SignedInUser } from '../../testing/signedIn';
+import {
+  fakeJpeg,
+  fakePng,
+  setStoredRole,
+  signUp,
+  withRole,
+  type SignedInUser,
+} from '../../testing/signedIn';
 import { seedUniversity, useTestApp } from '../../testing/testApp';
 import { MongoItemRepository } from './infrastructure/MongoItemRepository';
 import { ITEM_RATE_LIMITS } from './item.routes';
@@ -365,6 +372,22 @@ describe('editing and removing', () => {
 
     expect(byStudent.status).toBe(403);
     expect(byAdmin.status).toBe(204);
+  });
+
+  it('stops a demoted admin from removing other people’s items at once', async () => {
+    const created = await report(asha);
+    const admin = await withRole(t, ravi, 'UNIVERSITY_ADMIN');
+    await setStoredRole(t, admin, 'STUDENT'); // the token still says UNIVERSITY_ADMIN
+
+    const res = await api()
+      .delete(`/api/v1/items/${created.body.id}`)
+      .set('Authorization', admin.bearer);
+    const stillThere = await api()
+      .get(`/api/v1/items/${created.body.id}`)
+      .set('Authorization', asha.bearer);
+
+    expect(res.status).toBe(403);
+    expect(stillThere.status).toBe(200);
   });
 });
 

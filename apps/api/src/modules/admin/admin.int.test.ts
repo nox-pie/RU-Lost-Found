@@ -271,6 +271,25 @@ describe('activity log', () => {
     const next = await get(priya, `audit?limit=50&cursor=${res.body.nextCursor}`).expect(200);
     expect(next.body.data.map((e: { action: string }) => e.action)).toContain('USER_REGISTERED');
   });
+
+  it('shows a blocked session theft on the victim’s university', async () => {
+    const login = await api()
+      .post('/api/v1/auth/login')
+      .send({ email: asha.email, password: TEST_PASSWORD })
+      .expect(200);
+    const stolenCookie = (login.headers['set-cookie'] as unknown as string[])[0]!.split(';')[0]!;
+    await api().post('/api/v1/auth/refresh').set('Cookie', stolenCookie).expect(200); // rotated
+    t.clock.set(minutesAfter(T0, 1)); // past the grace window for a lost answer
+    await api().post('/api/v1/auth/refresh').set('Cookie', stolenCookie).expect(401); // replayed
+
+    const res = await get(priya, 'audit?action=SESSION_REUSE_DETECTED').expect(200);
+
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0]).toMatchObject({
+      action: 'SESSION_REUSE_DETECTED',
+      metadata: { userId: asha.id },
+    });
+  });
 });
 
 describe('activity filters', () => {

@@ -15,6 +15,7 @@ import type { ErrorReporter } from './core/observability/ErrorReporter';
 import type { PasswordHasher } from './core/security/PasswordHasher';
 import { generateNumericCode } from './core/security/randomCode';
 import type { StorageProvider } from './core/storage/StorageProvider';
+import { FallbackKeyValueStore } from './infrastructure/cache/FallbackKeyValueStore';
 import { InMemoryKeyValueStore } from './infrastructure/cache/InMemoryKeyValueStore';
 import type { RedisKeyValueStore } from './infrastructure/cache/RedisKeyValueStore';
 import type { MongoDatabase } from './infrastructure/database/MongoDatabase';
@@ -195,7 +196,19 @@ export async function buildContainer(
     errorReporter: overrides.errorReporter ?? createErrorReporter(env),
     ...overrides,
   };
-  const { clock, ids, keyValueStore, passwordHasher, errorReporter } = providers;
+  const { clock, ids, passwordHasher, errorReporter } = providers;
+  // If Redis becomes unreachable, codes, rate limits and job leases fall back to this process's
+  // memory instead of failing every sign-in and change (see FallbackKeyValueStore).
+  const keyValueStore =
+    infra.redis && providers.keyValueStore === infra.redis
+      ? new FallbackKeyValueStore(
+          infra.redis,
+          new InMemoryKeyValueStore(clock),
+          clock,
+          logger,
+          errorReporter,
+        )
+      : providers.keyValueStore;
   // Mail to reserved test domains (demo accounts) is never handed to the provider.
   const emailSender = new SkipUndeliverableEmailSender(providers.emailSender, logger);
   // Every image is cleaned (metadata removed, resized, re-encoded) before any provider stores it.
@@ -240,7 +253,15 @@ export async function buildContainer(
   const notificationEmails = new NotificationEmails(emailLayout, env.APP_URL);
 
   const adminAccounts = new AdminAccounts(env.ADMIN_EMAILS, repositories.users, clock, logger);
-  const sessions = new SessionManager(repositories.sessions, unitOfWork, ids, clock, logger, audit);
+  const sessions = new SessionManager(
+    repositories.sessions,
+    unitOfWork,
+    ids,
+    clock,
+    logger,
+    audit,
+    repositories.users,
+  );
   const authService = new AuthService({
     users: repositories.users,
     universities: repositories.universities,

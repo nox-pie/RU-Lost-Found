@@ -177,9 +177,11 @@ export class ItemService {
    * Photos of removed items are deleted later by a scheduled clean-up.
    */
   async remove(actor: Actor, scope: TenantScope, id: string): Promise<void> {
-    await this.assertMayChangePosts(actor);
+    const user = await this.assertMayChangePosts(actor);
     const item = await this.requireVisible(scope, id);
-    item.remove(actor, this.clock.now());
+    // Moderator rights come from the role stored now, not from the (up to 15-minute-old) token,
+    // so a demoted admin can no longer remove other people's posts.
+    item.remove({ userId: actor.userId, role: user?.role ?? 'STUDENT' }, this.clock.now());
     await this.items.update(item);
   }
 
