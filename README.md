@@ -31,9 +31,9 @@ Claims that never get handed over expire, other claims on the item close automat
 
 **For visitors:** a landing page that explains the portal, and one-click sign-in as a sample student to try a whole claim on the [sample data](docs/demo-data.md) (shared demo accounts that reset every hour and can't post, edit or remove items, or change their profile).
 
-**For students:** sign-up verified by an emailed code (open to any email so visitors can try it; can be limited to university addresses by configuration) · search and filters · photo upload from phone or desktop · verification questions · in-app and email notifications · claim timeline · profile and picture · works on 360 px phones and up.
+**For students:** sign-up verified by an emailed code (open to any email so visitors can try it; can be limited to university addresses by configuration) · search and filters · photo upload from phone or desktop · verification questions · in-app and email notifications · claim timeline · edit your own open posts · profile and picture · change password · download my data · delete my account · privacy policy and terms · works on 360 px phones and up.
 
-**For staff:** security-desk handover confirmation · admin dashboard (posts in play, return rate, average time to return, 8-week trend) · reports queue for flagged posts (remove with a reason, or keep) · people management (roles, suspension with immediate sign-out) · activity log in plain language.
+**For staff:** security desk console (handovers waiting, items held at the desk) and in-person handover confirmation · admin dashboard (posts in play, return rate, average time to return, 8-week trend) · reports queue for flagged posts (remove with a reason, or keep) · people management (roles, suspension with immediate sign-out) · activity log in plain language.
 
 **Under the hood:** rotating refresh tokens with theft detection · rate limits that work behind a campus-wide shared IP · images stripped of location data and re-encoded before storage · transactional outbox so no notification is lost · OpenAPI docs · error tracking · Docker images · re-brandable for other organisations through configuration.
 
