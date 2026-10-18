@@ -13,6 +13,8 @@ const AppLayout = lazy(() =>
 const LoginPage = lazy(() => import('./features/auth/LoginPage'));
 const SignupPage = lazy(() => import('./features/auth/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('./features/auth/ForgotPasswordPage'));
+const PrivacyPage = lazy(() => import('./features/legal/PrivacyPage'));
+const TermsPage = lazy(() => import('./features/legal/TermsPage'));
 const FeedPage = lazy(() => import('./features/items/FeedPage'));
 const ItemPage = lazy(() => import('./features/items/ItemPage'));
 const MyItemsPage = lazy(() => import('./features/items/MyItemsPage'));
@@ -55,6 +57,9 @@ export default function App() {
             </PublicOnly>
           }
         />
+        {/* Open to everyone, signed in or not. */}
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
 
         <Route
           element={

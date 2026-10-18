@@ -1,5 +1,6 @@
 import { ExternalLink, Heart, Mail, MapPin } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { brand } from '../../brand/brand.config';
 
 export function Footer() {
@@ -63,6 +64,14 @@ export function Footer() {
           <span>
             © {new Date().getFullYear()} {brand.productName} · {organisation.name}
           </span>
+          <nav aria-label="Legal" className="flex gap-4">
+            <Link to="/privacy" className="hover:text-white hover:underline">
+              Privacy
+            </Link>
+            <Link to="/terms" className="hover:text-white hover:underline">
+              Terms
+            </Link>
+          </nav>
           {brand.credit && (
             <span className="flex items-center gap-1">
               Created with <Heart className="h-3.5 w-3.5 fill-white text-white" aria-label="love" />{' '}
