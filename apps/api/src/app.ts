@@ -8,6 +8,7 @@ import { requestLogger } from './core/http/middleware/requestLogger';
 import { createDocsRouter } from './docs/docs.routes';
 import { buildOpenApiDocument } from './docs/openapi';
 import { limitWrites, noStore, securityHeaders } from './core/http/middleware/security';
+import { createAccountRouter } from './modules/account/account.routes';
 import { createAdminRouter } from './modules/admin/admin.routes';
 import { createAuthRouter } from './modules/auth/auth.routes';
 import { createClaimRouter } from './modules/claims/claim.routes';
@@ -66,6 +67,13 @@ export function createApp(container: Container): Express {
       authenticate: middleware.authenticate,
       limiter: middleware.rateLimiter,
       uploadSlot: middleware.uploadSlot,
+    }),
+  );
+  api.use(
+    '/account',
+    createAccountRouter(controllers.account, {
+      authenticate: middleware.authenticate,
+      limiter: middleware.rateLimiter,
     }),
   );
   api.use(

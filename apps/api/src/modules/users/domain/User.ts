@@ -179,6 +179,21 @@ export class User extends AggregateRoot {
     });
   }
 
+  /**
+   * The person deletes their account; the repository then deletes the record. Records the event
+   * for the activity log, and returns the picture so the caller can delete the file.
+   */
+  close(now: Date): ImageRef | null {
+    this.assertEditable();
+    this.record({
+      type: 'AccountDeleted',
+      aggregateId: this.id,
+      occurredAt: now,
+      payload: { universityId: this.universityId },
+    });
+    return this.props.profile.avatar;
+  }
+
   /** An admin gives this user another role. Recording the same role again changes nothing. */
   changeRole(role: Role, by: Actor, now: Date): void {
     this.assertManageableBy(by);

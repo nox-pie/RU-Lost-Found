@@ -122,6 +122,11 @@ export class MongoNotificationRepository
     return this.model.countDocuments({ userId: toObjectId(userId), readAt: null });
   }
 
+  async deleteAllForUser(userId: string): Promise<number> {
+    const result = await this.model.deleteMany({ userId: toObjectId(userId) });
+    return result.deletedCount;
+  }
+
   async markRead(userId: string, ids: readonly string[] | undefined, now: Date): Promise<number> {
     const filter: DocumentFilter = { userId: toObjectId(userId), readAt: null };
     if (ids) filter._id = { $in: ids.map(parseObjectId).filter((id) => id !== null) };

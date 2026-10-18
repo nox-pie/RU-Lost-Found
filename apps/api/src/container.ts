@@ -78,6 +78,8 @@ import { AdminAccounts } from './modules/users/AdminAccounts';
 import { MongoUserRepository } from './modules/users/infrastructure/MongoUserRepository';
 import { UserController } from './modules/users/user.controller';
 import { UserService } from './modules/users/user.service';
+import { AccountController } from './modules/account/account.controller';
+import { AccountService } from './modules/account/account.service';
 
 /**
  * Everything the HTTP layer needs, fully wired.
@@ -100,6 +102,7 @@ export interface Container {
     health: HealthController;
     auth: AuthController;
     users: UserController;
+    account: AccountController;
     items: ItemController;
     claims: ClaimController;
     notifications: NotificationController;
@@ -254,6 +257,7 @@ export async function buildContainer(
   });
   const notificationEmails = new NotificationEmails(emailLayout, env.APP_URL);
 
+  const loginThrottle = new LoginThrottle(keyValueStore);
   const adminAccounts = new AdminAccounts(env.ADMIN_EMAILS, repositories.users, clock, logger);
   const sessions = new SessionManager(
     repositories.sessions,
@@ -277,7 +281,7 @@ export async function buildContainer(
     ids,
     clock,
     audit,
-    loginThrottle: new LoginThrottle(keyValueStore),
+    loginThrottle,
     logger,
     demoSignIn: env.DEMO_MODE,
   });
@@ -312,6 +316,24 @@ export async function buildContainer(
     generateHandoverCode: () => generateNumericCode(6),
     logger,
     audit,
+  });
+
+  // The person's own account as a whole (download my data, delete my account)
+  const accountService = new AccountService({
+    users: repositories.users,
+    items: repositories.items,
+    claims: repositories.claims,
+    notifications: repositories.notifications,
+    sessions: repositories.sessions,
+    itemService,
+    claimService,
+    storage,
+    passwords: passwordHasher,
+    loginThrottle,
+    emailSender,
+    emails: notificationEmails,
+    clock,
+    logger,
   });
 
   // Sample data: claims are played through a ClaimService on its own clock, so the demo
@@ -438,6 +460,7 @@ export async function buildContainer(
       health: new HealthController(new HealthService(providers.healthIndicators)),
       auth: new AuthController(authService, { secureCookies: env.NODE_ENV === 'production' }),
       users: new UserController(userService),
+      account: new AccountController(accountService),
       items: new ItemController(itemService),
       claims: new ClaimController(claimService),
       notifications: new NotificationController(notificationService),

@@ -54,6 +54,7 @@ export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
 /** How each audit entry reads in the activity log. */
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   USER_REGISTERED: 'Created an account',
+  ACCOUNT_DELETED: 'Deleted their account',
   LOGIN_SUCCEEDED: 'Signed in',
   LOGIN_FAILED: 'Failed sign-in',
   PASSWORD_CHANGED: 'Changed password',

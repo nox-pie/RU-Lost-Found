@@ -10,4 +10,6 @@ export interface SessionRepository extends Repository<Session> {
   endFamily(familyId: string, reason: SessionEndReason, now: Date): Promise<number>;
   /** Ends every still-active session of a user (sign out everywhere). */
   endAllForUser(userId: string, reason: SessionEndReason, now: Date): Promise<number>;
+  /** Deletes every session of a user, ended ones included (they hold devices and addresses). */
+  deleteAllForUser(userId: string): Promise<number>;
 }

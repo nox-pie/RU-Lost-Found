@@ -37,6 +37,9 @@ class FakeUserRepository implements UserRepository {
     if (this.failUpdates) throw new Error('database unavailable');
     this.users.set(user.id, user);
   }
+  async delete(user: User) {
+    this.users.delete(user.id);
+  }
 }
 
 class FakeUniversityRepository implements UniversityRepository {

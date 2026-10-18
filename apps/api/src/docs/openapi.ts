@@ -11,6 +11,7 @@ import {
   changeRoleSchema,
   claimIdParamsSchema,
   createItemSchema,
+  deleteAccountSchema,
   demoSignInSchema,
   deskItemsQuerySchema,
   flagItemSchema,
@@ -435,6 +436,31 @@ export const OPERATIONS: Operation[] = [
     access: 'staff',
     params: claimIdParamsSchema,
     ok: { 200: 'ClaimDto' },
+  },
+
+  // Account
+  {
+    method: 'get',
+    path: '/account/export',
+    tag: 'Account',
+    summary: 'Download my data',
+    description:
+      'Everything the account holds (profile, posts, claims made and received, notifications) as a JSON file download.',
+    access: 'user',
+    limited: true,
+    ok: { 200: 'AccountExportDto' },
+  },
+  {
+    method: 'delete',
+    path: '/account',
+    tag: 'Account',
+    summary: 'Delete my account',
+    description:
+      'Needs the password. Withdraws active claims, removes open posts, then deletes the person, their sessions, notifications and picture. Finished handovers stay, shown as "Former member". Demo accounts are refused.',
+    access: 'user',
+    body: deleteAccountSchema,
+    limited: true,
+    ok: { 204: 'Account deleted' },
   },
 
   // Security desk
