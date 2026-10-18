@@ -11,6 +11,12 @@ import { ITEM_STATUS, formatDateTime, formatDay } from '../../lib/format';
 import { useDebouncedValue } from '../../lib/hooks';
 import { queryKeys } from '../../lib/queryClient';
 
+/**
+ * The desk keeps this page open while people come and go, so its lists are always fetched again
+ * when shown and refresh themselves every half minute.
+ */
+const LIVE = { staleTime: 0, refetchInterval: 30_000 } as const;
+
 const VIEWS = [
   { id: 'handovers', label: 'Handovers waiting' },
   { id: 'items', label: 'Items at the desk' },
@@ -59,6 +65,7 @@ function HandoversWaiting() {
     queryFn: ({ pageParam }) => deskApi.handovers(pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    ...LIVE,
   });
   const claims = query.data?.pages.flatMap((page) => page.data) ?? [];
 
@@ -122,6 +129,7 @@ function ItemsAtDesk() {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     placeholderData: keepPreviousData,
+    ...LIVE,
   });
   const items = query.data?.pages.flatMap((page) => page.data) ?? [];
 
