@@ -42,13 +42,21 @@ export async function signUp(
   return { id: registered.body.user.id, email, token, bearer: `Bearer ${token}` };
 }
 
-/** Gives an existing user a role and signs in again so the new token carries it. */
-export async function withRole(t: TestApp, user: SignedInUser, role: Role): Promise<SignedInUser> {
+/**
+ * Changes a user's stored role but keeps their current token, as when an admin demotes someone
+ * who is signed in: the token still claims the old role until it expires.
+ */
+export async function setStoredRole(t: TestApp, user: SignedInUser, role: Role): Promise<void> {
   const users = new MongoUserRepository(t.connection);
   const stored = await users.findById(user.id);
   if (!stored) throw new Error(`User ${user.id} not found`);
   stored.appointBySystem(role, T0);
   await users.update(stored);
+}
+
+/** Gives an existing user a role and signs in again so the new token carries it. */
+export async function withRole(t: TestApp, user: SignedInUser, role: Role): Promise<SignedInUser> {
+  await setStoredRole(t, user, role);
 
   const res = await request(t.app)
     .post('/api/v1/auth/login')
