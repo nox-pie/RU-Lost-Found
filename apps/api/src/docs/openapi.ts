@@ -12,6 +12,7 @@ import {
   claimIdParamsSchema,
   createItemSchema,
   demoSignInSchema,
+  deskItemsQuerySchema,
   flagItemSchema,
   itemCountsQuerySchema,
   handoverSchema,
@@ -434,6 +435,29 @@ export const OPERATIONS: Operation[] = [
     access: 'staff',
     params: claimIdParamsSchema,
     ok: { 200: 'ClaimDto' },
+  },
+
+  // Security desk
+  {
+    method: 'get',
+    path: '/desk/handovers',
+    tag: 'Security desk',
+    summary: 'Approved claims waiting for their handover',
+    description:
+      'Every approved claim of the university, newest first, without handover codes or contact details. Desk staff and admins, by the role stored now.',
+    access: 'staff',
+    query: pageQuerySchema,
+    ok: { 200: `${PAGE} T = ClaimDto` },
+  },
+  {
+    method: 'get',
+    path: '/desk/items',
+    tag: 'Security desk',
+    summary: 'Found items held at the security desk',
+    description: 'Open or reserved found items handed in at the desk, newest first.',
+    access: 'staff',
+    query: deskItemsQuerySchema,
+    ok: { 200: `${PAGE} T = ItemDto` },
   },
 
   // Notifications

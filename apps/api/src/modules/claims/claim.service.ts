@@ -2,6 +2,7 @@ import type {
   ApproveClaimInput,
   ListClaimsQuery,
   ListMyClaimsQuery,
+  PageQuery,
   SubmitClaimInput,
 } from '@ru-lost-found/shared';
 import type { AuditTrail } from '../../core/audit/AuditTrail';
@@ -293,6 +294,14 @@ export class ClaimService {
     );
   }
 
+  /**
+   * Security desk console: every approved claim of the university, waiting for its handover.
+   * Staff only (checked by the route against the role stored now).
+   */
+  listAwaitingHandover(scope: TenantScope, query: PageQuery): Promise<PageResult<ClaimView>> {
+    return this.search(scope, { statuses: ['APPROVED'] }, query);
+  }
+
   /** Claims others made on items I reported. */
   listReceived(
     actor: Actor,
@@ -305,7 +314,7 @@ export class ClaimService {
   private async search(
     scope: TenantScope,
     criteria: Parameters<ClaimRepository['search']>[1],
-    query: ListClaimsQuery,
+    query: PageQuery,
   ): Promise<PageResult<ClaimView>> {
     const page = await this.deps.claims.search(scope, criteria, {
       cursor: query.cursor,

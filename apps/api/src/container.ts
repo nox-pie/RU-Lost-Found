@@ -93,6 +93,8 @@ export interface Container {
     uploadSlot: RequestHandler;
     /** Admin routes: checks the role stored now, not the one in the token. */
     requireAdmin: RequestHandler;
+    /** Security desk console: desk staff and admins, by the role stored now. */
+    requireStaff: RequestHandler;
   };
   controllers: {
     health: HealthController;
@@ -422,6 +424,12 @@ export async function buildContainer(
       uploadSlot: limitConcurrency(4),
       requireAdmin: authorizeCurrent(
         (userId) => repositories.users.findById(userId),
+        'UNIVERSITY_ADMIN',
+        'PLATFORM_ADMIN',
+      ),
+      requireStaff: authorizeCurrent(
+        (userId) => repositories.users.findById(userId),
+        'SECURITY_DESK',
         'UNIVERSITY_ADMIN',
         'PLATFORM_ADMIN',
       ),

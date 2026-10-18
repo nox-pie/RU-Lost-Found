@@ -153,6 +153,9 @@ export class MongoItemRepository
     if (criteria.type) filter.type = criteria.type;
     if (criteria.category) filter.category = criteria.category;
     if (criteria.reporterId) filter.reporterId = toObjectId(criteria.reporterId);
+    if (criteria.heldAtSecurityDesk !== undefined) {
+      filter.heldAtSecurityDesk = criteria.heldAtSecurityDesk;
+    }
     // Word search on the text index (stemmed: "keys" also matches "key").
     if (criteria.text) filter.$text = { $search: criteria.text };
     if (page.cursor) {

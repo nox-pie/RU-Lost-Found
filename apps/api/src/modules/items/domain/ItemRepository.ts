@@ -11,6 +11,8 @@ export interface ItemSearchCriteria {
   category?: ItemCategory;
   statuses: readonly ItemStatus[];
   reporterId?: string;
+  /** Only found items handed in at the security desk. */
+  heldAtSecurityDesk?: boolean;
 }
 
 /** How many listable items there are of one type in one status. */

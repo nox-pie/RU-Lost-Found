@@ -11,6 +11,7 @@ import { limitWrites, noStore, securityHeaders } from './core/http/middleware/se
 import { createAdminRouter } from './modules/admin/admin.routes';
 import { createAuthRouter } from './modules/auth/auth.routes';
 import { createClaimRouter } from './modules/claims/claim.routes';
+import { createDeskRouter } from './modules/desk/desk.routes';
 import { createHealthRouter } from './modules/health/health.routes';
 import { createItemRouter } from './modules/items/item.routes';
 import { createModerationRouter } from './modules/moderation/moderation.routes';
@@ -94,6 +95,15 @@ export function createApp(container: Container): Express {
       moderation: controllers.moderation,
       authenticate: middleware.authenticate,
       requireAdmin: middleware.requireAdmin,
+    }),
+  );
+  api.use(
+    '/desk',
+    createDeskRouter({
+      claims: controllers.claims,
+      items: controllers.items,
+      authenticate: middleware.authenticate,
+      requireStaff: middleware.requireStaff,
     }),
   );
   if (container.localUploads) {
