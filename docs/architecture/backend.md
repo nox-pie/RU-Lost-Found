@@ -89,7 +89,7 @@ apps/api/src/
 │   └── logger/                   # pino logger (redacts credentials)
 ├── infrastructure/               # Adapters that implement the ports
 │   ├── database/                 # MongoDatabase, MongoUnitOfWork, MongoRepository base (+ OutboxWriter), schemas
-│   ├── cache/                    # RedisKeyValueStore, InMemoryKeyValueStore
+│   ├── cache/                    # RedisKeyValueStore, InMemoryKeyValueStore, FallbackKeyValueStore (decorator)
 │   ├── storage/                  # CloudinaryStorageProvider, LocalDiskStorageProvider,
 │   │                             #   SanitizingStorageProvider (decorator), SharpImageProcessor
 │   ├── email/                    # BrevoEmailSender, ConsoleEmailSender, FileEmailSender
@@ -144,7 +144,7 @@ Services depend on these interfaces, never on concrete SDKs. Interfaces have pla
 | `UnitOfWork`                                             | `MongoUnitOfWork` (session + transaction)                      | same                                                                          | Atomic multi-document writes                            |
 | `OutboxWriter`                                           | `MongoOutbox`                                                  | same                                                                          | Storing domain events in the aggregate's transaction    |
 | `EventHandler` (+ `EventHandlerRegistry`)                | notification, audit and claims handlers                        | same                                                                          | Reacting to events (delivered by `OutboxProcessor`)     |
-| `KeyValueStore`                                          | `RedisKeyValueStore` (Upstash)                                 | `InMemoryKeyValueStore`                                                       | One-time codes, rate limits, login throttle, job leases |
+| `KeyValueStore`                                          | `FallbackKeyValueStore` around `RedisKeyValueStore` (Upstash)  | `InMemoryKeyValueStore`                                                       | One-time codes, rate limits, login throttle, job leases |
 | `StorageProvider`                                        | `SanitizingStorageProvider` around `CloudinaryStorageProvider` | `LocalDiskStorageProvider` (dev), `InMemoryStorageProvider` (tests)           | Image upload and delete                                 |
 | `ImageSanitizer`                                         | `SharpImageProcessor`                                          | same                                                                          | Strip metadata, resize, re-encode                       |
 | `EmailSender`                                            | `BrevoEmailSender`                                             | `ConsoleEmailSender`, `FileEmailSender` (e2e), `CapturingEmailSender` (tests) | Sending email                                           |
@@ -161,7 +161,7 @@ Services depend on these interfaces, never on concrete SDKs. Interfaces have pla
 
 ```ts
 // container.ts (excerpt)
-keyValueStore: infra.redis ?? new InMemoryKeyValueStore(clock),   // Redis is connected in main.ts
+keyValueStore: infra.redis ?? new InMemoryKeyValueStore(clock),   // Redis (connected in main.ts) is then wrapped in FallbackKeyValueStore
 emailSender: env.BREVO_API_KEY
   ? new BrevoEmailSender(env.BREVO_API_KEY, { address: env.EMAIL_FROM_ADDRESS, name })
   : env.DEV_EMAIL_DIR
@@ -269,6 +269,7 @@ classDiagram
         +claimId
         +itemId
         +readAt
+        +emailedAt
     }
 
     University "1" --> "*" User
@@ -387,7 +388,7 @@ sequenceDiagram
 - **Claiming:** a worker takes one event at a time with an atomic `findOneAndUpdate` and a 60-second lease. With several instances each event goes to exactly one; an event whose worker crashed is taken over when the lease runs out.
 - **Per-handler progress:** each handler's success is recorded on the event (`completedHandlers`), so a retry only re-runs the handlers that failed. A healthy email is not re-sent because another handler failed.
 - **Retries:** exponential back-off (30 s, 1 min, 2 min, 4 min); after 5 attempts the event is marked `FAILED` and kept for inspection.
-- **Idempotent handlers:** in-app notifications have a unique index on (event id, recipient), so even a redelivered event can't notify anyone twice.
+- **Idempotent handlers:** in-app notifications have a unique index on (event id, recipient), and each notification records when its email went out (`emailedAt`), so even a redelivered event can't notify or email anyone twice. An email that failed is still sent on the retry.
 - **Housekeeping:** delivered events are deleted after 7 days; notifications after 180 days (TTL index).
 
 **Observer pattern:** handlers subscribe to event types through the `EventHandlerRegistry`. Adding a new reaction, such as push notifications, means adding a handler; the module that raised the event doesn't change.
@@ -400,7 +401,7 @@ sequenceDiagram
 | `AuditEventHandler`        | Account, item, claim, role and moderation events                                   | Writes the matching `audit_logs` entry (idempotent: one entry per event)                                                                                                      |
 | `ItemModerationHandler`    | `ItemRemoved` (by an admin)                                                        | Tells the poster their post was removed, with the admin's reason (in the app and by email)                                                                                    |
 
-**Scheduled jobs**, run by the same worker. A lease in the shared key-value store (Redis) makes each job run on only one instance per interval:
+**Scheduled jobs**, run by the same worker. A lease in the shared key-value store (Redis) makes each job run on only one instance per interval; if the lease can't be taken, that run is skipped and reported, never left to crash the process:
 
 | Job                         | Every  | Does                                                                                                     |
 | --------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
@@ -577,27 +578,27 @@ One `errorHandler` middleware converts `AppError` into the error format above. A
 
 ## 12. Design principles and patterns: where and why
 
-| Principle / pattern   | Where                                                                                                                  | Why                                                                        |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Single Responsibility | Controller, service, repository and mapper are separate classes                                                        | Each changes for one reason                                                |
-| Open/Closed           | Claim states, event handlers, storage decorators                                                                       | New behaviour = new class                                                  |
-| Liskov Substitution   | `InMemoryKeyValueStore` and `RedisKeyValueStore` are interchangeable                                                   | Tests use fakes with no special cases                                      |
-| Interface Segregation | Small interfaces (`StorageProvider` has only `upload` and `delete`)                                                    | Implementations don't carry unused methods                                 |
-| Dependency Inversion  | Services depend on interfaces; `container.ts` picks implementations                                                    | Free → paid provider switch is one line                                    |
-| State                 | `Claim` + `ClaimState` classes                                                                                         | Legal transitions defined in one place                                     |
-| Strategy              | `EmailSender`, `StorageProvider`, `KeyValueStore`, `ErrorReporter`                                                     | Providers chosen at startup in `container.ts` from configuration           |
-| Adapter               | `CloudinaryStorageProvider`, `BrevoEmailSender`                                                                        | Wrap third-party SDKs behind our interfaces                                |
-| Decorator             | `SanitizingStorageProvider` wraps any storage provider                                                                 | Adds image sanitising to every provider without changing it or its callers |
-| Repository            | `Mongo*Repository`                                                                                                     | Business logic unaware of MongoDB                                          |
-| Template Method       | `MongoRepository` base class: insert, versioned update, error translation; subclasses only map fields                  | Persistence rules written once for every collection                        |
-| Flyweight             | One shared instance per claim state (`claimStateFor`)                                                                  | States hold no per-claim data                                              |
-| Unit of Work          | `MongoUnitOfWork`                                                                                                      | Atomic changes across claim, item and outbox                               |
-| Observer              | Outbox events → handlers                                                                                               | Decouple side effects from use cases                                       |
-| Transactional Outbox  | `outbox_events` + `OutboxProcessor`                                                                                    | Reliable notifications without a message broker                            |
-| Composition Root / DI | `container.ts`                                                                                                         | One place to see and change the object graph                               |
-| CQRS (read model)     | `StatsReader` / `MongoStatsReader`: dashboard counts come straight from database aggregations, not from domain objects | Reads shaped for the screen; writes keep the rich domain model             |
-| Policy                | `RolePolicy` (who may manage whom, which roles they may give), used by the `User` aggregate                            | One place for the authorisation rule; tested without HTTP                  |
-| DTO / Mapper          | `*.mapper.ts`                                                                                                          | Never leak internal or private fields                                      |
+| Principle / pattern   | Where                                                                                                                  | Why                                                                                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Single Responsibility | Controller, service, repository and mapper are separate classes                                                        | Each changes for one reason                                                                                                                         |
+| Open/Closed           | Claim states, event handlers, storage decorators                                                                       | New behaviour = new class                                                                                                                           |
+| Liskov Substitution   | `InMemoryKeyValueStore` and `RedisKeyValueStore` are interchangeable                                                   | Tests use fakes with no special cases                                                                                                               |
+| Interface Segregation | Small interfaces (`StorageProvider` has only `upload` and `delete`)                                                    | Implementations don't carry unused methods                                                                                                          |
+| Dependency Inversion  | Services depend on interfaces; `container.ts` picks implementations                                                    | Free → paid provider switch is one line                                                                                                             |
+| State                 | `Claim` + `ClaimState` classes                                                                                         | Legal transitions defined in one place                                                                                                              |
+| Strategy              | `EmailSender`, `StorageProvider`, `KeyValueStore`, `ErrorReporter`                                                     | Providers chosen at startup in `container.ts` from configuration                                                                                    |
+| Adapter               | `CloudinaryStorageProvider`, `BrevoEmailSender`                                                                        | Wrap third-party SDKs behind our interfaces                                                                                                         |
+| Decorator             | `SanitizingStorageProvider` wraps any storage provider; `FallbackKeyValueStore` wraps Redis                            | Adds image sanitising to every provider without changing it or its callers; keeps the API working through a Redis outage (a simple circuit breaker) |
+| Repository            | `Mongo*Repository`                                                                                                     | Business logic unaware of MongoDB                                                                                                                   |
+| Template Method       | `MongoRepository` base class: insert, versioned update, error translation; subclasses only map fields                  | Persistence rules written once for every collection                                                                                                 |
+| Flyweight             | One shared instance per claim state (`claimStateFor`)                                                                  | States hold no per-claim data                                                                                                                       |
+| Unit of Work          | `MongoUnitOfWork`                                                                                                      | Atomic changes across claim, item and outbox                                                                                                        |
+| Observer              | Outbox events → handlers                                                                                               | Decouple side effects from use cases                                                                                                                |
+| Transactional Outbox  | `outbox_events` + `OutboxProcessor`                                                                                    | Reliable notifications without a message broker                                                                                                     |
+| Composition Root / DI | `container.ts`                                                                                                         | One place to see and change the object graph                                                                                                        |
+| CQRS (read model)     | `StatsReader` / `MongoStatsReader`: dashboard counts come straight from database aggregations, not from domain objects | Reads shaped for the screen; writes keep the rich domain model                                                                                      |
+| Policy                | `RolePolicy` (who may manage whom, which roles they may give), used by the `User` aggregate                            | One place for the authorisation rule; tested without HTTP                                                                                           |
+| DTO / Mapper          | `*.mapper.ts`                                                                                                          | Never leak internal or private fields                                                                                                               |
 
 ---
 

@@ -43,6 +43,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 - **Watch:** Usage page (commands per day).
 - **Rotate the password:** database page → reset credentials → copy the new `rediss://…` URL into Render.
 - **Without it:** the API keeps the same data in memory (fine for one instance; never in production).
+- **If it goes down:** the API keeps working. Codes, rate limits and job leases move to the API's own memory until Upstash answers again; the API checks every 30 seconds, and the one request that checks can take up to 1.5 s. Codes requested before the outage must be requested again. `/api/v1/health/ready` reports `redis: down` (so the alert-only UptimeRobot monitor fires), and the outage is logged and reported to Sentry once.
 
 ## Render
 
