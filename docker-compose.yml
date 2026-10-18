@@ -41,6 +41,8 @@ services:
       CORS_ORIGINS: http://localhost:8080
       # nginx in the web container is the one proxy in front of the API.
       TRUST_PROXY_HOPS: '1'
+      # Sample posts and one-click demo sign-in, as on the live site (docs/demo-data.md).
+      DEMO_MODE: 'true'
     depends_on:
       mongo: { condition: service_healthy }
 

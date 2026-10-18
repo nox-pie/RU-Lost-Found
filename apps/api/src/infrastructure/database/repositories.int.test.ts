@@ -215,13 +215,6 @@ describe('MongoClaimRepository', () => {
     expect(active.map((c) => c.id).sort()).toEqual([requested.id, approved.id].sort());
     expect(overdueNow).toEqual([]);
     expect(overdueLater.map((c) => c.id)).toEqual([approved.id]);
-    expect(
-      await claims.findActiveByItemAndClaimant(
-        { universityId: item.universityId },
-        item.id,
-        requested.claimantId,
-      ),
-    ).not.toBeNull();
   });
 });
 

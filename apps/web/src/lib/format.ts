@@ -1,10 +1,11 @@
-import type {
-  AuditAction,
-  ClaimStatus,
-  ItemCategory,
-  ItemStatus,
-  ReportReason,
-  Role,
+import {
+  MAX_YEAR_OF_STUDY,
+  type AuditAction,
+  type ClaimStatus,
+  type ItemCategory,
+  type ItemStatus,
+  type ReportReason,
+  type Role,
 } from '@ru-lost-found/shared';
 
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
@@ -122,7 +123,7 @@ export function todayIso(): string {
 }
 
 /** Years of study offered on the sign-up and profile forms. */
-export const YEAR_OPTIONS = [1, 2, 3, 4, 5].map((year) => ({
-  value: String(year),
-  label: `Year ${year}`,
+export const YEAR_OPTIONS = Array.from({ length: MAX_YEAR_OF_STUDY }, (_, index) => ({
+  value: String(index + 1),
+  label: `Year ${index + 1}`,
 }));

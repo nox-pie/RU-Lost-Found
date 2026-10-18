@@ -1,6 +1,5 @@
 # Render Blueprint for the API (https://render.com/docs/blueprint-spec).
-# A new service, next to the first version's: the web app is switched over by changing the
-# /api rewrite in apps/web/vercel.json, and switched back the same way. See docs/deployment.md.
+# The web app reaches it through the /api rewrite in apps/web/vercel.json. See docs/deployment.md.
 services:
   - type: web
     name: ru-lost-found-api

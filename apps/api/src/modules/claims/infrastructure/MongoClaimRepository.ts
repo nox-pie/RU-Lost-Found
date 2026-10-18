@@ -170,26 +170,6 @@ export class MongoClaimRepository
     );
   }
 
-  findActiveByItemAndClaimant(
-    scope: TenantScope,
-    itemId: string,
-    claimantId: string,
-    tx?: TransactionContext,
-  ): Promise<Claim | null> {
-    const itemObjectId = parseObjectId(itemId);
-    const claimantObjectId = parseObjectId(claimantId);
-    if (!itemObjectId || !claimantObjectId) return Promise.resolve(null);
-    return this.findOne(
-      {
-        universityId: toObjectId(scope.universityId),
-        itemId: itemObjectId,
-        claimantId: claimantObjectId,
-        status: { $in: ACTIVE_STATUSES },
-      },
-      tx,
-    );
-  }
-
   async search(
     scope: TenantScope,
     criteria: ClaimSearchCriteria,

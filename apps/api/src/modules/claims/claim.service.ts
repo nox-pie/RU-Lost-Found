@@ -227,17 +227,18 @@ export class ClaimService {
     for (const candidate of overdue) {
       const scope = { universityId: candidate.universityId };
       try {
-        await this.deps.unitOfWork.run(async (tx) => {
+        const didExpire = await this.deps.unitOfWork.run(async (tx) => {
           const { claim, item } = await this.load(scope, candidate.id, tx);
-          if (claim.status !== 'APPROVED') return; // changed since the query
+          if (claim.status !== 'APPROVED') return false; // changed since the query
           claim.expire(now);
           await this.deps.claims.update(claim, tx);
           if (item.status === 'RESERVED') {
             item.reopen(now);
             await this.deps.items.update(item, tx);
           }
+          return true;
         });
-        expired += 1;
+        if (didExpire) expired += 1;
       } catch (err) {
         this.deps.logger.error({ err, claimId: candidate.id }, 'Could not expire claim');
       }

@@ -1,4 +1,4 @@
-import { describe, expect, inject, it } from 'vitest';
+import { describe, expect, inject, it, vi } from 'vitest';
 import { createLogger } from '../../core/logger/logger';
 import { MongoDatabase } from './MongoDatabase';
 
@@ -11,6 +11,16 @@ describe('MongoDatabase', () => {
     expect(await database.isHealthy()).toBe(true);
     await database.disconnect();
     expect(await database.isHealthy()).toBe(false);
+  });
+
+  it('closes quietly on shutdown: only a connection lost unexpectedly is a warning', async () => {
+    const database = await MongoDatabase.connect(inject('mongoUri'), logger);
+    const warn = vi.spyOn(logger, 'warn');
+
+    await database.disconnect();
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it('fails fast with a clear error when the server cannot be reached', async () => {

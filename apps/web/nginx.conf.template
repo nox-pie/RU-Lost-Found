@@ -15,19 +15,20 @@ server {
     proxy_read_timeout 120s;
   }
 
-  # Hashed build files never change: cache them for a year.
-  location /assets/ {
+  # Hashed build files and the self-hosted fonts never change: cache them for a year.
+  location ~ ^/(assets|fonts)/ {
     add_header Cache-Control "public, max-age=31536000, immutable";
     add_header X-Content-Type-Options "nosniff" always;
     try_files $uri =404;
   }
 
   # Single-page app: unknown paths load index.html, which must never be cached.
-  # Same headers as vercel.json. (nginx: a location with its own add_header inherits none,
-  # so /api keeps exactly the API's headers.)
+  # Same headers as vercel.json (keep the two in step), except HSTS: it belongs to whatever
+  # terminates HTTPS in front of this container. (nginx: a location with its own add_header
+  # inherits none, so /api keeps exactly the API's headers.)
   location / {
     add_header Cache-Control "no-cache";
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://res.cloudinary.com; connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://res.cloudinary.com; connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header X-Frame-Options "DENY" always;

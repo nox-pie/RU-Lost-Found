@@ -8,7 +8,6 @@ export default defineConfig({
     worker: 'src/worker.ts',
     'scripts/seed': 'src/scripts/seed.ts',
     'scripts/set-role': 'src/scripts/set-role.ts',
-    'scripts/migrate-legacy': 'src/scripts/migrate-legacy.ts',
     'scripts/demo': 'src/scripts/demo.ts',
   },
   format: ['esm'],
