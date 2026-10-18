@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { daysAfter } from '../../testing/builders';
 import {
   reportItem,
@@ -10,6 +10,7 @@ import {
 } from '../../testing/signedIn';
 import { seedUniversity, useTestApp } from '../../testing/testApp';
 import { MAX_HANDOVER_ATTEMPTS } from './domain/Claim';
+import { MongoClaimRepository } from './infrastructure/MongoClaimRepository';
 
 const t = useTestApp();
 const api = () => request(t.app);
@@ -368,6 +369,26 @@ describe('background rules', () => {
     expect((await post(asha, `${claimId}/handover`, { code })).status).toBe(409);
     t.clock.set(daysAfter(now, 8));
     expect(await t.container.services.claims.expireOverdue()).toBe(0);
+  });
+
+  it('counts only the claims it really expired, not ones that changed in the meantime', async () => {
+    const claimId = await submitted(ravi, await foundPhone());
+    await approve(claimId);
+    const claims = new MongoClaimRepository(t.connection);
+    const now = t.clock.now();
+    t.clock.set(daysAfter(now, 8));
+    // The job's query found the claim, but by the time it is processed it has already ended.
+    const stale = await claims.findOverdueApproved(t.clock.now(), 100);
+    expect(await t.container.services.claims.expireOverdue()).toBe(1);
+    const query = vi
+      .spyOn(MongoClaimRepository.prototype, 'findOverdueApproved')
+      .mockResolvedValueOnce(stale);
+
+    const expired = await t.container.services.claims.expireOverdue();
+
+    t.clock.set(now);
+    query.mockRestore();
+    expect(expired).toBe(0);
   });
 
   it('ends the active claims of an item that is removed', async () => {
