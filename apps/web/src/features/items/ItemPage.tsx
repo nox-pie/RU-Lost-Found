@@ -55,7 +55,7 @@ function ItemView({ item }: { item: ItemDto }) {
             type="button"
             onClick={() => setZoomed(true)}
             aria-label={`Open photo ${photo + 1} full size`}
-            className="group relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100 shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="group relative block aspect-4/3 w-full overflow-hidden rounded-2xl bg-gray-100 shadow-card focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
           >
             <img src={item.photos[photo]} alt={item.title} className="h-full w-full object-cover" />
             <span className="absolute bottom-3 right-3 rounded-full bg-black/55 p-2 text-white opacity-80 transition group-hover:opacity-100">
@@ -131,7 +131,7 @@ function ItemView({ item }: { item: ItemDto }) {
             )}
           </dl>
 
-          <div className="mt-6 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm">
+          <div className="mt-6 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-xs">
             <Avatar name={item.reporter.name} url={item.reporter.avatarUrl} />
             <div>
               <p className="text-sm font-medium text-gray-900">
@@ -266,7 +266,7 @@ function ReporterActions({ item }: { item: ItemDto }) {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl bg-white p-4 shadow-sm">
+      <section className="rounded-2xl bg-white p-4 shadow-xs">
         <h2 className="font-display text-lg font-semibold">Claims on this item</h2>
         {claims.isPending ? (
           <p className="mt-2 text-sm text-gray-500">Loading…</p>

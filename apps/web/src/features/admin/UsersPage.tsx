@@ -50,7 +50,7 @@ export default function UsersPage() {
 
   return (
     <div>
-      <div className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm sm:grid-cols-[1fr_12rem_10rem]">
+      <div className="grid gap-3 rounded-2xl bg-white p-4 shadow-xs sm:grid-cols-[1fr_12rem_10rem]">
         <Input
           label="Search"
           type="search"
@@ -93,7 +93,7 @@ export default function UsersPage() {
           <>
             <ul
               aria-busy={query.isPlaceholderData}
-              className={`divide-y overflow-hidden rounded-2xl bg-white shadow-sm transition-opacity ${query.isPlaceholderData ? 'opacity-60' : ''}`}
+              className={`divide-y overflow-hidden rounded-2xl bg-white shadow-xs transition-opacity ${query.isPlaceholderData ? 'opacity-60' : ''}`}
             >
               {users.map((user) => (
                 <UserRow key={user.id} user={user} me={me} />
@@ -144,7 +144,7 @@ function UserRow({ user, me }: { user: AdminUserDto; me: MeDto }) {
 
   return (
     <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-      <div className="flex min-w-0 flex-grow items-center gap-3">
+      <div className="flex min-w-0 grow items-center gap-3">
         <Avatar name={name} url={user.avatarUrl} />
         <div className="min-w-0">
           <p className="flex flex-wrap items-center gap-2 font-medium text-gray-900">

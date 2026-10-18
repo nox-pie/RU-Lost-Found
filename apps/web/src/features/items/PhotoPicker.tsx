@@ -85,7 +85,7 @@ export function PhotoPicker({ files, onChange, max, maxBytes, error }: PhotoPick
               type="button"
               onClick={() => onChange(files.filter((_, i) => i !== index))}
               aria-label={`Remove photo ${index + 1}`}
-              className="absolute right-1.5 top-1.5 rounded-full bg-white/90 p-1 text-gray-700 shadow hover:text-red-600"
+              className="absolute right-1.5 top-1.5 rounded-full bg-white/90 p-1 text-gray-700 shadow-sm hover:text-red-600"
             >
               <X className="h-4 w-4" />
             </button>

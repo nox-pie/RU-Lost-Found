@@ -65,11 +65,11 @@ export function SampleCarousel() {
       <div className="relative">
         {/* Two cards peeking out behind, for depth. */}
         <div
-          className="absolute inset-x-6 -bottom-3 top-6 rotate-3 rounded-3xl bg-white/40 backdrop-blur-sm"
+          className="absolute inset-x-6 -bottom-3 top-6 rotate-3 rounded-3xl bg-white/40 backdrop-blur-xs"
           aria-hidden
         />
         <div
-          className="absolute inset-x-3 -bottom-1.5 top-3 -rotate-2 rounded-3xl bg-white/60 backdrop-blur-sm"
+          className="absolute inset-x-3 -bottom-1.5 top-3 -rotate-2 rounded-3xl bg-white/60 backdrop-blur-xs"
           aria-hidden
         />
 
@@ -106,7 +106,7 @@ export function SampleCarousel() {
               onClick={() => setIndex(i)}
               aria-label={`Show post ${i + 1}: ${post.title}`}
               aria-current={i === index}
-              className="group flex h-6 min-w-6 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="group flex h-6 min-w-6 items-center justify-center rounded-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
             >
               {/* A small dot inside a 24 px target, big enough to tap. */}
               <span
@@ -142,7 +142,7 @@ function PostCard({ post, eager }: { post: SamplePost; eager: boolean }) {
   const Icon = CATEGORY_ICONS[post.category];
   return (
     <article>
-      <div className="relative aspect-[4/3] bg-gray-100">
+      <div className="relative aspect-4/3 bg-gray-100">
         <img
           src={post.photo}
           alt=""
@@ -152,7 +152,7 @@ function PostCard({ post, eager }: { post: SamplePost; eager: boolean }) {
           className="h-full w-full object-cover"
         />
         <span
-          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow ${post.type === 'LOST' ? 'bg-primary text-primary-contrast' : 'bg-secondary text-secondary-contrast'}`}
+          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow-sm ${post.type === 'LOST' ? 'bg-primary text-primary-contrast' : 'bg-secondary text-secondary-contrast'}`}
         >
           {post.type === 'LOST' ? 'Lost' : 'Found'}
         </span>
@@ -193,7 +193,7 @@ function ControlButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur hover:bg-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+      className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
     >
       {children}
     </button>

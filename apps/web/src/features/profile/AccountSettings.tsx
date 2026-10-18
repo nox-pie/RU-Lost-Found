@@ -65,7 +65,7 @@ function ChangePasswordForm({ user }: { user: MeDto }) {
   return (
     <form
       onSubmit={onSubmit}
-      className="mt-6 space-y-4 rounded-2xl bg-white p-5 shadow-sm"
+      className="mt-6 space-y-4 rounded-2xl bg-white p-5 shadow-xs"
       aria-labelledby="password-heading"
       noValidate
     >
@@ -131,7 +131,7 @@ function YourData() {
   });
 
   return (
-    <section className="mt-6 rounded-2xl bg-white p-5 shadow-sm" aria-labelledby="data-heading">
+    <section className="mt-6 rounded-2xl bg-white p-5 shadow-xs" aria-labelledby="data-heading">
       <SectionHeading id="data-heading" icon={<Download className="h-5 w-5" />}>
         Your data
       </SectionHeading>
@@ -157,7 +157,7 @@ function DeleteAccount() {
 
   return (
     <section
-      className="mt-6 rounded-2xl border border-red-200 bg-white p-5 shadow-sm"
+      className="mt-6 rounded-2xl border border-red-200 bg-white p-5 shadow-xs"
       aria-labelledby="delete-heading"
     >
       <SectionHeading id="delete-heading" icon={<Trash2 className="h-5 w-5 text-red-600" />}>

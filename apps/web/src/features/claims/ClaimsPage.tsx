@@ -45,7 +45,7 @@ export default function ClaimsPage() {
       <p className="mt-1 text-gray-600">Follow every claim from request to handover.</p>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" className="flex rounded-full bg-white p-1 shadow-sm">
+        <div role="tablist" className="flex rounded-full bg-white p-1 shadow-xs">
           {VIEWS.map((v) => (
             <button
               key={v.id}
@@ -64,7 +64,7 @@ export default function ClaimsPage() {
             type="checkbox"
             checked={showAll}
             onChange={(event) => update('show', event.target.checked ? 'all' : null)}
-            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            className="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary"
           />
           Include closed claims
         </label>
@@ -83,7 +83,7 @@ export default function ClaimsPage() {
           </EmptyState>
         ) : (
           <>
-            <ul className="divide-y overflow-hidden rounded-2xl bg-white shadow-sm">
+            <ul className="divide-y overflow-hidden rounded-2xl bg-white shadow-xs">
               {claims.map((claim) => (
                 <ClaimListRow key={claim.id} claim={claim} />
               ))}
@@ -124,7 +124,7 @@ function ClaimListRow({ claim }: { claim: ClaimDto }) {
         ) : (
           <Avatar name={person.name} url={person.avatarUrl} />
         )}
-        <div className="min-w-0 flex-grow">
+        <div className="min-w-0 grow">
           <p className="truncate font-medium text-gray-900">{claim.item.title}</p>
           <p className="truncate text-sm text-gray-500">
             {claim.myRole === 'CLAIMANT' ? `Reported by ${person.name}` : `From ${person.name}`} ·{' '}

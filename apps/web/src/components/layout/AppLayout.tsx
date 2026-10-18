@@ -15,7 +15,7 @@ export function AppLayout() {
       </a>
       <Header />
       <DemoBanner />
-      <main id="main" className="mx-auto w-full max-w-7xl flex-grow px-4 py-8 sm:px-6 sm:py-10">
+      <main id="main" className="mx-auto w-full max-w-7xl grow px-4 py-8 sm:px-6 sm:py-10">
         <Outlet />
       </main>
       <Footer />

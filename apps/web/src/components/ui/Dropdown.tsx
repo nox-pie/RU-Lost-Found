@@ -63,7 +63,7 @@ export function Dropdown<T extends string>({
         className={
           hideLabel
             ? 'sr-only'
-            : 'mb-1 block text-sm font-medium text-gray-700 data-[disabled]:opacity-60'
+            : 'mb-1 block text-sm font-medium text-gray-700 data-disabled:opacity-60'
         }
       >
         {label}
@@ -72,8 +72,8 @@ export function Dropdown<T extends string>({
         <ListboxButton
           onBlur={onBlur}
           aria-describedby={error || hint ? messageId : undefined}
-          className={`group flex w-full items-center gap-2 border bg-white text-left text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 data-[open]:border-primary data-[open]:ring-2 data-[open]:ring-primary/20 data-[disabled]:cursor-not-allowed data-[disabled]:bg-gray-50 data-[disabled]:text-gray-500 data-[hover]:border-gray-400 ${
-            pill ? 'rounded-full px-4 py-2 shadow-sm' : 'rounded-xl px-3 py-2.5'
+          className={`group flex w-full items-center gap-2 border bg-white text-left text-sm transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/60 data-open:border-primary data-open:ring-2 data-open:ring-primary/20 data-disabled:cursor-not-allowed data-disabled:bg-gray-50 data-disabled:text-gray-500 data-hover:border-gray-400 ${
+            pill ? 'rounded-full px-4 py-2 shadow-xs' : 'rounded-xl px-3 py-2.5'
           } ${error ? 'border-red-400' : pill ? 'border-gray-200' : 'border-gray-300'}`}
         >
           {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />}
@@ -83,30 +83,30 @@ export function Dropdown<T extends string>({
             {selected?.label ?? placeholder}
           </span>
           <ChevronDown
-            className="h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200 group-data-[open]:rotate-180"
+            className="h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200 group-data-open:rotate-180"
             aria-hidden
           />
         </ListboxButton>
         <ListboxOptions
           anchor={{ to: 'bottom start', gap: 6, padding: 12 }}
           transition
-          className="z-[70] max-h-72 w-[var(--button-width)] min-w-[12rem] overflow-y-auto rounded-2xl border border-gray-100 bg-white p-1.5 shadow-xl outline-none transition duration-150 ease-out [--anchor-max-height:18rem] data-[closed]:-translate-y-1 data-[closed]:opacity-0"
+          className="z-70 max-h-72 w-(--button-width) min-w-48 overflow-y-auto rounded-2xl border border-gray-100 bg-white p-1.5 shadow-xl outline-hidden transition duration-150 ease-out [--anchor-max-height:18rem] data-closed:-translate-y-1 data-closed:opacity-0"
         >
           {options.map((option) => (
             <ListboxOption
               key={option.value}
               value={option.value}
-              className="group flex cursor-pointer select-none items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-gray-700 data-[focus]:bg-primary/10 data-[selected]:font-semibold data-[focus]:text-primary data-[selected]:text-gray-900"
+              className="group flex cursor-pointer select-none items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-gray-700 data-focus:bg-primary/10 data-selected:font-semibold data-focus:text-primary data-selected:text-gray-900"
             >
               {option.icon && (
                 <option.icon
-                  className="h-4 w-4 shrink-0 text-gray-500 group-data-[focus]:text-primary group-data-[selected]:text-primary"
+                  className="h-4 w-4 shrink-0 text-gray-500 group-data-focus:text-primary group-data-selected:text-primary"
                   aria-hidden
                 />
               )}
               <span className="min-w-0 flex-1 truncate">{option.label}</span>
               <Check
-                className="invisible h-4 w-4 shrink-0 text-primary group-data-[selected]:visible"
+                className="invisible h-4 w-4 shrink-0 text-primary group-data-selected:visible"
                 aria-hidden
               />
             </ListboxOption>

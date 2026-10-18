@@ -128,7 +128,7 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
           {(['LOST', 'FOUND'] as const).map((value) => (
             <label
               key={value}
-              className={`cursor-pointer rounded-lg py-2 text-center text-sm font-medium transition ${type === value ? (value === 'LOST' ? 'bg-primary text-white shadow' : 'bg-secondary text-secondary-contrast shadow') : 'text-gray-600'}`}
+              className={`cursor-pointer rounded-lg py-2 text-center text-sm font-medium transition ${type === value ? (value === 'LOST' ? 'bg-primary text-white shadow-sm' : 'bg-secondary text-secondary-contrast shadow-sm') : 'text-gray-600'}`}
             >
               <input type="radio" value={value} className="sr-only" {...register('type')} />
               {value === 'LOST' ? 'I lost something' : 'I found something'}
@@ -211,7 +211,7 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
             <div className="space-y-2">
               {questions.fields.map((field, index) => (
                 <div key={field.id} className="flex items-start gap-2">
-                  <div className="flex-grow">
+                  <div className="grow">
                     <Input
                       label={`Question ${index + 1}`}
                       error={errors.questions?.[index]?.text?.message}

@@ -11,7 +11,7 @@ function ItemCard({ item }: { item: ItemDto }) {
   return (
     <Link
       to={`/items/${item.id}`}
-      className={`${CARD} hover:-translate-y-1 hover:shadow-card-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
+      className={`${CARD} hover:-translate-y-1 hover:shadow-card-hover focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary`}
     >
       <ItemCardContent item={item} />
     </Link>
@@ -31,7 +31,7 @@ function ItemCardContent({ item }: { item: ItemDto }) {
   const status = ITEM_STATUS[item.status];
   return (
     <>
-      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+      <div className="relative aspect-4/3 overflow-hidden bg-gray-100">
         {item.photos[0] && (
           <img
             src={item.photos[0]}
@@ -41,7 +41,7 @@ function ItemCardContent({ item }: { item: ItemDto }) {
           />
         )}
         <span
-          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow ${item.type === 'LOST' ? 'bg-primary text-primary-contrast' : 'bg-secondary text-secondary-contrast'}`}
+          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow-sm ${item.type === 'LOST' ? 'bg-primary text-primary-contrast' : 'bg-secondary text-secondary-contrast'}`}
         >
           {item.type === 'LOST' ? 'Lost' : 'Found'}
         </span>
@@ -52,14 +52,14 @@ function ItemCardContent({ item }: { item: ItemDto }) {
         )}
         {item.isSample && (
           <span
-            className="absolute bottom-3 left-3 rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm"
+            className="absolute bottom-3 left-3 rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-xs"
             title="Sample data showing how the portal works"
           >
             Sample post
           </span>
         )}
       </div>
-      <div className="flex flex-grow flex-col p-4">
+      <div className="flex grow flex-col p-4">
         <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
           {CATEGORY_LABELS[item.category]}
         </p>
@@ -110,13 +110,13 @@ export function ItemGridSkeleton({ count = 8 }: { count?: number }) {
           className="flex animate-pulse flex-col overflow-hidden rounded-2xl bg-white shadow-card motion-reduce:animate-none"
           aria-hidden
         >
-          <div className="aspect-[4/3] bg-gray-200" />
+          <div className="aspect-4/3 bg-gray-200" />
           <div className="space-y-3 p-4">
-            <div className="h-3 w-1/4 rounded bg-gray-200" />
-            <div className="h-5 w-3/4 rounded bg-gray-200" />
-            <div className="h-3 w-full rounded bg-gray-100" />
-            <div className="h-3 w-2/3 rounded bg-gray-100" />
-            <div className="h-3 w-1/2 rounded bg-gray-100" />
+            <div className="h-3 w-1/4 rounded-sm bg-gray-200" />
+            <div className="h-5 w-3/4 rounded-sm bg-gray-200" />
+            <div className="h-3 w-full rounded-sm bg-gray-100" />
+            <div className="h-3 w-2/3 rounded-sm bg-gray-100" />
+            <div className="h-3 w-1/2 rounded-sm bg-gray-100" />
           </div>
         </div>
       ))}

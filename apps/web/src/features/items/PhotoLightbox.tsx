@@ -77,7 +77,7 @@ export function PhotoLightbox({
         type="button"
         onClick={onClose}
         aria-label="Close photo"
-        className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
       >
         <X className="h-6 w-6" />
       </button>
@@ -87,7 +87,7 @@ export function PhotoLightbox({
             type="button"
             onClick={() => go(-1)}
             aria-label="Previous photo"
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
           >
             <ChevronLeft className="h-7 w-7" />
           </button>
@@ -95,7 +95,7 @@ export function PhotoLightbox({
             type="button"
             onClick={() => go(1)}
             aria-label="Next photo"
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
           >
             <ChevronRight className="h-7 w-7" />
           </button>

@@ -70,7 +70,7 @@ export default function FeedPage() {
   return (
     <>
       <section className="mb-10 text-center">
-        <h1 className="font-display text-3xl font-bold leading-tight text-gray-900 sm:text-5xl">
+        <h1 className="font-display text-3xl font-bold leading-tight text-gray-900 sm:text-5xl sm:leading-none">
           Lost something? Found something?
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-gray-600 sm:text-lg">
@@ -93,7 +93,7 @@ export default function FeedPage() {
             }}
             placeholder="Search by name, place or description"
             aria-label="Search items"
-            className="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
+            className="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm shadow-xs focus:outline-hidden focus:ring-2 focus:ring-primary/60"
           />
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -105,7 +105,7 @@ export default function FeedPage() {
                 type="button"
                 aria-selected={tab === t.id}
                 onClick={() => setParam('tab', t.id === 'all' ? '' : t.id)}
-                className={`rounded-full px-5 py-2 text-sm font-medium transition ${tab === t.id ? 'bg-primary text-white shadow' : 'bg-white text-gray-600 shadow-sm hover:bg-gray-50'}`}
+                className={`rounded-full px-5 py-2 text-sm font-medium transition ${tab === t.id ? 'bg-primary text-white shadow-sm' : 'bg-white text-gray-600 shadow-xs hover:bg-gray-50'}`}
               >
                 {t.label}
                 {counts.data && (

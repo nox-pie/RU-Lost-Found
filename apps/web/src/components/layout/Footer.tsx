@@ -32,7 +32,7 @@ export function Footer() {
           width={1280}
           height={344}
           loading="lazy"
-          className="order-last mx-auto w-full max-w-xs select-none opacity-90 md:order-none md:w-[22rem] md:max-w-none lg:w-[35rem]"
+          className="order-last mx-auto w-full max-w-xs select-none opacity-90 md:order-0 md:w-88 md:max-w-none lg:w-140"
         />
 
         <ul className="space-y-2.5 text-sm text-white/90 md:justify-self-end">

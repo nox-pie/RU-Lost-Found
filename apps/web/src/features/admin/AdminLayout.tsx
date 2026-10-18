@@ -76,7 +76,7 @@ export default function AdminLayout() {
               to={section.to}
               end={section.end}
               className={({ isActive }) =>
-                `flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors sm:px-4 ${isActive ? 'bg-primary text-primary-contrast shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`
+                `flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors sm:px-4 ${isActive ? 'bg-primary text-primary-contrast shadow-xs' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`
               }
             >
               <section.icon className="h-4 w-4" aria-hidden />

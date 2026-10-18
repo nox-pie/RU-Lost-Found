@@ -102,7 +102,7 @@ function ReportsWaiting({ count }: { count: number }) {
       </div>
       <Link
         to="/admin/reports"
-        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-contrast shadow-sm hover:bg-primary-dark"
+        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-contrast shadow-xs hover:bg-primary-dark"
       >
         Review now <ArrowRight className="h-4 w-4" aria-hidden />
       </Link>
@@ -186,10 +186,10 @@ function WeeklyChart({ weeks }: { weeks: UniversityStatsDto['weekly'] }) {
         <h2 className="font-display text-lg font-semibold">Last 8 weeks</h2>
         <div className="flex gap-4 text-xs text-gray-600" aria-hidden>
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-primary" /> Posted
+            <span className="h-2.5 w-2.5 rounded-xs bg-primary" /> Posted
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-secondary" /> Returned
+            <span className="h-2.5 w-2.5 rounded-xs bg-secondary" /> Returned
           </span>
         </div>
       </div>
@@ -231,7 +231,7 @@ function WeeklyChart({ weeks }: { weeks: UniversityStatsDto['weekly'] }) {
 
 function Bar({ value, max, className }: { value: number; max: number; className: string }) {
   return (
-    <div className="relative flex h-full w-full max-w-[1.25rem] items-end">
+    <div className="relative flex h-full w-full max-w-5 items-end">
       <div
         className={`w-full rounded-t ${className}`}
         style={{ height: value === 0 ? '2px' : `${(value / max) * 100}%` }}

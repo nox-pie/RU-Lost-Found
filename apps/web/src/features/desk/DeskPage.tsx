@@ -39,7 +39,7 @@ export default function DeskPage() {
         the item is in its owner’s hands.
       </p>
 
-      <div role="tablist" className="mt-6 inline-flex rounded-full bg-white p-1 shadow-sm">
+      <div role="tablist" className="mt-6 inline-flex rounded-full bg-white p-1 shadow-xs">
         {VIEWS.map((v) => (
           <button
             key={v.id}
@@ -80,7 +80,7 @@ function HandoversWaiting() {
   }
   return (
     <>
-      <ul className="divide-y overflow-hidden rounded-2xl bg-white shadow-sm">
+      <ul className="divide-y overflow-hidden rounded-2xl bg-white shadow-xs">
         {claims.map((claim) => (
           <HandoverRow key={claim.id} claim={claim} />
         ))}
@@ -95,7 +95,7 @@ function HandoverRow({ claim }: { claim: ClaimDto }) {
     <li>
       <Link to={`/claims/${claim.id}`} className="flex items-center gap-4 p-4 hover:bg-gray-50">
         <Thumbnail url={claim.item.photo} />
-        <div className="min-w-0 flex-grow">
+        <div className="min-w-0 grow">
           <p className="truncate font-medium text-gray-900">{claim.item.title}</p>
           <p className="truncate text-sm text-gray-500">
             {claim.claimant.name} and {claim.reporter.name}
@@ -135,7 +135,7 @@ function ItemsAtDesk() {
 
   return (
     <>
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-white p-4 shadow-xs">
         <Input
           label="Search"
           type="search"
@@ -159,7 +159,7 @@ function ItemsAtDesk() {
         ) : (
           <>
             <ul
-              className={`divide-y overflow-hidden rounded-2xl bg-white shadow-sm transition-opacity ${query.isPlaceholderData ? 'opacity-60' : ''}`}
+              className={`divide-y overflow-hidden rounded-2xl bg-white shadow-xs transition-opacity ${query.isPlaceholderData ? 'opacity-60' : ''}`}
               aria-busy={query.isPlaceholderData}
             >
               {items.map((item) => (
@@ -180,7 +180,7 @@ function DeskItemRow({ item }: { item: ItemDto }) {
     <li>
       <Link to={`/items/${item.id}`} className="flex items-center gap-4 p-4 hover:bg-gray-50">
         <Thumbnail url={item.photos[0] ?? null} />
-        <div className="min-w-0 flex-grow">
+        <div className="min-w-0 grow">
           <p className="truncate font-medium text-gray-900">{item.title}</p>
           <p className="truncate text-sm text-gray-500">
             Found {formatDay(item.occurredOn)} · {item.location}

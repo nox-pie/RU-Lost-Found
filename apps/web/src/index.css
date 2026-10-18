@@ -23,9 +23,30 @@
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+/* The theme stays in tailwind.config.ts, which reads the colours from the brand file. */
+@config '../tailwind.config.ts';
+
+/* Tailwind 4 changed a few defaults; these keep the look of the app as it was. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: theme('colors.gray.200', currentcolor);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: theme('colors.gray.400');
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 @layer base {
   body {

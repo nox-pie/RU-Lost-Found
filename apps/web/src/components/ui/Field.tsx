@@ -7,7 +7,7 @@ import {
 } from 'react';
 
 const CONTROL =
-  'block w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/60 disabled:bg-gray-50 disabled:text-gray-500';
+  'block w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-primary/60 disabled:bg-gray-50 disabled:text-gray-500';
 
 interface FieldShellProps {
   id: string;
@@ -95,7 +95,7 @@ export const Checkbox = forwardRef<
         ref={ref}
         id={id}
         type="checkbox"
-        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+        className="mt-0.5 h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary"
         {...rest}
       />
       <span>{label}</span>
