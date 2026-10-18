@@ -1,7 +1,7 @@
 import { LogOut, Menu, Plus, UserRound, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
-import { isAdmin, useAuth, useCurrentUser } from '../../features/auth/authContext';
+import { isAdmin, isStaff, useAuth, useCurrentUser } from '../../features/auth/authContext';
 import { ReportItemDialog } from '../../features/items/ReportItemDialog';
 import { NotificationBell } from '../../features/notifications/NotificationBell';
 import { Avatar } from '../ui/misc';
@@ -12,6 +12,9 @@ const LINKS = [
   { to: '/my-items', label: 'My items', end: false },
   { to: '/claims', label: 'Claims', end: false },
 ];
+
+/** On phones these are in the bottom bar, so the menu only lists the rest. */
+const BOTTOM_BAR_PATHS = LINKS.map((link) => link.to);
 
 function navClass({ isActive }: { isActive: boolean }) {
   return `rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${isActive ? 'bg-white text-primary' : 'text-white hover:bg-white/15'}`;
@@ -26,7 +29,11 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const account = useRef<HTMLDivElement>(null);
   const location = useLocation();
-  const links = isAdmin(user) ? [...LINKS, { to: '/admin', label: 'Admin', end: false }] : LINKS;
+  const links = [
+    ...LINKS,
+    ...(isStaff(user) ? [{ to: '/desk', label: 'Desk', end: false }] : []),
+    ...(isAdmin(user) ? [{ to: '/admin', label: 'Admin', end: false }] : []),
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -136,7 +143,7 @@ export function Header() {
           </p>
           {/* Browse, My items, Claims, Profile and Report are in the bottom bar on phones. */}
           {links
-            .filter((link) => link.to === '/admin')
+            .filter((link) => !BOTTOM_BAR_PATHS.includes(link.to))
             .map((link) => (
               <NavLink
                 key={link.to}

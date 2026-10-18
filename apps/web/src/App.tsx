@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Link, Route, Routes } from 'react-router';
 import { PageLoader } from './components/ui/misc';
-import { PublicOnly, RequireAdmin, RequireAuth } from './features/auth/guards';
+import { PublicOnly, RequireAdmin, RequireAuth, RequireStaff } from './features/auth/guards';
 // Not lazy: it is the first screen of every new visitor, and small.
 import LandingPage from './features/landing/LandingPage';
 
@@ -19,6 +19,7 @@ const MyItemsPage = lazy(() => import('./features/items/MyItemsPage'));
 const ClaimsPage = lazy(() => import('./features/claims/ClaimsPage'));
 const ClaimPage = lazy(() => import('./features/claims/ClaimPage'));
 const ProfilePage = lazy(() => import('./features/profile/ProfilePage'));
+const DeskPage = lazy(() => import('./features/desk/DeskPage'));
 const AdminLayout = lazy(() => import('./features/admin/AdminLayout'));
 const OverviewPage = lazy(() => import('./features/admin/OverviewPage'));
 const ReportsPage = lazy(() => import('./features/admin/ReportsPage'));
@@ -68,6 +69,14 @@ export default function App() {
           <Route path="claims" element={<ClaimsPage />} />
           <Route path="claims/:id" element={<ClaimPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route
+            path="desk"
+            element={
+              <RequireStaff>
+                <DeskPage />
+              </RequireStaff>
+            }
+          />
           <Route
             path="admin"
             element={
