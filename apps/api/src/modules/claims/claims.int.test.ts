@@ -201,6 +201,22 @@ describe('submitting a claim', () => {
     expect((await claim(ravi, itemId)).status).toBe(201);
   });
 
+  it('can be looked up by item, however many claims the person has', async () => {
+    const phone = await foundPhone();
+    const wallet = await reportItem(t, asha, { title: 'Brown wallet' });
+    const phoneClaim = await submitted(ravi, phone);
+    await submitted(ravi, wallet, { answers: [] });
+
+    const mine = await get(ravi, `claims/mine?status=REQUESTED,APPROVED&itemId=${phone}`).expect(
+      200,
+    );
+    const others = await get(kabir, `claims/mine?itemId=${phone}`).expect(200);
+
+    expect(mine.body.data.map((c: { id: string }) => c.id)).toEqual([phoneClaim]);
+    expect(others.body.data).toEqual([]);
+    expect((await get(ravi, 'claims/mine?itemId=not-an-id')).status).toBe(400);
+  });
+
   it('is not possible on removed or reserved items', async () => {
     const removed = await foundPhone();
     await api().delete(`/api/v1/items/${removed}`).set('Authorization', asha.bearer).expect(204);

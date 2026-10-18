@@ -5,6 +5,7 @@ import {
   handoverSchema,
   itemIdParamsSchema,
   listClaimsQuerySchema,
+  listMyClaimsQuerySchema,
   rejectClaimSchema,
   submitClaimSchema,
 } from '@ru-lost-found/shared';
@@ -43,7 +44,7 @@ export function createClaimRouter(
 
   const claims = Router();
   claims.use(authenticate);
-  claims.get('/mine', validate({ query: listClaimsQuerySchema }), controller.listMine);
+  claims.get('/mine', validate({ query: listMyClaimsQuerySchema }), controller.listMine);
   claims.get('/received', validate({ query: listClaimsQuerySchema }), controller.listReceived);
   claims.get('/:id', validate({ params: claimIdParamsSchema }), controller.get);
   claims.post(

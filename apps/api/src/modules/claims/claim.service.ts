@@ -1,4 +1,9 @@
-import type { ApproveClaimInput, ListClaimsQuery, SubmitClaimInput } from '@ru-lost-found/shared';
+import type {
+  ApproveClaimInput,
+  ListClaimsQuery,
+  ListMyClaimsQuery,
+  SubmitClaimInput,
+} from '@ru-lost-found/shared';
 import type { AuditTrail } from '../../core/audit/AuditTrail';
 import { type Actor, isStaff } from '../../core/domain/Actor';
 import type { Clock } from '../../core/domain/Clock';
@@ -279,9 +284,13 @@ export class ClaimService {
   listMine(
     actor: Actor,
     scope: TenantScope,
-    query: ListClaimsQuery,
+    query: ListMyClaimsQuery,
   ): Promise<PageResult<ClaimView>> {
-    return this.search(scope, { claimantId: actor.userId, statuses: query.status }, query);
+    return this.search(
+      scope,
+      { claimantId: actor.userId, itemId: query.itemId, statuses: query.status },
+      query,
+    );
   }
 
   /** Claims others made on items I reported. */

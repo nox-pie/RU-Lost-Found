@@ -144,11 +144,12 @@ function ItemView({ item }: { item: ItemDto }) {
 /** For everyone except the reporter: claim it, or see the claim they already made. */
 function ClaimantActions({ item }: { item: ItemDto }) {
   const [claiming, setClaiming] = useState(false);
+  // Asked for this item only: searching a page of recent claims misses older ones.
   const mine = useQuery({
-    queryKey: queryKeys.claims.mine('REQUESTED,APPROVED'),
-    queryFn: () => claimsApi.mine({ status: 'REQUESTED,APPROVED' }),
+    queryKey: queryKeys.claims.mineOnItem(item.id),
+    queryFn: () => claimsApi.mine({ status: 'REQUESTED,APPROVED', itemId: item.id }),
   });
-  const existing = mine.data?.data.find((claim) => claim.item.id === item.id);
+  const existing = mine.data?.data[0];
 
   if (existing) {
     return (
