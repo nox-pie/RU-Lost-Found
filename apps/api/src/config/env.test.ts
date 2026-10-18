@@ -15,6 +15,7 @@ describe('loadEnv', () => {
       PORT: 5001,
       LOG_LEVEL: 'info',
       CORS_ORIGINS: ['http://localhost:5173'],
+      WRITE_LIMIT_PER_MINUTE: 120,
     });
     expect(env.TRUST_PROXY_HOPS).toBeUndefined();
   });
@@ -24,10 +25,12 @@ describe('loadEnv', () => {
       ...valid,
       PORT: '8080',
       TRUST_PROXY_HOPS: '1',
+      WRITE_LIMIT_PER_MINUTE: '600',
       CORS_ORIGINS: 'https://a.example , https://b.example,',
     });
 
     expect(env.PORT).toBe(8080);
+    expect(env.WRITE_LIMIT_PER_MINUTE).toBe(600);
     expect(env.TRUST_PROXY_HOPS).toBe(1);
     expect(env.CORS_ORIGINS).toEqual(['https://a.example', 'https://b.example']);
   });
