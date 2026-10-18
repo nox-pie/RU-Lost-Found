@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Role } from './enums';
+import { MAX_YEAR_OF_STUDY, type Role } from './enums';
 
 export const OTP_PURPOSES = ['SIGNUP', 'PASSWORD_RESET'] as const;
 export type OtpPurpose = (typeof OTP_PURPOSES)[number];
@@ -32,7 +32,11 @@ const name = (label: string) =>
 export const profileFieldsSchema = z.object({
   firstName: name('First name'),
   lastName: name('Last name'),
-  year: z.coerce.number().int().min(1, 'Select your year').max(6, 'Select your year'),
+  year: z.coerce
+    .number()
+    .int()
+    .min(1, 'Select your year')
+    .max(MAX_YEAR_OF_STUDY, 'Select your year'),
   school: z.string().trim().min(1, 'Select your school').max(100),
   enrollmentNumber: z
     .string()

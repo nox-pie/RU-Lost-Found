@@ -53,3 +53,6 @@ export const CLAIM_STATUSES = [
   'COMPLETED',
 ] as const;
 export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
+
+/** Years of study: up to 6, the longest programme (the PhD). Kept here, free of zod, for the web forms. */
+export const MAX_YEAR_OF_STUDY = 6;
