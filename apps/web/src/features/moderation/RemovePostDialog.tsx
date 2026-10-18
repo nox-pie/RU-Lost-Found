@@ -27,10 +27,17 @@ export function RemovePostDialog({
     onSuccess: async () => {
       onClose();
       setReason('');
+      toast.success('The post was removed.');
+      if (onRemoved) {
+        // Leaving the post's own page: refetching it now would flash "Item not found" first.
+        // Mark the data stale instead; lists refresh when they are shown.
+        void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all, refetchType: 'none' });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.items.all, refetchType: 'none' });
+        onRemoved();
+        return;
+      }
       await queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       await queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
-      toast.success('The post was removed.');
-      onRemoved?.();
     },
     onError: (error) => toast.error(error.message),
   });
