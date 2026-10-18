@@ -51,11 +51,11 @@ export function LandingNav({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${light ? 'border-b border-black/5 bg-surface/90 shadow-sm backdrop-blur-md' : 'bg-gradient-to-b from-black/40 to-transparent'}`}
+      className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${light ? 'border-b border-black/5 bg-surface/90 shadow-xs backdrop-blur-md' : 'bg-linear-to-b from-black/40 to-transparent'}`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-secondary-light bg-white p-1.5 shadow-sm">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-secondary-light bg-white p-1.5 shadow-xs">
             <img src={brand.images.symbol} alt="" className="h-full w-full object-contain" />
           </span>
           <span
@@ -91,7 +91,7 @@ export function LandingNav({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
           </Link>
           <Link
             to="/signup"
-            className={`hidden rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition-colors sm:inline-block ${light ? 'bg-primary text-white hover:bg-primary-dark' : 'bg-white text-primary hover:bg-surface'}`}
+            className={`hidden rounded-full px-4 py-2 text-sm font-semibold shadow-xs transition-colors sm:inline-block ${light ? 'bg-primary text-white hover:bg-primary-dark' : 'bg-white text-primary hover:bg-surface'}`}
           >
             Create account
           </Link>

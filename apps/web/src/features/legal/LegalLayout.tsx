@@ -35,7 +35,7 @@ export function LegalLayout({
           </Link>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-3xl flex-grow px-4 py-10 sm:px-6">
+      <main className="mx-auto w-full max-w-3xl grow px-4 py-10 sm:px-6">
         <h1 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">{title}</h1>
         <p className="mt-2 text-sm text-gray-500">Last updated {updated}</p>
         <div className="mt-6 text-gray-700">{intro}</div>
@@ -56,7 +56,7 @@ export function LegalLayout({
 /** One numbered part of a policy, in a card. */
 export function LegalSection({ heading, children }: { heading: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+    <section className="rounded-2xl bg-white p-5 shadow-xs sm:p-6">
       <h2 className="font-display text-xl font-semibold text-gray-900">{heading}</h2>
       <div className="mt-3 space-y-3 text-sm leading-relaxed text-gray-700 [&_li]:ml-5 [&_li]:list-disc [&_ul]:space-y-1.5">
         {children}

@@ -38,7 +38,7 @@ export default function PostsPage() {
 
   return (
     <div>
-      <div className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm sm:grid-cols-[1fr_12rem_10rem]">
+      <div className="grid gap-3 rounded-2xl bg-white p-4 shadow-xs sm:grid-cols-[1fr_12rem_10rem]">
         <Input
           label="Search"
           type="search"
@@ -84,7 +84,7 @@ export default function PostsPage() {
           <>
             <ul
               aria-busy={query.isPlaceholderData}
-              className={`divide-y overflow-hidden rounded-2xl bg-white shadow-sm transition-opacity ${query.isPlaceholderData ? 'opacity-60' : ''}`}
+              className={`divide-y overflow-hidden rounded-2xl bg-white shadow-xs transition-opacity ${query.isPlaceholderData ? 'opacity-60' : ''}`}
             >
               {posts.map((post) => (
                 <PostRow key={post.id} post={post} />
@@ -137,11 +137,11 @@ function PostRow({ post }: { post: ItemDto }) {
     <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
       {removed ? (
         // Removed posts can't be opened any more.
-        <div className="flex min-w-0 flex-grow items-center gap-3">{summary}</div>
+        <div className="flex min-w-0 grow items-center gap-3">{summary}</div>
       ) : (
         <Link
           to={`/items/${post.id}`}
-          className="flex min-w-0 flex-grow items-center gap-3 hover:opacity-90"
+          className="flex min-w-0 grow items-center gap-3 hover:opacity-90"
         >
           {summary}
         </Link>

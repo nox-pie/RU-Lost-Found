@@ -71,7 +71,7 @@ function ClaimView({ claim }: { claim: ClaimDto }) {
         <ArrowLeft className="h-4 w-4" /> All claims
       </Link>
 
-      <section className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
+      <section className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-xs">
         {claim.item.photo && (
           <img
             src={claim.item.photo}
@@ -79,7 +79,7 @@ function ClaimView({ claim }: { claim: ClaimDto }) {
             className="h-20 w-20 shrink-0 rounded-xl object-cover"
           />
         )}
-        <div className="min-w-0 flex-grow">
+        <div className="min-w-0 grow">
           <p className="text-xs uppercase tracking-wide text-gray-500">
             {claim.kind === 'OWNERSHIP' ? 'Ownership claim' : 'Found report'}
           </p>
@@ -103,7 +103,7 @@ function ClaimView({ claim }: { claim: ClaimDto }) {
           <DecisionPanel claim={claim} />
 
           {(claim.message || claim.answers.length > 0) && (
-            <section className="rounded-2xl bg-white p-5 shadow-sm">
+            <section className="rounded-2xl bg-white p-5 shadow-xs">
               <h2 className="font-display text-lg font-semibold">
                 {claim.myRole === 'CLAIMANT' ? 'What you sent' : 'What they said'}
               </h2>
@@ -133,7 +133,7 @@ function ClaimView({ claim }: { claim: ClaimDto }) {
         </div>
 
         <aside className="space-y-6 md:col-span-2">
-          <section className="rounded-2xl bg-white p-5 shadow-sm">
+          <section className="rounded-2xl bg-white p-5 shadow-xs">
             <p className="text-xs uppercase tracking-wide text-gray-500">
               {claim.myRole === 'STAFF' ? 'People involved' : otherRole}
             </p>
@@ -173,12 +173,12 @@ function ClaimView({ claim }: { claim: ClaimDto }) {
             )}
           </section>
 
-          <section className="rounded-2xl bg-white p-5 shadow-sm">
+          <section className="rounded-2xl bg-white p-5 shadow-xs">
             <h2 className="text-xs uppercase tracking-wide text-gray-500">Timeline</h2>
             <ol className="mt-3 space-y-3 border-l-2 border-gray-100 pl-4">
               {claim.history.map((entry, index) => (
                 <li key={`${entry.status}-${index}`} className="relative text-sm">
-                  <span className="absolute -left-[1.3rem] top-1.5 h-2.5 w-2.5 rounded-full bg-primary" />
+                  <span className="absolute left-[-1.3rem] top-1.5 h-2.5 w-2.5 rounded-full bg-primary" />
                   <p className="font-medium text-gray-900">{CLAIM_STATUS[entry.status].label}</p>
                   <p className="text-xs text-gray-500">{formatDateTime(entry.at)}</p>
                 </li>
@@ -225,7 +225,7 @@ function DecisionPanel({ claim }: { claim: ClaimDto }) {
   if (claim.myRole !== 'REPORTER' || claim.status !== 'REQUESTED') return null;
 
   return (
-    <section className="rounded-2xl border-2 border-primary/20 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border-2 border-primary/20 bg-white p-5 shadow-xs">
       <h2 className="font-display text-lg font-semibold">
         {claim.kind === 'OWNERSHIP' ? 'Is this the owner?' : 'Did they find your item?'}
       </h2>
@@ -318,7 +318,7 @@ function HandoverPanel({ claim }: { claim: ClaimDto }) {
 
   if (claim.myRole === 'STAFF') {
     return (
-      <section className="rounded-2xl border-2 border-secondary/40 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border-2 border-secondary/40 bg-white p-5 shadow-xs">
         <h2 className="font-display text-lg font-semibold">Security desk</h2>
         <p className="mt-1 text-sm text-gray-600">
           Confirm only if you saw the item handed to its owner in person.
@@ -337,7 +337,7 @@ function HandoverPanel({ claim }: { claim: ClaimDto }) {
 
   if (handover.code) {
     return (
-      <section className="rounded-2xl border-2 border-primary/30 bg-white p-5 text-center shadow-sm">
+      <section className="rounded-2xl border-2 border-primary/30 bg-white p-5 text-center shadow-xs">
         <KeyRound className="mx-auto h-8 w-8 text-primary" />
         <h2 className="mt-2 font-display text-lg font-semibold">Your handover code</h2>
         <p
@@ -371,14 +371,14 @@ function HandoverPanel({ claim }: { claim: ClaimDto }) {
       confirm.mutate(code, { onError: () => setCode('') });
     };
     return (
-      <section className="rounded-2xl border-2 border-primary/30 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border-2 border-primary/30 bg-white p-5 shadow-xs">
         <h2 className="font-display text-lg font-semibold">Confirm the handover</h2>
         <p className="mt-1 text-sm text-gray-600">
           When you give the item back, ask the owner for the 6-digit code in their app and enter it
           here. Meet before {deadline}.
         </p>
         <form onSubmit={submit} className="mt-4 flex items-end gap-2">
-          <div className="flex-grow">
+          <div className="grow">
             <Input
               label="Owner's code"
               value={code}

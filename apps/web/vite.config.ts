@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { type Plugin, defineConfig } from 'vite';
 import { brand } from './src/brand/brand.config';
@@ -64,7 +65,7 @@ function webManifest(): Plugin {
 process.env.VITE_RELEASE ??= process.env.VERCEL_GIT_COMMIT_SHA;
 
 export default defineConfig({
-  plugins: [react(), brandedHtml(), webManifest()],
+  plugins: [react(), tailwindcss(), brandedHtml(), webManifest()],
   server: {
     // Same origin as the API in development, exactly like the Vercel rewrite in production,
     // so the refresh-token cookie (SameSite=Lax, path /api/v1/auth) works unchanged.

@@ -39,7 +39,7 @@ export function ClaimProgress({ claim }: { claim: ClaimDto }) {
   ];
 
   return (
-    <ol aria-label="Progress" className="mt-6 flex items-start rounded-2xl bg-white p-4 shadow-sm">
+    <ol aria-label="Progress" className="mt-6 flex items-start rounded-2xl bg-white p-4 shadow-xs">
       {steps.map((step, index) => (
         <li
           key={step.label}

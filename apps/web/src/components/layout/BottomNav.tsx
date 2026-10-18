@@ -19,7 +19,7 @@ export function BottomNav() {
     <>
       <nav
         aria-label="Sections"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
       >
         <ul className="mx-auto grid h-16 max-w-md grid-cols-5 items-center">
           {LINKS.map((link) =>
@@ -42,7 +42,7 @@ export function BottomNav() {
                   type="button"
                   onClick={() => setReporting(true)}
                   aria-label="Report an item"
-                  className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg ring-4 ring-surface hover:bg-primary-dark focus:outline-none focus-visible:ring-primary/40"
+                  className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg ring-4 ring-surface hover:bg-primary-dark focus:outline-hidden focus-visible:ring-primary/40"
                 >
                   <Plus className="h-7 w-7" aria-hidden />
                 </button>

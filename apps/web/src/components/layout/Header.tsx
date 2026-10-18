@@ -82,7 +82,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setReporting(true)}
-            className="hidden items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm hover:bg-surface sm:inline-flex"
+            className="hidden items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary shadow-xs hover:bg-surface sm:inline-flex"
           >
             <Plus className="h-4 w-4" /> Report item
           </button>

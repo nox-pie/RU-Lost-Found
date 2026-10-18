@@ -41,7 +41,7 @@ export function Modal({ open, title, onClose, children, size = 'md' }: ModalProp
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-xs sm:items-center sm:p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -52,7 +52,7 @@ export function Modal({ open, title, onClose, children, size = 'md' }: ModalProp
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-2xl focus:outline-none animate-dialog-in sm:rounded-2xl ${size === 'lg' ? 'sm:max-w-2xl' : 'sm:max-w-md'}`}
+        className={`max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-2xl focus:outline-hidden animate-dialog-in sm:rounded-2xl ${size === 'lg' ? 'sm:max-w-2xl' : 'sm:max-w-md'}`}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-5 py-4">
           <h2 id={titleId} className="font-display text-xl font-semibold text-gray-900">

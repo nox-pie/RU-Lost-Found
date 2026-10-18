@@ -89,7 +89,7 @@ const searchScene: Scene = {
       <div className="space-y-4">
         <div className="relative mx-auto max-w-md">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-          <div className="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm shadow-sm ring-2 ring-primary/40">
+          <div className="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm shadow-xs ring-2 ring-primary/40">
             {query || <span className="text-gray-400">Search by name, place or description</span>}
             {caret(!results)}
           </div>
@@ -131,12 +131,12 @@ const reportScene: Scene = {
     const question = typed(QUESTION, t, 2800, 26);
     const publishAt = 5000;
     return (
-      <div className="relative rounded-2xl bg-white p-4 shadow-sm">
+      <div className="relative rounded-2xl bg-white p-4 shadow-xs">
         {toast(t >= publishAt + 350, 'Your report is published')}
         <p className="font-display text-lg font-semibold text-gray-900">Report an item</p>
         <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 text-center text-sm font-medium">
           <span className="rounded-lg py-1.5 text-gray-600">I lost something</span>
-          <span className="rounded-lg bg-secondary py-1.5 text-secondary-contrast shadow">
+          <span className="rounded-lg bg-secondary py-1.5 text-secondary-contrast shadow-sm">
             I found something
           </span>
         </div>
@@ -190,7 +190,7 @@ const claimScene: Scene = {
       <div className="relative grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         {toast(sent, 'Claim sent to Asha')}
         <ItemCardPreview item={WALLET} className="hidden sm:flex" />
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="rounded-2xl bg-white p-4 shadow-xs">
           <p className="font-display text-lg font-semibold text-gray-900">This is mine</p>
           <div className="mt-3 space-y-2.5">
             <Input label={QUESTION} value={answer} readOnly />
@@ -223,7 +223,7 @@ const approveScene: Scene = {
     const digits = Math.max(0, Math.min(6, Math.floor((t - 3200) / 300) + 1));
     return (
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="space-y-3 rounded-2xl bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
               <Avatar name="Asha Verma" url={ASHA_PICTURE} size="sm" /> Asha
@@ -264,7 +264,7 @@ const approveScene: Scene = {
             </p>
           )}
         </div>
-        <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="space-y-3 rounded-2xl bg-white p-4 shadow-xs">
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
             <Avatar name="Ravi Singh" url={RAVI_PICTURE} size="sm" /> Ravi
           </p>
@@ -300,7 +300,7 @@ const handoverScene: Scene = {
     return (
       <div className="relative grid gap-3 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         {toast(done, 'Handed over. Thanks, Asha!')}
-        <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="space-y-3 rounded-2xl bg-white p-4 shadow-xs">
           <p className="font-display text-lg font-semibold text-gray-900">Confirm the handover</p>
           <p className="text-sm text-gray-600">Enter the code Ravi shows you.</p>
           <div className="flex gap-1.5">

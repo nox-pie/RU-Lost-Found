@@ -34,7 +34,7 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-surface">
       <LandingNav heroRef={heroRef} />
-      <main className="flex-grow">
+      <main className="grow">
         <Hero heroRef={heroRef} />
         <HowItWorks />
         <TryTheDemo />
@@ -73,7 +73,7 @@ function Hero({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
         className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_65%]"
       />
       <div
-        className="absolute inset-0 -z-10 bg-gradient-to-b from-black/70 via-black/55 to-black/80 lg:bg-gradient-to-r lg:from-black/80 lg:via-black/55 lg:to-black/30"
+        className="absolute inset-0 -z-10 bg-linear-to-b from-black/70 via-black/55 to-black/80 lg:bg-linear-to-r lg:from-black/80 lg:via-black/55 lg:to-black/30"
         aria-hidden
       />
       <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 pb-16 pt-28 sm:px-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:pb-20 lg:pt-32">
@@ -81,7 +81,7 @@ function Hero({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
           <p className="text-sm font-semibold uppercase tracking-widest text-white/90">
             {brand.organisation.name}
           </p>
-          <h1 className="mt-3 font-display text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mt-3 font-display text-4xl font-bold leading-tight sm:text-5xl sm:leading-none lg:text-6xl">
             Lost something on campus? Found something?
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg text-white/90 lg:mx-0">
@@ -97,7 +97,7 @@ function Hero({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
             </a>
             <a
               href="#how-it-works"
-              className="inline-flex h-12 items-center justify-center rounded-full border border-white/70 bg-white/10 px-7 font-semibold text-white backdrop-blur hover:bg-white/20"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-white/70 bg-white/10 px-7 font-semibold text-white backdrop-blur-sm hover:bg-white/20"
             >
               See how it works
             </a>
@@ -121,7 +121,7 @@ function HowItWorks() {
           />
         </Reveal>
         <Reveal>
-          <Suspense fallback={<div className="min-h-[34rem]" aria-hidden />}>
+          <Suspense fallback={<div className="min-h-136" aria-hidden />}>
             <HandoverStory />
           </Suspense>
         </Reveal>
@@ -138,7 +138,7 @@ function TryTheDemo() {
     >
       {/* A soft glow in the brand colours, behind the cards. */}
       <div
-        className="absolute left-1/2 top-1/2 -z-10 h-[34rem] w-[min(60rem,140vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-primary/40 via-primary-dark/30 to-secondary/25 blur-3xl"
+        className="absolute left-1/2 top-1/2 -z-10 h-136 w-[min(60rem,140vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-linear-to-r from-primary/40 via-primary-dark/30 to-secondary/25 blur-3xl"
         aria-hidden
       />
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
@@ -246,7 +246,7 @@ function GetStarted() {
             style={{ animationPlayState: visible ? 'running' : 'paused' }}
           />
           <div
-            className="absolute inset-0 -z-10 bg-gradient-to-br from-primary-dark/95 via-primary/85 to-black/75"
+            className="absolute inset-0 -z-10 bg-linear-to-br from-primary-dark/95 via-primary/85 to-black/75"
             aria-hidden
           />
           <p className="text-sm font-semibold uppercase tracking-widest text-white/90">

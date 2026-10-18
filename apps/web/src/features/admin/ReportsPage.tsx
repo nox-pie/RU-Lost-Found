@@ -44,7 +44,7 @@ export default function ReportsPage() {
 
   return (
     <div className="max-w-3xl">
-      <div role="tablist" className="inline-flex rounded-full bg-white p-1 shadow-sm">
+      <div role="tablist" className="inline-flex rounded-full bg-white p-1 shadow-xs">
         {(['OPEN', 'RESOLVED'] as const).map((tab) => (
           <button
             key={tab}
@@ -145,7 +145,7 @@ function OpenReportCard({ group }: { group: PostReports }) {
   });
 
   return (
-    <li className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+    <li className="rounded-2xl bg-white p-4 shadow-xs sm:p-5">
       <PostSummary item={group.item} />
       <ul className="mt-4 space-y-3 border-t pt-4">
         {group.reports.map((report) => (
@@ -157,7 +157,7 @@ function OpenReportCard({ group }: { group: PostReports }) {
                 {REPORT_REASON_LABELS[report.reason]}
               </p>
               {report.details && (
-                <p className="mt-0.5 break-words text-gray-600">“{report.details}”</p>
+                <p className="mt-0.5 wrap-break-word text-gray-600">“{report.details}”</p>
               )}
               <p className="mt-0.5 text-xs text-gray-500">{timeAgo(report.createdAt)}</p>
             </div>
@@ -218,7 +218,7 @@ function OpenReportCard({ group }: { group: PostReports }) {
 function DecidedReportRow({ report }: { report: ModerationReportDto }) {
   const removed = report.status === 'ACTIONED';
   return (
-    <li className="rounded-2xl bg-white p-4 shadow-sm">
+    <li className="rounded-2xl bg-white p-4 shadow-xs">
       <PostSummary item={report.item} />
       <div className="mt-3 border-t pt-3 text-sm text-gray-600">
         <p>

@@ -106,7 +106,7 @@ export default function ActivityPage() {
 
   return (
     <div className="max-w-3xl">
-      <div className="grid gap-3 rounded-2xl bg-white p-4 shadow-sm sm:grid-cols-3">
+      <div className="grid gap-3 rounded-2xl bg-white p-4 shadow-xs sm:grid-cols-3">
         <Dropdown
           label="Show"
           value={action}
@@ -170,7 +170,7 @@ export default function ActivityPage() {
           />
         ) : (
           <>
-            <ol className="divide-y overflow-hidden rounded-2xl bg-white shadow-sm">
+            <ol className="divide-y overflow-hidden rounded-2xl bg-white shadow-xs">
               {entries.map((entry) => {
                 const detail = detailOf(entry);
                 const who =
@@ -178,7 +178,7 @@ export default function ActivityPage() {
                 return (
                   <li key={entry.id} className="flex gap-3 p-4">
                     <Avatar name={who} url={entry.actor?.avatarUrl} size="sm" />
-                    <div className="min-w-0 flex-grow text-sm">
+                    <div className="min-w-0 grow text-sm">
                       <p className="text-gray-900">
                         {entry.actor ? (
                           <button
@@ -198,7 +198,7 @@ export default function ActivityPage() {
                         )}{' '}
                         · {AUDIT_ACTION_LABELS[entry.action]}
                       </p>
-                      {detail && <p className="mt-0.5 break-words text-gray-600">{detail}</p>}
+                      {detail && <p className="mt-0.5 wrap-break-word text-gray-600">{detail}</p>}
                       <p className="mt-0.5 text-xs text-gray-500">
                         <time dateTime={entry.occurredAt}>{formatDateTime(entry.occurredAt)}</time>
                         {entry.ip && <> · {entry.ip}</>}

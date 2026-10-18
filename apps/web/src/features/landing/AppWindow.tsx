@@ -26,7 +26,7 @@ export function AppWindow({ path, children }: { path: string; children: ReactNod
           <span className="px-2.5 py-1">Claims</span>
         </span>
       </div>
-      <div className="min-h-[25rem] p-4 sm:min-h-[26rem] sm:p-5">{children}</div>
+      <div className="min-h-100 p-4 sm:min-h-104 sm:p-5">{children}</div>
     </div>
   );
 }

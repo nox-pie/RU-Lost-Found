@@ -32,7 +32,7 @@ export function ShareButton({ item }: { item: ItemDto }) {
     <button
       type="button"
       onClick={() => void share()}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-xs hover:bg-gray-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
     >
       <Share2 className="h-4 w-4" aria-hidden /> Share
     </button>

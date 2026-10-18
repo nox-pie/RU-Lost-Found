@@ -79,7 +79,7 @@ export function HandoverStory() {
     <div className={`flex flex-wrap items-center gap-3 ${className}`}>
       <a
         href="#demo"
-        className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark"
+        className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-white shadow-xs hover:bg-primary-dark"
       >
         Try it yourself <ArrowRight className="h-4 w-4" aria-hidden />
       </a>
@@ -87,7 +87,7 @@ export function HandoverStory() {
         <button
           type="button"
           onClick={() => setPaused((value) => !value)}
-          className="inline-flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-gray-700 hover:bg-white/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="inline-flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-gray-700 hover:bg-white/70 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
         >
           {paused ? (
             <>
@@ -119,7 +119,7 @@ export function HandoverStory() {
                 onClick={() => show(i)}
                 aria-label={`Step ${i + 1}: ${item.title}`}
                 aria-current={i === active ? 'step' : undefined}
-                className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${i === active ? 'bg-primary text-primary-contrast shadow' : i < active ? 'bg-primary/10 text-primary' : 'bg-white text-gray-500 shadow-sm'}`}
+                className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary ${i === active ? 'bg-primary text-primary-contrast shadow-sm' : i < active ? 'bg-primary/10 text-primary' : 'bg-white text-gray-500 shadow-xs'}`}
               >
                 {i < active ? <Check className="h-4 w-4" aria-hidden /> : i + 1}
               </button>
@@ -140,7 +140,7 @@ export function HandoverStory() {
                   type="button"
                   onClick={() => show(i)}
                   aria-current={isActive ? 'step' : undefined}
-                  className={`relative w-full overflow-hidden rounded-2xl p-4 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${isActive ? 'bg-white shadow-card ring-1 ring-black/5' : 'hover:bg-white/60'}`}
+                  className={`relative w-full overflow-hidden rounded-2xl p-4 text-left transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary ${isActive ? 'bg-white shadow-card ring-1 ring-black/5' : 'hover:bg-white/60'}`}
                 >
                   <span className="flex items-center gap-3">
                     <span

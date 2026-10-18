@@ -93,7 +93,7 @@ function AvatarSection({ user, onChange }: { user: MeDto; onChange: (user: MeDto
   }
 
   return (
-    <section className="mt-8 flex items-center gap-5 rounded-2xl bg-white p-5 shadow-sm">
+    <section className="mt-8 flex items-center gap-5 rounded-2xl bg-white p-5 shadow-xs">
       <Avatar name={`${user.firstName} ${user.lastName}`} url={user.avatarUrl} size="lg" />
       <div>
         <p className="font-medium text-gray-900">
@@ -176,7 +176,7 @@ function DetailsForm({ user, onSaved }: { user: MeDto; onSaved: (user: MeDto) =>
   return (
     <form
       onSubmit={onSubmit}
-      className="mt-6 space-y-4 rounded-2xl bg-white p-5 shadow-sm"
+      className="mt-6 space-y-4 rounded-2xl bg-white p-5 shadow-xs"
       noValidate
     >
       <div className="grid gap-4 sm:grid-cols-2">
