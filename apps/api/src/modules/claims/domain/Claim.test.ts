@@ -168,7 +168,7 @@ describe('Claim.cancel', () => {
 
     expect(claim.status).toBe('CANCELLED');
     expect(claim.pullEvents()).toMatchObject([
-      { type: 'ClaimCancelled', payload: { wasApproved: false } },
+      { type: 'ClaimCancelled', payload: { wasApproved: false, automatic: false } },
     ]);
   });
 
@@ -213,6 +213,11 @@ describe('Claim.cancelAutomatically', () => {
     for (const claim of [requested, approvedOne]) {
       expect(claim.status).toBe('CANCELLED');
       expect(claim.history.at(-1)).toMatchObject({ byUserId: null, note: 'The item was removed.' });
+      // Marked like an automatic rejection, so the activity log can tell them apart.
+      expect(claim.pullEvents().at(-1)).toMatchObject({
+        type: 'ClaimCancelled',
+        payload: { cancelledBy: null, automatic: true },
+      });
     }
   });
 });

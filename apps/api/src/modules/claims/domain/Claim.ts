@@ -238,7 +238,11 @@ export class Claim extends AggregateRoot {
     const wasApproved = this.props.status === 'APPROVED';
     const next = this.state.cancel();
     this.transitionTo(next, actor.userId, now);
-    this.recordEvent('ClaimCancelled', now, { cancelledBy: actor.userId, wasApproved });
+    this.recordEvent('ClaimCancelled', now, {
+      cancelledBy: actor.userId,
+      wasApproved,
+      automatic: false,
+    });
   }
 
   /** Used when the item is removed: any active claim on it ends. */
@@ -246,7 +250,7 @@ export class Claim extends AggregateRoot {
     const wasApproved = this.props.status === 'APPROVED';
     const next = this.state.cancel();
     this.transitionTo(next, null, now, reason);
-    this.recordEvent('ClaimCancelled', now, { cancelledBy: null, wasApproved });
+    this.recordEvent('ClaimCancelled', now, { cancelledBy: null, wasApproved, automatic: true });
   }
 
   /**
