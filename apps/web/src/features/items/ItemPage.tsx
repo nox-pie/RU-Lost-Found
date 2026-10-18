@@ -144,11 +144,12 @@ function ItemView({ item }: { item: ItemDto }) {
 /** For everyone except the reporter: claim it, or see the claim they already made. */
 function ClaimantActions({ item }: { item: ItemDto }) {
   const [claiming, setClaiming] = useState(false);
+  // Asked for this item only: searching a page of recent claims misses older ones.
   const mine = useQuery({
-    queryKey: queryKeys.claims.mine('REQUESTED,APPROVED'),
-    queryFn: () => claimsApi.mine({ status: 'REQUESTED,APPROVED' }),
+    queryKey: queryKeys.claims.mineOnItem(item.id),
+    queryFn: () => claimsApi.mine({ status: 'REQUESTED,APPROVED', itemId: item.id }),
   });
-  const existing = mine.data?.data.find((claim) => claim.item.id === item.id);
+  const existing = mine.data?.data[0];
 
   if (existing) {
     return (
@@ -242,8 +243,10 @@ function ReporterActions({ item }: { item: ItemDto }) {
 
   const remove = useMutation({
     mutationFn: () => itemsApi.remove(item.id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
+    onSuccess: () => {
+      // Mark item data stale without refetching now: refetching this page's own item would
+      // briefly show "Item not found" before the page is left. Lists refresh when shown.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.items.all, refetchType: 'none' });
       toast.success('Your report was removed.');
       navigate('/my-items');
     },

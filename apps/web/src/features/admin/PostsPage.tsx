@@ -1,5 +1,5 @@
 import type { ItemDto } from '@ru-lost-found/shared';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { PackageOpen, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
@@ -30,6 +30,9 @@ export default function PostsPage() {
     queryFn: ({ pageParam }) => adminApi.items(filters, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    // While a new search loads, the current list stays (dimmed) instead of a spinner: replacing
+    // it would also close any dialog a row has open, such as Suspend or Remove.
+    placeholderData: keepPreviousData,
   });
   const posts = query.data?.pages.flatMap((page) => page.data) ?? [];
 
@@ -79,7 +82,10 @@ export default function PostsPage() {
           </EmptyState>
         ) : (
           <>
-            <ul className="divide-y overflow-hidden rounded-2xl bg-white shadow-sm">
+            <ul
+              aria-busy={query.isPlaceholderData}
+              className={`divide-y overflow-hidden rounded-2xl bg-white shadow-sm transition-opacity ${query.isPlaceholderData ? 'opacity-60' : ''}`}
+            >
               {posts.map((post) => (
                 <PostRow key={post.id} post={post} />
               ))}

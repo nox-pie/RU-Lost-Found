@@ -95,8 +95,10 @@ export const claimsApi = {
     api<ClaimDto>(`/items/${itemId}/claims`, { method: 'POST', json: body }),
   forItem: (itemId: string) =>
     api<Page<ClaimDto>>(`/items/${itemId}/claims`, { query: { limit: 50 } }),
-  mine: (query: { status?: string }, cursor?: string) =>
-    api<Page<ClaimDto>>('/claims/mine', { query: { status: query.status, cursor, limit: 20 } }),
+  mine: (query: { status?: string; itemId?: string }, cursor?: string) =>
+    api<Page<ClaimDto>>('/claims/mine', {
+      query: { status: query.status, itemId: query.itemId, cursor, limit: 20 },
+    }),
   received: (query: { status?: string }, cursor?: string) =>
     api<Page<ClaimDto>>('/claims/received', { query: { status: query.status, cursor, limit: 20 } }),
   get: (id: string) => api<ClaimDto>(`/claims/${id}`),

@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const EMAIL_DIR = path.join(HERE, '.emails');
@@ -139,4 +140,15 @@ export async function reportFoundItem(page: Page, title: string) {
   await dialog.getByLabel('Where did you find it?').fill('Library');
   await dialog.getByRole('button', { name: 'Publish report' }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
+}
+
+/** A 12-megapixel camera-style photo of random noise: well over the 5 MB upload limit. */
+export async function bigPhoto(): Promise<Buffer> {
+  const width = 4000;
+  const height = 3000;
+  const noise = Buffer.alloc(width * height * 3);
+  for (let i = 0; i < noise.length; i += 1) noise[i] = Math.floor(Math.random() * 256);
+  return sharp(noise, { raw: { width, height, channels: 3 } })
+    .jpeg({ quality: 100 })
+    .toBuffer();
 }

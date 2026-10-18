@@ -13,13 +13,20 @@ interface ModalProps {
 export function Modal({ open, title, onClose, children, size = 'md' }: ModalProps) {
   const titleId = useId();
   const panel = useRef<HTMLDivElement>(null);
+  // Callers usually pass a new `onClose` function on every render. Reading it from a ref keeps the
+  // effect below tied to opening and closing only: if it re-ran on every render, it would move the
+  // focus away from whatever the person is typing in after each keystroke.
+  const latestOnClose = useRef(onClose);
+  useEffect(() => {
+    latestOnClose.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
     panel.current?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') latestOnClose.current();
     };
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
@@ -28,7 +35,7 @@ export function Modal({ open, title, onClose, children, size = 'md' }: ModalProp
       document.body.style.overflow = '';
       previouslyFocused?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
