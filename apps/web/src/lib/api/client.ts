@@ -125,6 +125,13 @@ export function refreshSession(): Promise<AuthResponse | null> {
   return refreshInFlight;
 }
 
+/**
+ * Endpoints under /auth/ work with a password, a code or the refresh cookie, so a 401 there means
+ * the credentials were refused, not that the access token expired. These are the exceptions:
+ * they act for the signed-in user, so an expired token is renewed and the request sent again.
+ */
+const SIGNED_IN_AUTH_PATHS: ReadonlySet<string> = new Set(['/auth/password/change']);
+
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   json?: unknown;
@@ -176,7 +183,8 @@ export async function api<T>(
     );
   }
 
-  if (res.status === 401 && retry && !path.startsWith('/auth/')) {
+  const renewable = !path.startsWith('/auth/') || SIGNED_IN_AUTH_PATHS.has(path);
+  if (res.status === 401 && retry && renewable) {
     if (await refreshSession()) return api<T>(path, options, false);
     expiredListeners.forEach((listener) => listener());
   }
