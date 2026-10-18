@@ -3,7 +3,12 @@ import type { AuditTrail } from '../../core/audit/AuditTrail';
 import { type Actor, isStaff } from '../../core/domain/Actor';
 import type { Clock } from '../../core/domain/Clock';
 import type { IdGenerator } from '../../core/domain/IdGenerator';
-import { ConflictError, ForbiddenError, NotFoundError } from '../../core/errors/AppError';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from '../../core/errors/AppError';
 import type { Logger } from '../../core/logger/logger';
 import type { PageResult } from '../../core/persistence/Pagination';
 import type { TenantScope } from '../../core/persistence/Repository';
@@ -192,10 +197,11 @@ export class ClaimService {
     scope: TenantScope,
     claimId: string,
   ): Promise<ClaimView> {
+    const staff = await this.currentActor(actor);
     const { claim, item } = await this.deps.unitOfWork.run(async (tx) => {
       const { claim, item } = await this.load(scope, claimId, tx);
       const now = this.deps.clock.now();
-      claim.completeHandoverAsStaff(actor, now);
+      claim.completeHandoverAsStaff(staff, now);
       await this.finishHandover(scope, claim, item, now, tx);
       return { claim, item };
     });
@@ -247,7 +253,7 @@ export class ClaimService {
   /** A claim, visible only to the two people involved and to staff. */
   async get(actor: Actor, scope: TenantScope, claimId: string): Promise<ClaimView> {
     const claim = await this.deps.claims.findById(scope, claimId);
-    if (!claim || !(claim.isParty(actor.userId) || isStaff(actor))) {
+    if (!claim || !(claim.isParty(actor.userId) || (await this.isStaffNow(actor)))) {
       throw new NotFoundError('Claim');
     }
     const [view] = await this.views(scope, [claim]);
@@ -263,7 +269,7 @@ export class ClaimService {
   ): Promise<PageResult<ClaimView>> {
     const item = await this.deps.items.findById(scope, itemId);
     if (!item || item.status === 'REMOVED') throw new NotFoundError('Item');
-    if (!item.isReportedBy(actor.userId) && !isStaff(actor)) {
+    if (!item.isReportedBy(actor.userId) && !(await this.isStaffNow(actor))) {
       throw new ForbiddenError('Only the person who reported this item can see its claims.');
     }
     return this.search(scope, { itemId, statuses: query.status }, query);
@@ -317,6 +323,23 @@ export class ClaimService {
       other.rejectAutomatically('The item was handed over to someone else.', now);
       await this.deps.claims.update(other, tx);
     }
+  }
+
+  /**
+   * The actor with the role stored now. Access tokens live up to 15 minutes, so staff rights are
+   * checked against the account itself: a demoted or suspended member of staff loses them at once.
+   */
+  private async currentActor(actor: Actor): Promise<Actor> {
+    const user = await this.deps.users.findById(actor.userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedError('Your session has ended. Please sign in again.');
+    }
+    return { userId: user.id, role: user.role };
+  }
+
+  /** Staff by token and by the stored role (the lookup only happens for staff tokens). */
+  private async isStaffNow(actor: Actor): Promise<boolean> {
+    return isStaff(actor) && isStaff(await this.currentActor(actor));
   }
 
   private async load(scope: TenantScope, claimId: string, tx?: TransactionContext) {

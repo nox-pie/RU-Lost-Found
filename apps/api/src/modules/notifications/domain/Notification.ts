@@ -13,6 +13,8 @@ export interface NotificationProps {
   /** The domain event that caused it; with `userId`, unique, so a retried event can't notify twice. */
   sourceEventId: string;
   readAt: Date | null;
+  /** When the matching email went out; null if none was sent (yet). Stops a retry emailing twice. */
+  emailedAt: Date | null;
   createdAt: Date;
   version: number;
 }
@@ -23,8 +25,8 @@ export class Notification extends AggregateRoot {
     super(props.id, props.version);
   }
 
-  static create(input: Omit<NotificationProps, 'readAt' | 'version'>): Notification {
-    return new Notification({ ...input, readAt: null, version: 0 });
+  static create(input: Omit<NotificationProps, 'readAt' | 'emailedAt' | 'version'>): Notification {
+    return new Notification({ ...input, readAt: null, emailedAt: null, version: 0 });
   }
 
   static restore(props: NotificationProps): Notification {
@@ -63,5 +65,8 @@ export class Notification extends AggregateRoot {
   }
   get isRead() {
     return this.props.readAt !== null;
+  }
+  get emailedAt() {
+    return this.props.emailedAt;
   }
 }

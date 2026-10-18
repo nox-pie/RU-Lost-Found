@@ -32,6 +32,8 @@ interface NotificationDocument extends VersionedDocument {
   itemId: Types.ObjectId | null;
   sourceEventId: string;
   readAt: Date | null;
+  /** Absent on notifications stored before this field existed: read as null. */
+  emailedAt?: Date | null;
   createdAt: Date;
 }
 
@@ -48,6 +50,7 @@ const notificationSchema = defineSchema(
     itemId: { type: Schema.Types.ObjectId, default: null },
     sourceEventId: { type: String, required: true },
     readAt: { type: Date, default: null },
+    emailedAt: { type: Date, default: null },
     createdAt: { type: Date, required: true },
     version: { type: Number, required: true },
   },
@@ -81,6 +84,17 @@ export class MongoNotificationRepository
       if (error instanceof ConflictError) return false;
       throw error;
     }
+  }
+
+  findBySourceEvent(sourceEventId: string, userId: string): Promise<Notification | null> {
+    return this.findOne({ sourceEventId, userId: toObjectId(userId) });
+  }
+
+  async markEmailed(id: string, at: Date): Promise<void> {
+    await this.model.updateOne(
+      { _id: toObjectId(id) },
+      { $set: { emailedAt: at }, $inc: { version: 1 } },
+    );
   }
 
   async listForUser(
@@ -130,6 +144,7 @@ export class MongoNotificationRepository
       itemId: doc.itemId ? fromObjectId(doc.itemId) : null,
       sourceEventId: doc.sourceEventId,
       readAt: doc.readAt ?? null,
+      emailedAt: doc.emailedAt ?? null,
       createdAt: doc.createdAt,
       version: doc.version,
     });
@@ -147,6 +162,7 @@ export class MongoNotificationRepository
       itemId: notification.itemId ? toObjectId(notification.itemId) : null,
       sourceEventId: notification.sourceEventId,
       readAt: notification.readAt,
+      emailedAt: notification.emailedAt,
       createdAt: notification.createdAt,
     };
   }

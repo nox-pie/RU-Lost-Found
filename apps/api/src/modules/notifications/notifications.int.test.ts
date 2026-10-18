@@ -173,6 +173,41 @@ describe('scheduled jobs', () => {
     expect(t.email.to(ravi.email).at(-1)?.subject).toBe('A claim expired');
   });
 
+  it('emails each person once, even when a retry is needed for someone else', async () => {
+    const itemId = await foundPhone();
+    const claimId = await claimOnPhone(ravi, itemId);
+    await act(asha, claimId, 'approve');
+    await drain();
+
+    // The provider refuses Ravi's email once; Asha's goes out first, in the same delivery.
+    const send = t.email.send.bind(t.email);
+    let refused = false;
+    t.email.send = async (message) => {
+      if (!refused && message.to === ravi.email && message.subject === 'A claim expired') {
+        refused = true;
+        throw new Error('Email service is temporarily unavailable.');
+      }
+      return send(message);
+    };
+    try {
+      const now = t.clock.now();
+      t.clock.set(daysAfter(now, 8));
+      await t.container.worker.scheduler.runNow('expire-claims');
+      await drain(); // Asha emailed; Ravi's attempt fails and is retried later
+      t.clock.set(new Date(daysAfter(now, 8).getTime() + 5 * 60_000));
+      await drain(); // the retry
+      t.clock.set(now);
+    } finally {
+      t.email.send = send;
+    }
+
+    const expired = (address: string) =>
+      t.email.to(address).filter((message) => message.subject === 'A claim expired');
+    expect(refused).toBe(true);
+    expect(expired(ravi.email)).toHaveLength(1);
+    expect(expired(asha.email)).toHaveLength(1);
+  });
+
   it('deletes the photos of items removed more than 30 days ago', async () => {
     const itemId = await foundPhone();
     await api().delete(`/api/v1/items/${itemId}`).set('Authorization', asha.bearer).expect(204);

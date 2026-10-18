@@ -4,6 +4,10 @@ import type { Notification } from './Notification';
 export interface NotificationRepository {
   /** Stores the notification; returns false if one already exists for the same event and user. */
   add(notification: Notification): Promise<boolean>;
+  /** The notification an event already produced for a user, if any. */
+  findBySourceEvent(sourceEventId: string, userId: string): Promise<Notification | null>;
+  /** Records that the notification's email went out. */
+  markEmailed(id: string, at: Date): Promise<void>;
   /** Newest first. */
   listForUser(
     userId: string,

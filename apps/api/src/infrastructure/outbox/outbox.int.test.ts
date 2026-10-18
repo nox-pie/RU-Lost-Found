@@ -246,4 +246,34 @@ describe('JobScheduler', () => {
       vi.useRealTimers();
     }
   });
+
+  it('skips a run and reports it when the lease store is unreachable, without crashing', async () => {
+    vi.useFakeTimers();
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => unhandled.push(reason);
+    process.on('unhandledRejection', onUnhandled);
+    try {
+      const reporter = new RecordingErrorReporter();
+      const leases = new InMemoryKeyValueStore(clock);
+      leases.increment = async () => {
+        throw new Error('Reached the max retries per request limit');
+      };
+      let runs = 0;
+      const job = { name: 'expire-claims', intervalSeconds: 60, run: async () => (runs += 1) };
+      const scheduler = new JobScheduler([job], leases, logger, reporter);
+
+      scheduler.start();
+      await vi.advanceTimersByTimeAsync(60_000);
+      await scheduler.stop();
+      vi.useRealTimers();
+      await new Promise((resolve) => setImmediate(resolve)); // let any stray rejection surface
+
+      expect(unhandled).toEqual([]);
+      expect(runs).toBe(0);
+      expect(reporter.reports).toMatchObject([{ context: { area: 'job', job: 'expire-claims' } }]);
+    } finally {
+      process.off('unhandledRejection', onUnhandled);
+      vi.useRealTimers();
+    }
+  });
 });
