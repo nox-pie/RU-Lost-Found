@@ -43,6 +43,8 @@ Against production, add `--env-file=.env.production` through `npx tsx --env-file
 
 ## Before real users arrive
 
+Part of the [launch checklist](launch-checklist.md), which has the full order of steps.
+
 1. Set `DEMO_MODE=false` on Render (otherwise the API recreates the samples at its next start).
 2. Run `npm run demo -- remove` against production.
 3. Optionally delete `apps/web/public/demo/` and `apps/api/src/modules/demo/`.
