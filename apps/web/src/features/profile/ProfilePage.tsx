@@ -13,6 +13,7 @@ import { Input } from '../../components/ui/Field';
 import { Avatar } from '../../components/ui/misc';
 import { usersApi } from '../../lib/api/endpoints';
 import { emptyToUndefined, showFormError } from '../../lib/forms';
+import { prepareImage } from '../../lib/images';
 import { queryKeys } from '../../lib/queryClient';
 import { useAuth, useCurrentUser } from '../auth/authContext';
 import { DemoLimitNotice } from '../demo/DemoBanner';
@@ -21,6 +22,8 @@ type ProfileInput = z.input<typeof profileFieldsSchema>;
 type Profile = z.output<typeof profileFieldsSchema>;
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+/** Longest side of a profile picture after shrinking on the device (shown at most 96 px). */
+const AVATAR_DIMENSION = 512;
 
 export default function ProfilePage() {
   const user = useCurrentUser();
@@ -71,17 +74,20 @@ function AvatarSection({ user, onChange }: { user: MeDto; onChange: (user: MeDto
     onError: (error) => toast.error(error.message),
   });
 
-  function pick(file: File | undefined) {
+  async function pick(file: File | undefined) {
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    // Phone photos are often several MB; a profile picture is shown at most 96 px wide, so it is
+    // made small on the device first (which also keeps the upload fast on mobile data).
+    const prepared = await prepareImage(file, { maxDimension: AVATAR_DIMENSION });
+    if (!prepared) {
       toast.error('Choose a JPEG, PNG or WebP image.');
       return;
     }
-    if (file.size > MAX_AVATAR_BYTES) {
+    if (prepared.size > MAX_AVATAR_BYTES) {
       toast.error('Choose an image under 2 MB.');
       return;
     }
-    upload.mutate(file);
+    upload.mutate(prepared);
   }
 
   return (
@@ -118,7 +124,7 @@ function AvatarSection({ user, onChange }: { user: MeDto; onChange: (user: MeDto
           accept="image/jpeg,image/png,image/webp"
           className="hidden"
           onChange={(event) => {
-            pick(event.target.files?.[0]);
+            void pick(event.target.files?.[0]);
             event.target.value = '';
           }}
         />
