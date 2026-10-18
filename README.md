@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml/badge.svg)](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
-![Tests](https://img.shields.io/badge/tests-403%20API%20%2B%2022%20end--to--end-success)
+![Tests](https://img.shields.io/badge/tests-403%20API%20%2B%2023%20end--to--end-success)
 ![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)
 
 The lost & found portal of **Rishihood University**: students report what they lost or found, prove an item is theirs, and get it back through a verified handover, without sharing phone numbers with strangers.
@@ -66,7 +66,7 @@ Design patterns and why each is there, security decisions, the data model and th
 
 |              |                                                                                                                                                                                                                                                                                                                                                      |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tests**    | 403 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 22 Playwright tests in a real browser on desktop and a phone, including the full handover, the moderation flow, the security desk, account deletion and a sleeping server |
+| **Tests**    | 403 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 23 Playwright tests in a real browser on desktop and a phone, including the full handover, the moderation flow, the security desk, account deletion and a sleeping server |
 | **Load**     | 200 simultaneous users on one instance: 95% of reads under 7 ms, writes under 25 ms, zero errors. Up to 1,000 simultaneous users (375 requests/s) without a single failed request. [Details](docs/load-test.md)                                                                                                                                      |
 | **Security** | Independent review with every finding fixed; strict content security policy; no personal data in logs or error reports. [Details](docs/architecture/backend.md#9-authentication-and-security)                                                                                                                                                        |
 | **CI**       | Typecheck, lint, formatting, tests with coverage, builds, end-to-end tests and Docker image builds on every push                                                                                                                                                                                                                                     |
