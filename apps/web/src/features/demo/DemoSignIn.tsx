@@ -1,26 +1,18 @@
 import { DEMO_PERSONAS, type DemoPersonaKey } from '@ru-lost-found/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { ArrowRight, Check } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/Button';
 import { authApi } from '../../lib/api/endpoints';
-import { queryKeys } from '../../lib/queryClient';
 import { useAuth } from '../auth/authContext';
+import { useDemoStatus } from './demoStatus';
 
-/**
- * One-click sign-in as a sample person. `available` stays false until the API confirms the
- * demo is switched on; while a sleeping server wakes up, `checking` is true.
- */
+/** One-click sign-in as a sample person. */
 function useDemoSignIn() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
-  const status = useQuery({
-    queryKey: queryKeys.demoStatus,
-    queryFn: authApi.demoStatus,
-    staleTime: Infinity,
-    retry: 1,
-  });
+  const status = useDemoStatus();
   const start = useMutation({
     mutationFn: (persona: DemoPersonaKey) => authApi.demoSignIn(persona),
     onSuccess: (session) => {
@@ -31,8 +23,7 @@ function useDemoSignIn() {
     onError: (error) => toast.error(error.message),
   });
   return {
-    available: status.data?.enabled === true,
-    checking: status.isPending,
+    ...status,
     start: start.mutate,
     startingAs: start.isPending ? start.variables : undefined,
   };
