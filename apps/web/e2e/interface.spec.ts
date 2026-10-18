@@ -1,8 +1,6 @@
-import { expect, test, type APIRequestContext, type Browser } from '@playwright/test';
-import { readFileSync } from 'node:fs';
+import { expect, test, type Browser } from '@playwright/test';
 import {
   FIXTURE_PHOTO,
-  PASSWORD,
   appoint,
   bigPhoto,
   choose,
@@ -122,53 +120,28 @@ test('removing your own post goes straight to "My items", without a "not found" 
   ).toBe(false);
 });
 
-async function tokenFor(request: APIRequestContext, email: string) {
-  const res = await request.post('/api/v1/auth/login', { data: { email, password: PASSWORD } });
-  expect(res.status()).toBe(200);
-  return ((await res.json()) as { accessToken: string }).accessToken;
-}
-
-test('an item page knows you already claimed it, however many claims you have', async ({
+test('an item page asks for your claim on that item, so an older claim is never missed', async ({
   browser,
 }) => {
-  test.slow(); // 21 posts and claims
-  const first = await student(browser, 'poster-a', 'Ann', 'Poster');
-  const second = await student(browser, 'poster-b', 'Ben', 'Poster');
-  const claimant = await student(browser, 'busy-claimant', 'Cal', 'Claimer');
-  const request = claimant.page.request;
-  const posters = [await tokenFor(request, first.email), await tokenFor(request, second.email)];
-  const claimantToken = await tokenFor(request, claimant.email);
-  const photo = readFileSync(FIXTURE_PHOTO);
+  // The page used to look for the claim among your 20 most recent ones, which misses older
+  // claims. It now asks the API about this item only (GET /claims/mine?itemId=…).
+  const finder = await student(browser, 'gadget-finder', 'Ann', 'Poster');
+  const claimant = await student(browser, 'gadget-claimant', 'Cal', 'Claimer');
+  await reportFoundItem(finder.page, 'Gadget');
+  const itemUrl = finder.page.url();
+  const itemId = itemUrl.split('/').pop() ?? '';
 
-  // 21 found items (each poster stays under the daily posting limit), all claimed by Cal;
-  // the first claim is the oldest, so it is not among his 20 most recent.
-  const items: string[] = [];
-  for (let i = 1; i <= 21; i += 1) {
-    const res = await request.post('/api/v1/items', {
-      headers: { Authorization: `Bearer ${posters[i % 2]}` },
-      multipart: {
-        type: 'FOUND',
-        category: 'ELECTRONICS',
-        title: `Gadget ${i}`,
-        description: 'Found near the library entrance.',
-        location: 'Library',
-        occurredOn: new Date().toISOString().slice(0, 10),
-        photos: { name: 'keys.png', mimeType: 'image/png', buffer: photo },
-      },
-    });
-    expect(res.status()).toBe(201);
-    items.push(((await res.json()) as { id: string }).id);
-  }
-  for (const id of items) {
-    const res = await request.post(`/api/v1/items/${id}/claims`, {
-      headers: { Authorization: `Bearer ${claimantToken}` },
-      data: {},
-    });
-    expect(res.status()).toBe(201);
-  }
+  await claimant.page.goto(itemUrl);
+  await claimant.page.getByRole('button', { name: 'This is mine' }).click();
+  await claimant.page.getByRole('dialog').getByRole('button', { name: 'Send' }).click();
+  await expect(claimant.page).toHaveURL(/\/claims\/[0-9a-f]{24}$/);
 
-  await claimant.page.goto(`/items/${items[0]}`);
-  await expect(claimant.page.getByRole('heading', { name: 'Gadget 1' })).toBeVisible();
+  const lookup = claimant.page.waitForRequest(
+    (request) =>
+      request.url().includes('/api/v1/claims/mine') && request.url().includes(`itemId=${itemId}`),
+  );
+  await claimant.page.goto(itemUrl);
+  await lookup;
   await expect(claimant.page.getByText("You've already made a claim on this item")).toBeVisible();
   await expect(claimant.page.getByRole('button', { name: 'This is mine' })).toHaveCount(0);
 });
