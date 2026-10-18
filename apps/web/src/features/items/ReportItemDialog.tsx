@@ -1,11 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  ITEM_CATEGORIES,
   type ItemCategory,
   MAX_ITEM_PHOTOS,
   MAX_PHOTO_BYTES,
   MAX_VERIFICATION_QUESTIONS,
-  dateOnlySchema,
 } from '@ru-lost-found/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
@@ -26,6 +24,7 @@ import { DemoLimitNotice } from '../demo/DemoBanner';
 import { PhotoPicker } from './PhotoPicker';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { CATEGORY_OPTIONS } from '../../lib/categories';
+import { itemDetailsFields } from './itemForm';
 
 const questionSchema = z.string().trim().min(5, 'At least 5 characters').max(150);
 
@@ -33,12 +32,7 @@ const questionSchema = z.string().trim().min(5, 'At least 5 characters').max(150
 const reportSchema = z
   .object({
     type: z.enum(['LOST', 'FOUND']),
-    category: z.enum(ITEM_CATEGORIES, { message: 'Choose a category' }),
-    title: z.string().trim().min(3, 'Title must be at least 3 characters').max(80),
-    description: z.string().trim().min(10, 'Describe the item in at least 10 characters').max(1000),
-    location: z.string().trim().min(2, 'Enter where it was lost or found').max(100),
-    occurredOn: dateOnlySchema,
-    heldAtSecurityDesk: z.boolean(),
+    ...itemDetailsFields,
     questions: z.array(z.object({ text: z.string() })).max(MAX_VERIFICATION_QUESTIONS),
   })
   .superRefine((form, ctx) => {
