@@ -1,7 +1,13 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { daysAfter } from '../../testing/builders';
-import { reportItem, signUp, withRole, type SignedInUser } from '../../testing/signedIn';
+import {
+  reportItem,
+  setStoredRole,
+  signUp,
+  withRole,
+  type SignedInUser,
+} from '../../testing/signedIn';
 import { seedUniversity, useTestApp } from '../../testing/testApp';
 import { MAX_HANDOVER_ATTEMPTS } from './domain/Claim';
 
@@ -313,6 +319,18 @@ describe('privacy', () => {
     expect((await get(kabir, `items/${itemId}/claims`)).status).toBe(403);
     expect((await get(ravi, `items/${itemId}/claims`)).status).toBe(403);
     expect((await get(meera, `items/${itemId}/claims`)).status).toBe(200);
+  });
+
+  it('follows the current role: demoted staff lose access at once, not when their token expires', async () => {
+    const itemId = await foundPhone();
+    const claimId = await submitted(ravi, itemId);
+    await approve(claimId);
+    await setStoredRole(t, meera, 'STUDENT'); // Meera's token still says SECURITY_DESK
+
+    expect((await get(meera, `claims/${claimId}`)).status).toBe(404);
+    expect((await get(meera, `items/${itemId}/claims`)).status).toBe(403);
+    expect((await post(meera, `${claimId}/handover/staff`)).status).toBe(403);
+    expect((await get(ravi, `claims/${claimId}`)).body.status).toBe('APPROVED');
   });
 });
 
