@@ -73,14 +73,14 @@ Design patterns and why each is there, security decisions, the data model and th
 
 ## Tech stack
 
-| Area     | Choices                                                                                       |
-| -------- | --------------------------------------------------------------------------------------------- |
-| Web      | React 18, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, React Hook Form + Zod |
-| API      | Node.js 22, Express 5, TypeScript, Mongoose 9, Zod, pino, sharp, JWT, bcrypt                  |
-| Data     | MongoDB Atlas (transactions), Upstash Redis                                                   |
-| Services | Cloudinary (images), Brevo (email), Sentry (errors), UptimeRobot (uptime)                     |
-| Delivery | Vercel (web), Render (API, Docker), GitHub Actions                                            |
-| Testing  | Vitest, Supertest, mongodb-memory-server, Playwright, k6                                      |
+| Area     | Choices                                                                                         |
+| -------- | ----------------------------------------------------------------------------------------------- |
+| Web      | React 18, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, React Hook Form + Zod |
+| API      | Node.js 22, Express 5, TypeScript, Mongoose 9, Zod, pino, sharp, JWT, bcrypt                    |
+| Data     | MongoDB Atlas (transactions), Upstash Redis                                                     |
+| Services | Cloudinary (images), Brevo (email), Sentry (errors), UptimeRobot (uptime)                       |
+| Delivery | Vercel (web), Render (API, Docker), GitHub Actions                                              |
+| Testing  | Vitest, Supertest, mongodb-memory-server, Playwright, k6                                        |
 
 ## Running it locally
 

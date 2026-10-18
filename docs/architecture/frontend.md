@@ -2,7 +2,7 @@
 
 Status: Built and live · Last updated: 3 October 2026
 
-The web app is a React 18 single-page application (TypeScript, Vite, Tailwind CSS) organised **by feature**. It talks to the API only through one typed client, keeps server data in TanStack Query's cache, and validates forms with the **same Zod schemas the API uses** (from `packages/shared`), so the client and server can't disagree about what's valid.
+The web app is a React 18 single-page application (TypeScript, Vite, Tailwind CSS 4) organised **by feature**. It talks to the API only through one typed client, keeps server data in TanStack Query's cache, and validates forms with the **same Zod schemas the API uses** (from `packages/shared`), so the client and server can't disagree about what's valid.
 
 ---
 
@@ -43,7 +43,7 @@ apps/web/src/
     └── profile/             # details, picture, password, download my data, delete account, sign out
 ```
 
-**Branding:** no component names the organisation or hard-codes a colour. Texts and image paths come from `src/brand/brand.config.ts`; colours reach Tailwind as `primary`, `secondary` and `surface`; `index.html` gets its title, description, icon and theme colour from the same file through a small Vite plugin. Images live in `public/brand/`. See [../branding.md](../branding.md).
+**Branding:** no component names the organisation or hard-codes a colour. Texts and image paths come from `src/brand/brand.config.ts`; colours reach Tailwind as `primary`, `secondary` and `surface` through `tailwind.config.ts`, which `src/index.css` loads with Tailwind 4's `@config` (so the theme keeps one source, the brand file); `index.html` gets its title, description, icon and theme colour from the same file through a small Vite plugin. Images live in `public/brand/`. See [../branding.md](../branding.md).
 
 **Rule:** features depend on `lib` and `components`, and use only other features' public pieces, never their internals: the item page uses `ClaimDialog` (claims) and `FlagItemDialog` (moderation), and pages read the signed-in user through the auth context.
 
