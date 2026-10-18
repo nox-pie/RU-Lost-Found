@@ -253,7 +253,15 @@ export async function buildContainer(
   const notificationEmails = new NotificationEmails(emailLayout, env.APP_URL);
 
   const adminAccounts = new AdminAccounts(env.ADMIN_EMAILS, repositories.users, clock, logger);
-  const sessions = new SessionManager(repositories.sessions, unitOfWork, ids, clock, logger, audit);
+  const sessions = new SessionManager(
+    repositories.sessions,
+    unitOfWork,
+    ids,
+    clock,
+    logger,
+    audit,
+    repositories.users,
+  );
   const authService = new AuthService({
     users: repositories.users,
     universities: repositories.universities,
