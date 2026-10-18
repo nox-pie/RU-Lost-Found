@@ -242,8 +242,10 @@ function ReporterActions({ item }: { item: ItemDto }) {
 
   const remove = useMutation({
     mutationFn: () => itemsApi.remove(item.id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
+    onSuccess: () => {
+      // Mark item data stale without refetching now: refetching this page's own item would
+      // briefly show "Item not found" before the page is left. Lists refresh when shown.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.items.all, refetchType: 'none' });
       toast.success('Your report was removed.');
       navigate('/my-items');
     },
