@@ -11,6 +11,8 @@ coverage/
 .env.*
 *.env
 !.env.example
+# Settings copied from the hosting dashboards (Render, Vercel) for comparison: never committed
+secrets/
 
 # OS / editor
 .DS_Store
