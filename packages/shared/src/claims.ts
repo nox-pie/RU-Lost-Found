@@ -58,11 +58,20 @@ export const listClaimsQuerySchema = z
   })
   .strict();
 
+/** "My claims", optionally only those on one item (e.g. "you already claimed this" on its page). */
+export const listMyClaimsQuerySchema = listClaimsQuerySchema.extend({
+  itemId: z
+    .string()
+    .regex(/^[0-9a-f]{24}$/i, 'Invalid id')
+    .optional(),
+});
+
 export type SubmitClaimInput = z.infer<typeof submitClaimSchema>;
 export type ApproveClaimInput = z.infer<typeof approveClaimSchema>;
 export type RejectClaimInput = z.infer<typeof rejectClaimSchema>;
 export type HandoverInput = z.infer<typeof handoverSchema>;
 export type ListClaimsQuery = z.infer<typeof listClaimsQuerySchema>;
+export type ListMyClaimsQuery = z.infer<typeof listMyClaimsQuerySchema>;
 
 export type ClaimRole = 'CLAIMANT' | 'REPORTER' | 'STAFF';
 

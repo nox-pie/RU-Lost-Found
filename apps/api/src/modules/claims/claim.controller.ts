@@ -4,6 +4,7 @@ import type {
   ClaimDto,
   HandoverInput,
   ListClaimsQuery,
+  ListMyClaimsQuery,
   Page,
   RejectClaimInput,
   SubmitClaimInput,
@@ -39,7 +40,8 @@ export class ClaimController {
 
   listMine: RequestHandler = async (req, res) => {
     const actor = actorOf(req);
-    res.json(this.toPage(await this.claims.listMine(actor, scopeOf(req), queryOf(req)), actor));
+    const query = req.query as unknown as ListMyClaimsQuery;
+    res.json(this.toPage(await this.claims.listMine(actor, scopeOf(req), query), actor));
   };
 
   listReceived: RequestHandler = async (req, res) => {

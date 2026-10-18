@@ -30,6 +30,8 @@ export const queryKeys = {
     all: ['claims'] as const,
     forItem: (itemId: string) => ['claims', 'item', itemId] as const,
     mine: (status: string) => ['claims', 'mine', status] as const,
+    /** My active claim on one item, if any. */
+    mineOnItem: (itemId: string) => ['claims', 'mine', 'item', itemId] as const,
     received: (status: string) => ['claims', 'received', status] as const,
     detail: (id: string) => ['claims', 'detail', id] as const,
   },
