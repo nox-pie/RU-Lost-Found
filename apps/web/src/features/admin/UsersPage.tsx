@@ -1,5 +1,10 @@
 import { ROLES, ROLE_RANK, type AdminUserDto, type MeDto, type Role } from '@ru-lost-found/shared';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
@@ -37,6 +42,9 @@ export default function UsersPage() {
     queryFn: ({ pageParam }) => adminApi.users(filters, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    // While a new search loads, the current list stays (dimmed) instead of a spinner: replacing
+    // it would also close any dialog a row has open, such as Suspend or Remove.
+    placeholderData: keepPreviousData,
   });
   const users = query.data?.pages.flatMap((page) => page.data) ?? [];
 
@@ -83,7 +91,10 @@ export default function UsersPage() {
           </EmptyState>
         ) : (
           <>
-            <ul className="divide-y overflow-hidden rounded-2xl bg-white shadow-sm">
+            <ul
+              aria-busy={query.isPlaceholderData}
+              className={`divide-y overflow-hidden rounded-2xl bg-white shadow-sm transition-opacity ${query.isPlaceholderData ? 'opacity-60' : ''}`}
+            >
               {users.map((user) => (
                 <UserRow key={user.id} user={user} me={me} />
               ))}
