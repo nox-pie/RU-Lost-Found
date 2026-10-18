@@ -8,6 +8,8 @@ import type { Logger } from '../../core/logger/logger';
  */
 export class MongoDatabase implements HealthIndicator {
   readonly name = 'mongodb';
+  /** Set while closing on purpose (shutdown), when "disconnected" is expected, not a problem. */
+  private closing = false;
 
   private constructor(
     readonly connection: Connection,
@@ -25,7 +27,9 @@ export class MongoDatabase implements HealthIndicator {
     await connection.asPromise();
 
     const database = new MongoDatabase(connection, logger);
-    connection.on('disconnected', () => logger.warn('MongoDB disconnected'));
+    connection.on('disconnected', () => {
+      if (!database.closing) logger.warn('MongoDB disconnected');
+    });
     connection.on('reconnected', () => logger.info('MongoDB reconnected'));
     logger.info({ database: connection.name }, 'Connected to MongoDB');
     return database;
@@ -47,6 +51,7 @@ export class MongoDatabase implements HealthIndicator {
   }
 
   async disconnect(): Promise<void> {
+    this.closing = true;
     await this.connection.close();
     this.logger.info('MongoDB connection closed');
   }
