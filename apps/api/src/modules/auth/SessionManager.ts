@@ -5,6 +5,7 @@ import type { IdGenerator } from '../../core/domain/IdGenerator';
 import { ConcurrencyError, UnauthorizedError } from '../../core/errors/AppError';
 import type { Logger } from '../../core/logger/logger';
 import type { UnitOfWork } from '../../core/persistence/UnitOfWork';
+import type { UserRepository } from '../users/domain/UserRepository';
 import { Session, type SessionEndReason } from './domain/Session';
 import type { SessionRepository } from './domain/SessionRepository';
 
@@ -47,6 +48,8 @@ export class SessionManager {
     private readonly clock: Clock,
     private readonly logger: Logger,
     private readonly audit: AuditTrail,
+    /** The account's university, so a theft alert appears in that university's activity log. */
+    private readonly users: Pick<UserRepository, 'findById'>,
   ) {}
 
   async start(userId: string, client: ClientInfo): Promise<IssuedRefreshToken> {
@@ -91,10 +94,11 @@ export class SessionManager {
           { userId: current.userId, familyId: current.familyId, ended },
           'Refresh token reuse detected; ended the session family',
         );
+        const victim = await this.users.findById(current.userId);
         await this.audit.recordSafely({
           action: 'SESSION_REUSE_DETECTED',
           actorId: null,
-          universityId: null,
+          universityId: victim?.universityId ?? null,
           targetType: 'SESSION',
           targetId: current.familyId,
           occurredAt: now,
