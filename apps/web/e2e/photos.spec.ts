@@ -1,17 +1,5 @@
 import { expect, test } from '@playwright/test';
-import sharp from 'sharp';
-import { choose, signUp, uniqueEmail } from './support';
-
-/** A 12-megapixel camera-style photo of random noise: well over the 5 MB upload limit. */
-async function bigPhoto(): Promise<Buffer> {
-  const width = 4000;
-  const height = 3000;
-  const noise = Buffer.alloc(width * height * 3);
-  for (let i = 0; i < noise.length; i += 1) noise[i] = Math.floor(Math.random() * 256);
-  return sharp(noise, { raw: { width, height, channels: 3 } })
-    .jpeg({ quality: 100 })
-    .toBuffer();
-}
+import { bigPhoto, choose, signUp, uniqueEmail } from './support';
 
 test('a large phone photo is made smaller on the device and accepted', async ({ page }) => {
   const photo = await bigPhoto();
