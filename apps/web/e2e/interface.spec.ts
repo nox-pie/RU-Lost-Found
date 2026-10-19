@@ -59,7 +59,8 @@ test('a post switched from "found" to "lost" is not held back by a hidden questi
   await dialog.getByLabel('Item name').fill('Blue water bottle');
   await choose(page, 'Category', 'Bottle', dialog);
   await dialog.getByLabel('Description').fill('Steel bottle with a dent and a sticker.');
-  await dialog.getByLabel('Where did you lose it?').fill('Gym');
+  await choose(page, 'Where did you lose it?', 'Gym', dialog);
+  await dialog.getByLabel('Exact spot').fill('Near the lockers');
   await dialog.getByRole('button', { name: 'Publish report' }).click();
 
   await expect(page.getByRole('heading', { name: 'Blue water bottle' })).toBeVisible();

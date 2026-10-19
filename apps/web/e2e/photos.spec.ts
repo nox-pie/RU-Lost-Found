@@ -21,7 +21,7 @@ test('a large phone photo is made smaller on the device and accepted', async ({ 
   await dialog.getByLabel('Item name').fill('Grey umbrella');
   await choose(page, 'Category', 'Other', dialog);
   await dialog.getByLabel('Description').fill('A grey folding umbrella left by the stairs.');
-  await dialog.getByLabel('Where did you find it?').fill('Main stairs');
+  await dialog.getByLabel('Exact spot').fill('Main stairs'); // the place stays "Somewhere else"
   await dialog.getByRole('button', { name: 'Publish report' }).click();
 
   const sent = (await upload).postDataBuffer()?.length ?? 0;

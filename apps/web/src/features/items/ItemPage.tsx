@@ -18,7 +18,14 @@ import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Avatar, Badge, ErrorState, PageLoader } from '../../components/ui/misc';
 import { claimsApi, itemsApi } from '../../lib/api/endpoints';
-import { CATEGORY_LABELS, CLAIM_STATUS, ITEM_STATUS, formatDay, timeAgo } from '../../lib/format';
+import {
+  CATEGORY_LABELS,
+  CLAIM_STATUS,
+  ITEM_STATUS,
+  formatDay,
+  timeAgo,
+  whereOf,
+} from '../../lib/format';
 import { queryKeys } from '../../lib/queryClient';
 import { isAdmin, useCurrentUser } from '../auth/authContext';
 import { ClaimDialog } from '../claims/ClaimDialog';
@@ -117,7 +124,7 @@ function ItemView({ item }: { item: ItemDto }) {
           <dl className="mt-6 space-y-2 text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" /> <dt className="sr-only">Place</dt>
-              <dd>{item.location}</dd>
+              <dd>{whereOf(item)}</dd>
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" /> <dt className="sr-only">Date</dt>

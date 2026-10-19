@@ -137,7 +137,8 @@ export async function reportFoundItem(page: Page, title: string) {
   await dialog.getByLabel('Item name').fill(title);
   await choose(page, 'Category', 'Electronics', dialog);
   await dialog.getByLabel('Description').fill('Brand new, message me for the price.');
-  await dialog.getByLabel('Where did you find it?').fill('Library');
+  await choose(page, 'Where did you find it?', 'Library', dialog);
+  await dialog.getByLabel('Exact spot').fill('Second floor');
   await dialog.getByRole('button', { name: 'Publish report' }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
 }

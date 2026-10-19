@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Field';
 import { Badge, EmptyState, ErrorState, PageLoader } from '../../components/ui/misc';
 import { deskApi } from '../../lib/api/endpoints';
-import { ITEM_STATUS, formatDateTime, formatDay } from '../../lib/format';
+import { ITEM_STATUS, formatDateTime, formatDay, whereOf } from '../../lib/format';
 import { useDebouncedValue } from '../../lib/hooks';
 import { queryKeys } from '../../lib/queryClient';
 
@@ -183,7 +183,7 @@ function DeskItemRow({ item }: { item: ItemDto }) {
         <div className="min-w-0 grow">
           <p className="truncate font-medium text-gray-900">{item.title}</p>
           <p className="truncate text-sm text-gray-500">
-            Found {formatDay(item.occurredOn)} · {item.location}
+            Found {formatDay(item.occurredOn)} · {whereOf(item)}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">

@@ -24,6 +24,7 @@ import { DemoLimitNotice } from '../demo/DemoBanner';
 import { PhotoPicker } from './PhotoPicker';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { CATEGORY_OPTIONS } from '../../lib/categories';
+import { ELSEWHERE, placeOptions, useCampusPlaces } from './campusPlaces';
 import { itemDetailsFields } from './itemForm';
 
 const questionSchema = z.string().trim().min(5, 'At least 5 characters').max(150);
@@ -84,12 +85,15 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
     defaultValues: {
       type: 'LOST',
       occurredOn: todayIso(),
+      place: ELSEWHERE,
       heldAtSecurityDesk: false,
       questions: [],
     },
   });
   const questions = useFieldArray({ control, name: 'questions' });
   const type = watch('type');
+  const places = useCampusPlaces();
+  const whereLabel = type === 'LOST' ? 'Where did you lose it?' : 'Where did you find it?';
 
   const onSubmit = handleSubmit(async (values) => {
     if (photos.length === 0) {
@@ -102,6 +106,7 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
     form.append('title', values.title);
     form.append('description', values.description);
     form.append('location', values.location);
+    if (values.place) form.append('place', values.place);
     form.append('occurredOn', values.occurredOn);
     form.append('heldAtSecurityDesk', String(values.heldAtSecurityDesk));
     if (values.type === 'FOUND') {
@@ -179,9 +184,27 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
+        {places.length > 0 && (
+          <Controller
+            name="place"
+            control={control}
+            render={({ field }) => (
+              <Dropdown
+                label={whereLabel}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                options={placeOptions(places)}
+                error={errors.place?.message}
+              />
+            )}
+          />
+        )}
         <Input
-          label={type === 'LOST' ? 'Where did you lose it?' : 'Where did you find it?'}
-          placeholder="e.g. Library, 2nd floor"
+          label={places.length > 0 ? 'Exact spot' : whereLabel}
+          placeholder={
+            places.length > 0 ? 'e.g. 2nd floor, near the lifts' : 'e.g. Library, 2nd floor'
+          }
           error={errors.location?.message}
           {...register('location')}
         />

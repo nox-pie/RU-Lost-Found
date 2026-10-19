@@ -13,6 +13,7 @@ import { CATEGORY_OPTIONS } from '../../lib/categories';
 import { todayIso } from '../../lib/format';
 import { showFormError } from '../../lib/forms';
 import { queryKeys } from '../../lib/queryClient';
+import { ELSEWHERE, placeOptions, useCampusPlaces } from './campusPlaces';
 import { itemDetailsFields } from './itemForm';
 
 const editSchema = z.object(itemDetailsFields);
@@ -37,6 +38,8 @@ export function EditItemDialog({
 
 function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
   const queryClient = useQueryClient();
+  const places = useCampusPlaces();
+  const whereLabel = item.type === 'LOST' ? 'Where did you lose it?' : 'Where did you find it?';
   const {
     register,
     control,
@@ -50,6 +53,7 @@ function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
       title: item.title,
       description: item.description,
       location: item.location,
+      place: item.place ?? ELSEWHERE,
       occurredOn: item.occurredOn,
       heldAtSecurityDesk: item.heldAtSecurityDesk,
     },
@@ -58,7 +62,10 @@ function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
   const onSubmit = handleSubmit(async (values) => {
     // Only what changed is sent, so an edit never overwrites more than the reporter touched.
     const changes = Object.fromEntries(
-      Object.entries(values).filter(([field]) => dirtyFields[field as keyof EditForm]),
+      Object.entries(values)
+        .filter(([field]) => dirtyFields[field as keyof EditForm])
+        // "Somewhere else" clears the place.
+        .map(([field, value]) => [field, field === 'place' && value === ELSEWHERE ? null : value]),
     ) as UpdateItemInput;
     try {
       const updated = await itemsApi.update(item.id, changes);
@@ -96,8 +103,24 @@ function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
         {...register('description')}
       />
       <div className="grid gap-4 sm:grid-cols-2">
+        {places.length > 0 && (
+          <Controller
+            name="place"
+            control={control}
+            render={({ field }) => (
+              <Dropdown
+                label={whereLabel}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                options={placeOptions(places)}
+                error={errors.place?.message}
+              />
+            )}
+          />
+        )}
         <Input
-          label={item.type === 'LOST' ? 'Where did you lose it?' : 'Where did you find it?'}
+          label={places.length > 0 ? 'Exact spot' : whereLabel}
           error={errors.location?.message}
           {...register('location')}
         />

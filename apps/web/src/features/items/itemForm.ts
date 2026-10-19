@@ -7,6 +7,8 @@ export const itemDetailsFields = {
   title: z.string().trim().min(3, 'Title must be at least 3 characters').max(80),
   description: z.string().trim().min(10, 'Describe the item in at least 10 characters').max(1000),
   location: z.string().trim().min(2, 'Enter where it was lost or found').max(100),
+  /** A campus place, or '' for somewhere else. */
+  place: z.string(),
   occurredOn: dateOnlySchema,
   heldAtSecurityDesk: z.boolean(),
 };
