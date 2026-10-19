@@ -10,6 +10,7 @@ import {
   changePasswordSchema,
   changeRoleSchema,
   claimIdParamsSchema,
+  closeItemSchema,
   createItemSchema,
   deleteAccountSchema,
   demoSignInSchema,
@@ -324,6 +325,29 @@ export const OPERATIONS: Operation[] = [
     access: 'user',
     params: itemIdParamsSchema,
     ok: { 204: 'Removed' },
+  },
+  {
+    method: 'post',
+    path: '/items/:id/close',
+    tag: 'Items',
+    summary: 'Close my open post',
+    description:
+      '`RETURNED` (back with its owner outside the portal) or `WITHDRAWN` (no longer needed). It leaves the feed and its open claims are closed; it can be opened again.',
+    access: 'user',
+    params: itemIdParamsSchema,
+    body: closeItemSchema,
+    ok: { 200: 'ItemDto' },
+  },
+  {
+    method: 'post',
+    path: '/items/:id/keep-open',
+    tag: 'Items',
+    summary: 'Keep my post open',
+    description:
+      'An open post stays up 60 more days (its reporter is reminded a week before it closes); a closed post opens again.',
+    access: 'user',
+    params: itemIdParamsSchema,
+    ok: { 200: 'ItemDto' },
   },
   {
     method: 'post',

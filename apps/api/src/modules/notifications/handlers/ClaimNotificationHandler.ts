@@ -115,13 +115,15 @@ export class ClaimNotificationHandler implements EventHandler {
       }
 
       case 'ClaimCancelled': {
-        const { cancelledBy, wasApproved } = payloadOf(event, 'ClaimCancelled');
+        const { cancelledBy, wasApproved, note } = payloadOf(event, 'ClaimCancelled');
         const byClaimant = cancelledBy === p.claimantId;
         const recipient = byClaimant ? p.reporterId : p.claimantId;
         const body =
-          cancelledBy === null
-            ? `“${title}” was removed, so your claim was closed.`
-            : `${nameOf(cancelledBy)} cancelled the claim on “${title}”.`;
+          cancelledBy !== null
+            ? `${nameOf(cancelledBy)} cancelled the claim on “${title}”.`
+            : note
+              ? `${note.replace(/\.$/, '')}, so your claim on “${title}” was closed.`
+              : `“${title}” was removed, so your claim was closed.`;
         await this.notifications.notify({
           ...base,
           userId: recipient,

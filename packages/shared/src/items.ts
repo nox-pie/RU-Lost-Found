@@ -3,6 +3,7 @@ import {
   ITEM_CATEGORIES,
   ITEM_TYPES,
   type ItemCategory,
+  type ItemCloseReason,
   type ItemStatus,
   type ItemType,
 } from './enums';
@@ -11,7 +12,10 @@ export const MAX_ITEM_PHOTOS = 3;
 export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 export const MAX_VERIFICATION_QUESTIONS = 3;
 
-/** Statuses that can be listed; removed items never appear in lists. */
+/**
+ * Statuses the browse page can list. Closed posts appear only in the reporter's own list
+ * ("My items"), removed ones nowhere.
+ */
 export const LISTABLE_ITEM_STATUSES = [
   'OPEN',
   'RESERVED',
@@ -63,6 +67,17 @@ export const createItemSchema = z
     ).default([]),
   })
   .strict();
+
+/** The reporter closes their own open post (EXPIRED is set by the system only). */
+export const closeItemSchema = z
+  .object({
+    reason: z.enum(['RETURNED', 'WITHDRAWN'], {
+      message: 'Choose why you are closing the post',
+    }),
+  })
+  .strict();
+
+export type CloseItemInput = z.infer<typeof closeItemSchema>;
 
 export const updateItemSchema = z
   .object({ ...itemTextFields, heldAtSecurityDesk: z.boolean() })
@@ -172,4 +187,8 @@ export interface ItemDto {
   createdAt: string;
   updatedAt: string;
   resolvedAt: string | null;
+  /** Set while the post is CLOSED. */
+  closeReason: ItemCloseReason | null;
+  /** When an open post closes unless its reporter keeps it open (a reminder comes a week before). */
+  expiresAt: string;
 }

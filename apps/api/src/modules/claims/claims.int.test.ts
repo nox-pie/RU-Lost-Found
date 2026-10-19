@@ -399,9 +399,10 @@ describe('background rules', () => {
     await api().delete(`/api/v1/items/${itemId}`).set('Authorization', asha.bearer).expect(204);
     const me = await get(asha, 'users/me');
 
-    const closed = await t.container.services.claims.closeClaimsForRemovedItem(
+    const closed = await t.container.services.claims.closeClaimsOfItem(
       { universityId: me.body.universityId },
       itemId,
+      'The item was removed.',
     );
 
     expect(closed).toBe(2);

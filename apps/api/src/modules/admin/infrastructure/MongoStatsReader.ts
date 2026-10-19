@@ -125,7 +125,10 @@ export class MongoStatsReader implements StatsReader {
     const byRole = countsByKey(ROLES, users?.byRole);
     const itemsByStatus = countsByKey(ITEM_STATUSES, items?.byStatus);
     const byType = countsByKey(['LOST', 'FOUND'] as const, items?.byType);
-    const live = itemsByStatus.OPEN + itemsByStatus.RESERVED + itemsByStatus.RESOLVED;
+    // Every post that wasn't removed; closed ones too, or posts nobody followed up on would
+    // flatter the rate.
+    const live =
+      itemsByStatus.OPEN + itemsByStatus.RESERVED + itemsByStatus.RESOLVED + itemsByStatus.CLOSED;
     const avgMs = items?.timeToReturn[0]?.avgMs ?? null;
 
     const weekCount = (rows: Counted[] = [], week: Date) =>

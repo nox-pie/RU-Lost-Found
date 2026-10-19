@@ -148,7 +148,7 @@ export class AccountService {
         ),
       (claim) => claimService.cancel(me, scope, claim.id),
     );
-    // Claims on these posts are closed by CloseClaimsOnItemRemoved, which tells the claimants.
+    // Claims on these posts are closed by CloseClaimsWhenItemEnds, which tells the claimants.
     await drain(
       () =>
         items.search(

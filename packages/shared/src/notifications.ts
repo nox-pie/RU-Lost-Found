@@ -9,6 +9,8 @@ export const NOTIFICATION_TYPES = [
   'HANDOVER_COMPLETED',
   'CLAIM_EXPIRED',
   'ITEM_REMOVED_BY_MODERATOR',
+  'POST_EXPIRING',
+  'POST_CLOSED',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

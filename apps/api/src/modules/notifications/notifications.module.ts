@@ -2,6 +2,7 @@ import type { AppModule } from '../../core/modules/AppModule';
 import type { Kernel } from '../kernel';
 import { AccountSecurityHandler } from './handlers/AccountSecurityHandler';
 import { ClaimNotificationHandler } from './handlers/ClaimNotificationHandler';
+import { ItemLifecycleHandler } from './handlers/ItemLifecycleHandler';
 import { ItemModerationHandler } from './handlers/ItemModerationHandler';
 import { NotificationController } from './notification.controller';
 import { NotificationEmails } from './notification.emails';
@@ -36,6 +37,7 @@ export function createNotificationsModule(kernel: Kernel) {
       ),
       new AccountSecurityHandler(repositories.users, emailSender, emails),
       new ItemModerationHandler(service, repositories.items, emails),
+      new ItemLifecycleHandler(service, repositories.items, emails),
     ],
   };
   return { module, emails };

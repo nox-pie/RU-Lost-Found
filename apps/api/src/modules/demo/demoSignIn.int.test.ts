@@ -194,6 +194,11 @@ describe('demo accounts', { timeout: 30_000 }, () => {
       .send({ title: 'Something else' })
       .expect(403);
     await api().delete(`/api/v1/items/${wallet}`).set('Authorization', asha.bearer).expect(403);
+    await api()
+      .post(`/api/v1/items/${wallet}/close`)
+      .set('Authorization', asha.bearer)
+      .send({ reason: 'WITHDRAWN' })
+      .expect(403);
     expect(await samplePost(asha, 'Black bifold wallet')).toBe(wallet); // still listed
   });
 

@@ -1,9 +1,11 @@
 import {
   ITEM_CATEGORIES,
+  ITEM_CLOSE_REASONS,
   ITEM_STATUSES,
   ITEM_TYPES,
   LISTABLE_ITEM_STATUSES,
   type ItemCategory,
+  type ItemCloseReason,
   type ItemStatus,
   type ItemType,
 } from '@ru-lost-found/shared';
@@ -35,8 +37,10 @@ import {
   imageRefSchema,
   subdocumentOptions,
 } from '../../../infrastructure/database/schemas';
-import { Item, type VerificationQuestion } from '../domain/Item';
+import { Item, OPEN_FOR_DAYS, type VerificationQuestion } from '../domain/Item';
 import type { ItemRepository, ItemSearchCriteria, ItemTally } from '../domain/ItemRepository';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 interface ItemDocument extends VersionedDocument {
   universityId: Types.ObjectId;
@@ -54,6 +58,10 @@ interface ItemDocument extends VersionedDocument {
   createdAt: Date;
   updatedAt: Date;
   resolvedAt: Date | null;
+  closeReason?: ItemCloseReason | null;
+  /** Absent on posts saved before expiry existed: they count from createdAt. */
+  expiresAt?: Date;
+  expiryRemindedAt?: Date | null;
 }
 
 const itemSchema = defineSchema(
@@ -81,6 +89,9 @@ const itemSchema = defineSchema(
     createdAt: { type: Date, required: true },
     updatedAt: { type: Date, required: true },
     resolvedAt: { type: Date, default: null },
+    closeReason: { type: String, enum: ITEM_CLOSE_REASONS, default: null },
+    expiresAt: { type: Date },
+    expiryRemindedAt: { type: Date, default: null },
     version: { type: Number, required: true },
   },
   collectionOptions('items'),
@@ -88,6 +99,8 @@ const itemSchema = defineSchema(
 // Feed: newest items of a university, optionally filtered by status/type (cursor on createdAt + _id).
 itemSchema.index({ universityId: 1, status: 1, type: 1, createdAt: -1, _id: -1 }, { name: 'feed' });
 itemSchema.index({ universityId: 1, reporterId: 1, createdAt: -1 }, { name: 'by_reporter' });
+// The job that reminds reporters and closes posts nobody kept open, across universities.
+itemSchema.index({ status: 1, expiresAt: 1 }, { name: 'by_expiry' });
 itemSchema.index(
   { title: 'text', location: 'text', description: 'text' },
   { name: 'text_search', weights: { title: 5, location: 3, description: 1 } },
@@ -111,6 +124,35 @@ export class MongoItemRepository
     const objectIds = [...new Set(ids)].map(parseObjectId).filter((id) => id !== null);
     if (objectIds.length === 0) return Promise.resolve([]);
     return this.findMany({ universityId: toObjectId(scope.universityId), _id: { $in: objectIds } });
+  }
+
+  findOpenNeedingReminder(expiringBy: Date, limit: number): Promise<Item[]> {
+    return this.findMany(
+      {
+        status: 'OPEN',
+        expiryRemindedAt: null,
+        $or: [
+          { expiresAt: { $lte: expiringBy } },
+          // Saved before expiry existed: open for OPEN_FOR_DAYS from when it was posted.
+          {
+            expiresAt: { $exists: false },
+            createdAt: { $lte: new Date(expiringBy.getTime() - OPEN_FOR_DAYS * DAY_MS) },
+          },
+        ],
+      },
+      { sort: { createdAt: 1 }, limit },
+    );
+  }
+
+  findOpenToClose(expiredBy: Date, remindedBy: Date, limit: number): Promise<Item[]> {
+    return this.findMany(
+      {
+        status: 'OPEN',
+        expiresAt: { $lte: expiredBy },
+        expiryRemindedAt: { $ne: null, $lte: remindedBy },
+      },
+      { sort: { expiresAt: 1 }, limit },
+    );
   }
 
   findRemovedWithPhotos(before: Date, limit: number): Promise<Item[]> {
@@ -194,6 +236,9 @@ export class MongoItemRepository
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
       resolvedAt: doc.resolvedAt ?? null,
+      closeReason: doc.closeReason ?? null,
+      expiresAt: doc.expiresAt ?? new Date(doc.createdAt.getTime() + OPEN_FOR_DAYS * DAY_MS),
+      expiryRemindedAt: doc.expiryRemindedAt ?? null,
       version: doc.version,
     });
   }
@@ -216,6 +261,9 @@ export class MongoItemRepository
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
       resolvedAt: item.resolvedAt,
+      closeReason: item.closeReason,
+      expiresAt: item.expiresAt,
+      expiryRemindedAt: item.expiryRemindedAt,
     };
   }
 }

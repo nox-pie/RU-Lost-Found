@@ -246,12 +246,12 @@ export class ClaimService {
     return expired;
   }
 
-  /** When an item is removed, every active claim on it ends. */
-  async closeClaimsForRemovedItem(scope: TenantScope, itemId: string): Promise<number> {
+  /** When an item is removed or closed, every active claim on it ends, with `note` as the reason. */
+  async closeClaimsOfItem(scope: TenantScope, itemId: string, note: string): Promise<number> {
     const active = await this.deps.claims.findActiveByItem(scope, itemId);
     const now = this.deps.clock.now();
     for (const claim of active) {
-      claim.cancelAutomatically('The item was removed.', now);
+      claim.cancelAutomatically(note, now);
       await this.deps.claims.update(claim);
     }
     return active.length;

@@ -31,5 +31,7 @@ export function toItemDto({ item, reporter }: ItemView, viewerId: string): ItemD
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
     resolvedAt: item.resolvedAt?.toISOString() ?? null,
+    closeReason: item.closeReason,
+    expiresAt: item.expiresAt.toISOString(),
   };
 }
