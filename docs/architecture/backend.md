@@ -651,7 +651,7 @@ One `errorHandler` middleware converts `AppError` into the error format above. A
 - A fixed, controllable clock: expiry, deadlines, back-off and rate-limit windows are tested by moving time, not by waiting.
 - Every test server binds explicitly to `127.0.0.1`: with many test files running in parallel, supertest's default (all addresses) occasionally let requests reach another file's server.
 
-**Current numbers:** 403 API tests and 23 end-to-end tests (29 runs: the six marked `@mobile` also run on a phone). Coverage is 95% statements, 87% branches, 96% functions, 96% lines. The build fails below 93 / 84 / 95 / 95.
+**Current numbers:** 408 API tests and 23 end-to-end tests (29 runs: the six marked `@mobile` also run on a phone). Coverage is 95% statements, 87% branches, 96% functions, 96% lines. The build fails below 93 / 84 / 95 / 95.
 
 ### Continuous integration (`.github/workflows/ci.yml`)
 
