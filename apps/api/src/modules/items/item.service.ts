@@ -3,6 +3,7 @@ import {
   ITEM_STATUSES,
   LISTABLE_ITEM_STATUSES,
   type ListAdminItemsQuery,
+  type CloseItemInput,
   type CreateItemInput,
   type DeskItemsQuery,
   type ItemCountsDto,
@@ -24,7 +25,9 @@ import type { TenantScope } from '../../core/persistence/Repository';
 import type { ImageUpload, StorageProvider } from '../../core/storage/StorageProvider';
 import type { User } from '../users/domain/User';
 import type { UserRepository } from '../users/domain/UserRepository';
-import { Item } from './domain/Item';
+import { Item, REMINDER_DAYS } from './domain/Item';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 import type { ItemRepository } from './domain/ItemRepository';
 import type { ItemView } from './item.mapper';
 
@@ -140,7 +143,7 @@ export class ItemService {
     return { items: await this.withReporters(page.items), nextCursor: page.nextCursor };
   }
 
-  /** Everything the user reported, in any status except removed. */
+  /** Everything the user reported, closed posts included, in any status except removed. */
   async listMine(
     actor: Actor,
     scope: TenantScope,
@@ -148,7 +151,7 @@ export class ItemService {
   ): Promise<PageResult<ItemView>> {
     const page = await this.items.search(
       scope,
-      { reporterId: actor.userId, statuses: LISTABLE_ITEM_STATUSES },
+      { reporterId: actor.userId, statuses: [...LISTABLE_ITEM_STATUSES, 'CLOSED'] },
       { cursor: query.cursor, limit: query.limit },
     );
     return { items: await this.withReporters(page.items), nextCursor: page.nextCursor };
@@ -184,6 +187,63 @@ export class ItemService {
     await this.items.update(item);
     const [view] = await this.withReporters([item]);
     return view as ItemView;
+  }
+
+  /** The reporter closes their open post: back with its owner another way, or no longer needed. */
+  async close(
+    actor: Actor,
+    scope: TenantScope,
+    id: string,
+    { reason }: CloseItemInput,
+  ): Promise<ItemView> {
+    await this.assertMayChangePosts(actor);
+    const item = await this.requireVisible(scope, id);
+    item.close(actor, reason, this.clock.now());
+    await this.items.update(item);
+    const [view] = await this.withReporters([item]);
+    return view as ItemView;
+  }
+
+  /** The reporter keeps an open post up for another stretch, or opens a closed one again. */
+  async keepOpen(actor: Actor, scope: TenantScope, id: string): Promise<ItemView> {
+    await this.assertMayChangePosts(actor);
+    const item = await this.requireVisible(scope, id);
+    item.keepOpen(actor, this.clock.now());
+    await this.items.update(item);
+    const [view] = await this.withReporters([item]);
+    return view as ItemView;
+  }
+
+  /**
+   * Scheduled job: reminds reporters of posts closing within REMINDER_DAYS, and closes posts
+   * past their expiry whose reporter was reminded at least REMINDER_DAYS ago (the domain
+   * decides; see Item.remindOfExpiry and Item.expire). One failure doesn't stop the rest.
+   */
+  async closeStalePosts(limit = 100): Promise<{ reminded: number; closed: number }> {
+    const now = this.clock.now();
+    const days = (n: number) => new Date(now.getTime() + n * DAY_MS);
+    const step = async (items: Item[], act: (item: Item) => boolean) => {
+      let done = 0;
+      for (const item of items) {
+        try {
+          if (!act(item)) continue;
+          await this.items.update(item);
+          done += 1;
+        } catch (err) {
+          this.logger.warn({ err, itemId: item.id }, 'Could not update an expiring post');
+        }
+      }
+      return done;
+    };
+    const reminded = await step(
+      await this.items.findOpenNeedingReminder(days(REMINDER_DAYS), limit),
+      (item) => item.remindOfExpiry(now),
+    );
+    const closed = await step(
+      await this.items.findOpenToClose(now, days(-REMINDER_DAYS), limit),
+      (item) => item.expire(now),
+    );
+    return { reminded, closed };
   }
 
   /**

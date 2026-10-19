@@ -135,7 +135,7 @@ describe('reacting to other modules', () => {
     expect(claim.body.status).toBe('CANCELLED');
     expect((await notificationsOf(ravi)).data[0]).toMatchObject({
       type: 'CLAIM_CANCELLED',
-      body: '“Black phone” was removed, so your claim was closed.',
+      body: 'The item was removed, so your claim on “Black phone” was closed.',
     });
   });
 

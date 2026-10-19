@@ -2,6 +2,7 @@ import { Router, type RequestHandler } from 'express';
 import {
   MAX_ITEM_PHOTOS,
   MAX_PHOTO_BYTES,
+  closeItemSchema,
   createItemSchema,
   itemCountsQuerySchema,
   itemIdParamsSchema,
@@ -44,6 +45,12 @@ export function createItemRouter(
     controller.update,
   );
   router.delete('/:id', validate({ params: itemIdParamsSchema }), controller.remove);
+  router.post(
+    '/:id/close',
+    validate({ params: itemIdParamsSchema, body: closeItemSchema }),
+    controller.close,
+  );
+  router.post('/:id/keep-open', validate({ params: itemIdParamsSchema }), controller.keepOpen);
 
   return router;
 }

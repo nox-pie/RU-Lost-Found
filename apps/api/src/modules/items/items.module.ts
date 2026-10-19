@@ -27,6 +27,8 @@ export function createItemsModule(kernel: Kernel) {
       },
     ],
     jobs: [
+      // Hourly, so a reminder or a closing is never more than an hour late.
+      { name: 'close-stale-posts', intervalSeconds: 60 * 60, run: () => service.closeStalePosts() },
       {
         name: 'purge-removed-item-photos',
         intervalSeconds: 60 * 60,

@@ -1,5 +1,6 @@
 import {
   ITEM_CATEGORIES,
+  ITEM_CLOSE_REASONS,
   ITEM_STATUSES,
   ITEM_TYPES,
   MODERATION_DECISIONS,
@@ -65,6 +66,18 @@ export const DOMAIN_EVENTS = {
     imagePublicIds: z.array(z.string()),
   }),
 
+  ItemClosed: z.object({
+    universityId: id,
+    reporterId: id,
+    /** The reporter, or null when it closed by itself (EXPIRED). */
+    actorId: id.nullable(),
+    reason: z.enum(ITEM_CLOSE_REASONS),
+    previousStatus: z.enum(ITEM_STATUSES),
+  }),
+  ItemReopened: z.object({ universityId: id, reporterId: id }),
+  /** An open post will close on `expiresAt` unless its reporter keeps it open. */
+  ItemExpiringSoon: z.object({ universityId: id, reporterId: id, expiresAt: z.string() }),
+
   ClaimRequested: claimEvent,
   ClaimApproved: claimEvent.extend({ deadline: z.string() }),
   ClaimRejected: claimEvent.extend({ automatic: z.boolean() }),
@@ -73,6 +86,8 @@ export const DOMAIN_EVENTS = {
     wasApproved: z.boolean(),
     /** Older events have no flag; the system cancelled when nobody did. */
     automatic: z.boolean().optional(),
+    /** Why the system cancelled it, e.g. "The post was closed." (older events have none). */
+    note: z.string().nullable().optional(),
   }),
   ClaimCompleted: claimEvent.extend({ confirmedBy: z.enum(['CODE', 'STAFF']) }),
   ClaimExpired: claimEvent,

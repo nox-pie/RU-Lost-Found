@@ -56,6 +56,7 @@ export default function PostsPage() {
             { value: 'OPEN', label: 'Open' },
             { value: 'RESERVED', label: 'Handover arranged' },
             { value: 'RESOLVED', label: 'Returned' },
+            { value: 'CLOSED', label: 'Closed' },
             { value: 'REMOVED', label: 'Removed' },
           ]}
         />

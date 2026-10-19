@@ -31,6 +31,10 @@ export interface ItemRepository extends Repository<Item> {
   findById(scope: TenantScope, id: string, tx?: TransactionContext): Promise<Item | null>;
   /** Items with these ids in the university (unknown ids are skipped). */
   findByIds(scope: TenantScope, ids: readonly string[]): Promise<Item[]>;
+  /** Open posts, across universities, closing by `expiringBy` whose reporter wasn't reminded yet. */
+  findOpenNeedingReminder(expiringBy: Date, limit: number): Promise<Item[]>;
+  /** Open posts, across universities, past `expiredBy` whose reporter was reminded by `remindedBy`. */
+  findOpenToClose(expiredBy: Date, remindedBy: Date, limit: number): Promise<Item[]>;
   /** Removed items, across all universities, still holding photos and removed before `before`. */
   findRemovedWithPhotos(before: Date, limit: number): Promise<Item[]>;
   /** Newest first. */

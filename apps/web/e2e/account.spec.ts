@@ -146,3 +146,21 @@ test('the privacy policy and terms are open to everyone, from the footer @mobile
     .click();
   await expect(page.getByRole('heading', { name: 'Terms of use', level: 1 })).toBeVisible();
 });
+
+test('a reporter closes their post and opens it again', async ({ page }) => {
+  await signUp(page, { email: uniqueEmail('closer'), first: 'Cleo', last: 'Ray' });
+  const title = `Desk lamp ${Date.now().toString(36)}`;
+  await reportFoundItem(page, title);
+
+  await page.getByRole('button', { name: 'Close post' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Close this post?' });
+  await dialog.getByText('It’s back with its owner').click();
+  await dialog.getByRole('button', { name: 'Close post' }).click();
+
+  await expect(page.getByText('This post is closed:')).toBeVisible();
+  await expect(page.getByText('Closed', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Open it again' }).click();
+  await expect(page.getByText('Your post is open again.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Close post' })).toBeVisible();
+});

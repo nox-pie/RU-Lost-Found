@@ -216,7 +216,7 @@ describe('Claim.cancelAutomatically', () => {
       // Marked like an automatic rejection, so the activity log can tell them apart.
       expect(claim.pullEvents().at(-1)).toMatchObject({
         type: 'ClaimCancelled',
-        payload: { cancelledBy: null, automatic: true },
+        payload: { cancelledBy: null, automatic: true, note: 'The item was removed.' },
       });
     }
   });

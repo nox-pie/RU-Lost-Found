@@ -1,5 +1,6 @@
 import type { Request, RequestHandler } from 'express';
 import type {
+  CloseItemInput,
   CreateItemInput,
   ItemCountsDto,
   ItemCountsQuery,
@@ -66,6 +67,21 @@ export class ItemController {
       idOf(req),
       req.body as UpdateItemInput,
     );
+    res.json(toItemDto(view, authOf(req).userId));
+  };
+
+  close: RequestHandler = async (req, res) => {
+    const view = await this.items.close(
+      actorOf(req),
+      scopeOf(req),
+      idOf(req),
+      req.body as CloseItemInput,
+    );
+    res.json(toItemDto(view, authOf(req).userId));
+  };
+
+  keepOpen: RequestHandler = async (req, res) => {
+    const view = await this.items.keepOpen(actorOf(req), scopeOf(req), idOf(req));
     res.json(toItemDto(view, authOf(req).userId));
   };
 

@@ -255,7 +255,12 @@ export class Claim extends AggregateRoot {
     const wasApproved = this.props.status === 'APPROVED';
     const next = this.state.cancel();
     this.transitionTo(next, null, now, reason);
-    this.recordEvent('ClaimCancelled', now, { cancelledBy: null, wasApproved, automatic: true });
+    this.recordEvent('ClaimCancelled', now, {
+      cancelledBy: null,
+      wasApproved,
+      automatic: true,
+      note: reason,
+    });
   }
 
   /**

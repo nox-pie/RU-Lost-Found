@@ -7,12 +7,14 @@ import {
 import {
   T0,
   aFoundItem,
+  daysAfter,
   aLostItem,
   anActor,
   minutesAfter,
   reporterOf,
 } from '../../../testing/builders';
 import { MAX_ITEM_PHOTOS } from '@ru-lost-found/shared';
+import { OPEN_FOR_DAYS, REMINDER_DAYS } from './Item';
 
 const LATER = minutesAfter(T0, 5);
 const photo = { url: 'https://img.example/a.jpg', publicId: 'items/a' };
@@ -150,5 +152,99 @@ describe('Item.remove', () => {
     item.remove(reporterOf(item), LATER);
 
     expect(() => item.remove(reporterOf(item), LATER)).toThrow(InvalidStateTransitionError);
+  });
+});
+
+describe('Item.close', () => {
+  it('lets the reporter close an open post, with the reason', () => {
+    const item = aLostItem();
+    item.pullEvents();
+
+    item.close(reporterOf(item), 'RETURNED', LATER);
+
+    expect(item.status).toBe('CLOSED');
+    expect(item.closeReason).toBe('RETURNED');
+    expect(item.isAcceptingClaims).toBe(false);
+    expect(item.pullEvents()).toMatchObject([
+      { type: 'ItemClosed', payload: { reason: 'RETURNED', reporterId: item.reporterId } },
+    ]);
+  });
+
+  it('is for the reporter only, and only while the post is open', () => {
+    const item = aFoundItem();
+    expect(() => item.close(anActor('UNIVERSITY_ADMIN'), 'WITHDRAWN', LATER)).toThrow(
+      ForbiddenError,
+    );
+
+    item.reserve(LATER); // a handover is being arranged: cancel the claim first
+    expect(() => item.close(reporterOf(item), 'WITHDRAWN', LATER)).toThrow(
+      InvalidStateTransitionError,
+    );
+  });
+});
+
+describe('Item expiry', () => {
+  const reminderDue = daysAfter(T0, OPEN_FOR_DAYS - REMINDER_DAYS);
+  const expired = daysAfter(T0, OPEN_FOR_DAYS);
+
+  it(`stays open ${OPEN_FOR_DAYS} days after it is posted`, () => {
+    expect(aFoundItem().expiresAt).toEqual(daysAfter(T0, OPEN_FOR_DAYS));
+  });
+
+  it('reminds the reporter once, a week before it closes', () => {
+    const item = aFoundItem();
+    item.pullEvents();
+
+    expect(item.remindOfExpiry(daysAfter(reminderDue, -1))).toBe(false); // too early
+    expect(item.remindOfExpiry(reminderDue)).toBe(true);
+    expect(item.remindOfExpiry(reminderDue)).toBe(false); // already reminded
+
+    expect(item.pullEvents()).toMatchObject([
+      { type: 'ItemExpiringSoon', payload: { expiresAt: expired.toISOString() } },
+    ]);
+  });
+
+  it('closes only after the reminder had a week to be read', () => {
+    const item = aFoundItem();
+
+    expect(item.expire(expired)).toBe(false); // never reminded: no closing without warning
+    item.remindOfExpiry(expired);
+    expect(item.expire(daysAfter(expired, REMINDER_DAYS - 1))).toBe(false);
+    expect(item.expire(daysAfter(expired, REMINDER_DAYS))).toBe(true);
+
+    expect(item.status).toBe('CLOSED');
+    expect(item.closeReason).toBe('EXPIRED');
+  });
+
+  it('can be kept open for another stretch, which clears the reminder', () => {
+    const item = aFoundItem();
+    item.remindOfExpiry(reminderDue);
+
+    item.keepOpen(reporterOf(item), reminderDue);
+
+    expect(item.expiresAt).toEqual(daysAfter(reminderDue, OPEN_FOR_DAYS));
+    expect(item.remindOfExpiry(daysAfter(reminderDue, 1))).toBe(false);
+  });
+
+  it('can be reopened by the reporter after it closed', () => {
+    const item = aFoundItem();
+    item.close(reporterOf(item), 'WITHDRAWN', LATER);
+    item.pullEvents();
+
+    item.keepOpen(reporterOf(item), LATER);
+
+    expect(item.status).toBe('OPEN');
+    expect(item.closeReason).toBeNull();
+    expect(item.expiresAt).toEqual(daysAfter(LATER, OPEN_FOR_DAYS));
+    expect(item.pullEvents().map((e) => e.type)).toEqual(['ItemReopened']);
+  });
+
+  it('cannot be kept open by others, or once it was returned through a handover', () => {
+    const item = aFoundItem();
+    expect(() => item.keepOpen(anActor(), LATER)).toThrow(ForbiddenError);
+
+    item.reserve(LATER);
+    item.resolve(LATER);
+    expect(() => item.keepOpen(reporterOf(item), LATER)).toThrow(InvalidStateTransitionError);
   });
 });

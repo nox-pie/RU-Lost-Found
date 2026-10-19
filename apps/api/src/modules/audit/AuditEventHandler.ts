@@ -16,6 +16,8 @@ const MAPPINGS = {
   AccountDeleted: { action: 'ACCOUNT_DELETED', targetType: 'USER', actor: 'aggregate' },
   ItemReported: { action: 'ITEM_REPORTED', targetType: 'ITEM', actor: 'reporterId' },
   ItemRemoved: { action: 'ITEM_REMOVED', targetType: 'ITEM', actor: 'removedBy' },
+  ItemClosed: { action: 'ITEM_CLOSED', targetType: 'ITEM', actor: 'actorId' },
+  ItemReopened: { action: 'ITEM_REOPENED', targetType: 'ITEM', actor: 'reporterId' },
   ClaimRequested: { action: 'CLAIM_SUBMITTED', targetType: 'CLAIM', actor: 'actorId' },
   ClaimApproved: { action: 'CLAIM_APPROVED', targetType: 'CLAIM', actor: 'actorId' },
   ClaimRejected: { action: 'CLAIM_REJECTED', targetType: 'CLAIM', actor: 'actorId' },

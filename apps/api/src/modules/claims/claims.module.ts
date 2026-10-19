@@ -5,7 +5,7 @@ import type { Kernel } from '../kernel';
 import { ClaimController } from './claim.controller';
 import { createClaimRouter } from './claim.routes';
 import { ClaimService } from './claim.service';
-import { CloseClaimsOnItemRemoved } from './handlers/CloseClaimsOnItemRemoved';
+import { CloseClaimsWhenItemEnds } from './handlers/CloseClaimsWhenItemEnds';
 
 /** A ClaimService on a given clock (the demo plays its sample claims on a clock of its own). */
 export function createClaimService(kernel: Kernel, clock: Clock = kernel.clock): ClaimService {
@@ -39,7 +39,7 @@ export function createClaimsModule(kernel: Kernel) {
         ),
       },
     ],
-    handlers: [new CloseClaimsOnItemRemoved(service)],
+    handlers: [new CloseClaimsWhenItemEnds(service)],
     jobs: [{ name: 'expire-claims', intervalSeconds: 5 * 60, run: () => service.expireOverdue() }],
   };
   return { module, service };

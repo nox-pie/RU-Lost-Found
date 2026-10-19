@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml/badge.svg)](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
-![Tests](https://img.shields.io/badge/tests-408%20API%20%2B%2023%20end--to--end-success)
+![Tests](https://img.shields.io/badge/tests-420%20API%20%2B%2024%20end--to--end-success)
 ![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)
 
 The lost & found portal of **Rishihood University**: students report what they lost or found, prove an item is theirs, and get it back through a verified handover, without sharing phone numbers with strangers.
@@ -31,7 +31,7 @@ Claims that never get handed over expire, other claims on the item close automat
 
 **For visitors:** a landing page that explains the portal, and one-click sign-in as a sample student to try a whole claim on the [sample data](docs/demo-data.md) (shared demo accounts that reset every hour and can't post, edit or remove items, or change their profile).
 
-**For students:** sign-up verified by an emailed code (open to any email so visitors can try it; can be limited to university addresses by configuration) · search and filters · photo upload from phone or desktop · verification questions · in-app and email notifications · claim timeline · edit your own open posts · profile and picture · change password · download my data · delete my account · privacy policy and terms · works on 360 px phones and up.
+**For students:** sign-up verified by an emailed code (open to any email so visitors can try it; can be limited to university addresses by configuration) · search and filters · photo upload from phone or desktop · verification questions · in-app and email notifications · claim timeline · edit your own open posts · close a post yourself, or it closes after 60 days unless kept open (with a reminder a week before) · profile and picture · change password · download my data · delete my account · privacy policy and terms · works on 360 px phones and up.
 
 **For staff:** security desk console (handovers waiting, items held at the desk) and in-person handover confirmation · admin dashboard (posts in play, return rate, average time to return, 8-week trend) · reports queue for flagged posts (remove with a reason, or keep) · people management (roles, suspension with immediate sign-out) · activity log in plain language.
 
@@ -66,7 +66,7 @@ Design patterns and why each is there, security decisions, the data model and th
 
 |              |                                                                                                                                                                                                                                                                                                                                                      |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tests**    | 408 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 23 Playwright tests in a real browser on desktop and a phone, including the full handover, the moderation flow, the security desk, account deletion and a sleeping server |
+| **Tests**    | 420 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 24 Playwright tests in a real browser on desktop and a phone, including the full handover, the moderation flow, the security desk, account deletion and a sleeping server |
 | **Load**     | 200 simultaneous users on one instance: 95% of reads under 7 ms, writes under 25 ms, zero errors. Up to 1,000 simultaneous users (375 requests/s) without a single failed request. [Details](docs/load-test.md)                                                                                                                                      |
 | **Security** | Independent review with every finding fixed; strict content security policy; no personal data in logs or error reports. [Details](docs/architecture/backend.md#9-authentication-and-security)                                                                                                                                                        |
 | **CI**       | Typecheck, lint, formatting, tests with coverage, builds, end-to-end tests and Docker image builds on every push                                                                                                                                                                                                                                     |

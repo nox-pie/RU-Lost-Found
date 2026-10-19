@@ -1,7 +1,7 @@
 import { FEED_TABS, MAX_PHOTO_BYTES } from '@ru-lost-found/shared';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { T0, minutesAfter } from '../../testing/builders';
+import { T0, daysAfter, minutesAfter } from '../../testing/builders';
 import {
   fakeJpeg,
   fakePng,
@@ -388,6 +388,90 @@ describe('editing and removing', () => {
 
     expect(res.status).toBe(403);
     expect(stillThere.status).toBe(200);
+  });
+});
+
+describe('closing and expiry', () => {
+  const close = (user: SignedInUser, id: string, reason: string) =>
+    api().post(`/api/v1/items/${id}/close`).set('Authorization', user.bearer).send({ reason });
+  const keepOpen = (user: SignedInUser, id: string) =>
+    api().post(`/api/v1/items/${id}/keep-open`).set('Authorization', user.bearer).send({});
+  const feedIds = async () =>
+    (await api().get('/api/v1/items').set('Authorization', ravi.bearer)).body.data.map(
+      (i: { id: string }) => i.id,
+    );
+  const notificationsOf = async (user: SignedInUser) =>
+    (await api().get('/api/v1/notifications').set('Authorization', user.bearer)).body.data as {
+      type: string;
+      body: string;
+    }[];
+
+  it('lets the reporter close a post: it leaves the feed and its open claims close', async () => {
+    const id = (await report(asha)).body.id as string;
+    await api()
+      .post(`/api/v1/items/${id}/claims`)
+      .set('Authorization', ravi.bearer)
+      .send({ message: 'Mine!' })
+      .expect(201);
+
+    const res = await close(asha, id, 'RETURNED');
+    await t.container.worker.drain();
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: 'CLOSED', closeReason: 'RETURNED' });
+    expect(await feedIds()).not.toContain(id);
+    const mine = await api().get('/api/v1/items/mine').set('Authorization', asha.bearer);
+    expect(mine.body.data.map((i: { id: string }) => i.id)).toContain(id);
+    const [claim] = (await api().get('/api/v1/claims/mine').set('Authorization', ravi.bearer)).body
+      .data;
+    expect(claim.status).toBe('CANCELLED');
+    expect((await notificationsOf(ravi))[0]?.body).toBe(
+      'The post was closed by its reporter, so your claim on “Black phone” was closed.',
+    );
+  });
+
+  it('lets the reporter open it again', async () => {
+    const id = (await report(asha)).body.id as string;
+    await close(asha, id, 'WITHDRAWN').expect(200);
+
+    const res = await keepOpen(asha, id);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: 'OPEN', closeReason: null });
+    expect(await feedIds()).toContain(id);
+  });
+
+  it('is only for the reporter, and only with a reason they may give', async () => {
+    const id = (await report(asha)).body.id as string;
+
+    expect((await close(ravi, id, 'RETURNED')).status).toBe(403);
+    expect((await keepOpen(ravi, id)).status).toBe(403);
+    expect((await close(asha, id, 'EXPIRED')).status).toBe(400);
+  });
+
+  it('reminds the reporter a week before a post closes, then closes it', async () => {
+    const id = (await report(asha)).body.id as string;
+    const items = t.container.services.items;
+    const posted = t.clock.now();
+
+    t.clock.set(daysAfter(posted, 53));
+    expect(await items.closeStalePosts()).toEqual({ reminded: 1, closed: 0 });
+    t.clock.set(daysAfter(posted, 59));
+    expect(await items.closeStalePosts()).toEqual({ reminded: 0, closed: 0 });
+    t.clock.set(daysAfter(posted, 60));
+    expect(await items.closeStalePosts()).toEqual({ reminded: 0, closed: 1 });
+    await t.container.worker.drain();
+    t.clock.set(posted); // back to when the test users' tokens are valid
+
+    expect((await notificationsOf(asha)).map((n) => n.type)).toEqual([
+      'POST_CLOSED',
+      'POST_EXPIRING',
+    ]);
+    expect(t.email.to(asha.email).map((m) => m.subject)).toContain(
+      'Still looking for “Black phone”?',
+    );
+    const item = await api().get(`/api/v1/items/${id}`).set('Authorization', asha.bearer);
+    expect(item.body).toMatchObject({ status: 'CLOSED', closeReason: 'EXPIRED' });
   });
 });
 

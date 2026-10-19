@@ -23,8 +23,15 @@ export type UserStatus = (typeof USER_STATUSES)[number];
 export const ITEM_TYPES = ['LOST', 'FOUND'] as const;
 export type ItemType = (typeof ITEM_TYPES)[number];
 
-export const ITEM_STATUSES = ['OPEN', 'RESERVED', 'RESOLVED', 'REMOVED'] as const;
+export const ITEM_STATUSES = ['OPEN', 'RESERVED', 'RESOLVED', 'CLOSED', 'REMOVED'] as const;
 export type ItemStatus = (typeof ITEM_STATUSES)[number];
+
+/**
+ * Why a post was closed without a handover through the portal: back with its owner some other
+ * way, no longer needed, or closed automatically after nobody kept it open.
+ */
+export const ITEM_CLOSE_REASONS = ['RETURNED', 'WITHDRAWN', 'EXPIRED'] as const;
+export type ItemCloseReason = (typeof ITEM_CLOSE_REASONS)[number];
 
 export const ITEM_CATEGORIES = [
   'ELECTRONICS',

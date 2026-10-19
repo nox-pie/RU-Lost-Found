@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Calendar,
+  CircleCheck,
   Expand,
   Flag,
   MapPin,
@@ -22,6 +23,7 @@ import { queryKeys } from '../../lib/queryClient';
 import { isAdmin, useCurrentUser } from '../auth/authContext';
 import { ClaimDialog } from '../claims/ClaimDialog';
 import { EditItemDialog } from './EditItemDialog';
+import { ClosePostDialog, PostLifecycleNotice } from './PostLifecycle';
 import { FlagItemDialog } from '../moderation/FlagItemDialog';
 import { RemovePostDialog } from '../moderation/RemovePostDialog';
 import { PhotoLightbox } from './PhotoLightbox';
@@ -177,6 +179,9 @@ function ClaimantActions({ item }: { item: ItemDto }) {
       <p className="text-sm text-gray-600">A handover is already being arranged for this item.</p>
     );
   }
+  if (item.status === 'CLOSED') {
+    return <p className="text-sm text-gray-600">This post is closed and no longer takes claims.</p>;
+  }
   if (item.status === 'RESOLVED') {
     return <p className="text-sm text-green-700">This item has been returned to its owner. 🎉</p>;
   }
@@ -240,13 +245,14 @@ function ModerationActions({ item }: { item: ItemDto }) {
   );
 }
 
-/** For the reporter: the claims on this item, editing and removing the report. */
+/** For the reporter: the claims on this item, keeping it open, editing, closing and removing it. */
 function ReporterActions({ item }: { item: ItemDto }) {
   const user = useCurrentUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [closing, setClosing] = useState(false);
   const claims = useQuery({
     queryKey: queryKeys.claims.forItem(item.id),
     queryFn: () => claimsApi.forItem(item.id),
@@ -266,6 +272,7 @@ function ReporterActions({ item }: { item: ItemDto }) {
 
   return (
     <div className="space-y-4">
+      {!user.isDemo && <PostLifecycleNotice item={item} />}
       <section className="rounded-2xl bg-white p-4 shadow-xs">
         <h2 className="font-display text-lg font-semibold">Claims on this item</h2>
         {claims.isPending ? (
@@ -287,9 +294,14 @@ function ReporterActions({ item }: { item: ItemDto }) {
         <div className="flex flex-wrap gap-2">
           {/* Only open posts can be edited: once a claim is approved, the claimant relies on them. */}
           {item.status === 'OPEN' && (
-            <Button variant="outline" onClick={() => setEditing(true)}>
-              <Pencil className="h-4 w-4" /> Edit post
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setEditing(true)}>
+                <Pencil className="h-4 w-4" /> Edit post
+              </Button>
+              <Button variant="outline" onClick={() => setClosing(true)}>
+                <CircleCheck className="h-4 w-4" /> Close post
+              </Button>
+            </>
           )}
           {item.status !== 'RESOLVED' && (
             <Button variant="danger" onClick={() => setConfirming(true)}>
@@ -299,6 +311,7 @@ function ReporterActions({ item }: { item: ItemDto }) {
         </div>
       )}
       <EditItemDialog item={item} open={editing} onClose={() => setEditing(false)} />
+      <ClosePostDialog item={item} open={closing} onClose={() => setClosing(false)} />
       <ConfirmDialog
         open={confirming}
         title="Remove this report?"
