@@ -128,6 +128,30 @@ export class MongoItemRepository
     return this.findMany({ universityId: toObjectId(scope.universityId), _id: { $in: objectIds } });
   }
 
+  findMatchCandidates(
+    scope: TenantScope,
+    criteria: {
+      type: ItemType;
+      category: ItemCategory;
+      occurredFrom: Date;
+      occurredTo: Date;
+      excludeReporterId: string;
+    },
+    limit: number,
+  ): Promise<Item[]> {
+    return this.findMany(
+      {
+        universityId: toObjectId(scope.universityId),
+        status: 'OPEN',
+        type: criteria.type,
+        category: criteria.category,
+        occurredOn: { $gte: criteria.occurredFrom, $lte: criteria.occurredTo },
+        reporterId: { $ne: toObjectId(criteria.excludeReporterId) },
+      },
+      { sort: { createdAt: -1, _id: -1 }, limit },
+    );
+  }
+
   findOpenNeedingReminder(expiringBy: Date, limit: number): Promise<Item[]> {
     return this.findMany(
       {

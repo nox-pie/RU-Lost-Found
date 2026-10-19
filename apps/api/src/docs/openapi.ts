@@ -339,6 +339,17 @@ export const OPERATIONS: Operation[] = [
     ok: { 200: 'ItemDto' },
   },
   {
+    method: 'get',
+    path: '/items/:id/matches',
+    tag: 'Items',
+    summary: 'Likely matches for my post',
+    description:
+      'Open posts on the other side (lost or found) that may be the same item: same category, close dates, same campus place and shared words. Up to 5, best first; `strong` ones are also notified to the owner of a lost post. For the post’s reporter only; sample posts only ever match sample posts.',
+    access: 'user',
+    params: itemIdParamsSchema,
+    ok: { 200: '`{ data: MatchDto[] }`' },
+  },
+  {
     method: 'post',
     path: '/items/:id/keep-open',
     tag: 'Items',

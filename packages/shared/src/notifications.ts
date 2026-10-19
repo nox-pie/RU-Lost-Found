@@ -11,6 +11,7 @@ export const NOTIFICATION_TYPES = [
   'ITEM_REMOVED_BY_MODERATOR',
   'POST_EXPIRING',
   'POST_CLOSED',
+  'POSSIBLE_MATCH',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

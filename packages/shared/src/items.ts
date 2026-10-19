@@ -203,3 +203,12 @@ export interface ItemDto {
   /** When an open post closes unless its reporter keeps it open (a reminder comes a week before). */
   expiresAt: string;
 }
+
+/** A post that may be the same item as one of yours (lost vs found). */
+export interface MatchDto {
+  item: ItemDto;
+  /** 0 to 1: same category, close dates, same campus place and shared words. */
+  score: number;
+  /** Likely enough that the owner of a lost post is told when it appears. */
+  strong: boolean;
+}
