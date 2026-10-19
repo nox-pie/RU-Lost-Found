@@ -25,6 +25,8 @@ export const queryKeys = {
     counts: (filters: object) => ['items', 'counts', filters] as const,
     mine: ['items', 'mine'] as const,
     detail: (id: string) => ['items', 'detail', id] as const,
+    /** Likely matches for one of my posts. */
+    matches: (id: string) => ['items', 'matches', id] as const,
     /** Security desk console: found items held at the desk. */
     desk: (q: string) => ['items', 'desk', q] as const,
   },

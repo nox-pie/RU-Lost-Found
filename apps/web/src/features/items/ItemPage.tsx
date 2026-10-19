@@ -30,6 +30,7 @@ import { queryKeys } from '../../lib/queryClient';
 import { isAdmin, useCurrentUser } from '../auth/authContext';
 import { ClaimDialog } from '../claims/ClaimDialog';
 import { EditItemDialog } from './EditItemDialog';
+import { PossibleMatches } from './PossibleMatches';
 import { ClosePostDialog, PostLifecycleNotice } from './PostLifecycle';
 import { FlagItemDialog } from '../moderation/FlagItemDialog';
 import { RemovePostDialog } from '../moderation/RemovePostDialog';
@@ -280,6 +281,7 @@ function ReporterActions({ item }: { item: ItemDto }) {
   return (
     <div className="space-y-4">
       {!user.isDemo && <PostLifecycleNotice item={item} />}
+      {item.status === 'OPEN' && <PossibleMatches item={item} />}
       <section className="rounded-2xl bg-white p-4 shadow-xs">
         <h2 className="font-display text-lg font-semibold">Claims on this item</h2>
         {claims.isPending ? (
