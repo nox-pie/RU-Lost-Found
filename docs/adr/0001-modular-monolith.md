@@ -18,7 +18,7 @@ The rebuild had to fix that structure. Constraints:
 Build **one deployable application split into modules with strict boundaries**: `auth`, `users`, `universities`, `items`, `claims`, `moderation`, `notifications`, `admin`, `audit`, `health` (`apps/api/src/modules/`).
 
 - Each business module has the same layers: routes → controller → service → repository (interface) → domain; dependencies point inwards only.
-- Modules talk through **services** (synchronous use cases) or **domain events** delivered by the outbox (asynchronous reactions, see [ADR 0006](0006-transactional-outbox.md)). For example `items` never calls `claims`: `CloseClaimsOnItemRemoved` in the claims module reacts to `ItemRemoved`.
+- Modules talk through **services** (synchronous use cases) or **domain events** delivered by the outbox (asynchronous reactions, see [ADR 0006](0006-transactional-outbox.md)). For example `items` never calls `claims`: `CloseClaimsWhenItemEnds` in the claims module reacts to `ItemRemoved`.
 - Shared building blocks (errors, persistence ports, events, HTTP helpers) live in `core/`; adapters for external systems in `infrastructure/`.
 
 ## Alternatives considered
