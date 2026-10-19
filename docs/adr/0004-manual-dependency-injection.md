@@ -1,6 +1,6 @@
 # ADR 0004: Manual dependency injection through one composition root
 
-- **Status:** Accepted
+- **Status:** Accepted (amended 20 October 2026 by [ADR 0012](0012-self-wiring-modules-and-event-contracts.md): each module now wires itself in its `*.module.ts`; `container.ts` builds the shared kernel and lists the modules)
 - **Date:** 1 October 2026 (the rebuild)
 
 ## Context

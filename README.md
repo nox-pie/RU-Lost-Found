@@ -114,7 +114,7 @@ npm run set-role -w @ru-lost-found/api -- you@rishihood.edu.in UNIVERSITY_ADMIN 
 
 - [Backend design](docs/architecture/backend.md): architecture, domain model, claim state machine, outbox, security, API, patterns, testing
 - [Frontend design](docs/architecture/frontend.md): structure, sessions, data layer, screens, accessibility
-- [Architecture decisions](docs/adr/README.md): 11 records of the main choices, the alternatives and the trade-offs
+- [Architecture decisions](docs/adr/README.md): 12 records of the main choices, the alternatives and the trade-offs
 - [Demo data](docs/demo-data.md): the sample posts visitors see, their safeguards and how to remove them
 - [External services](docs/services.md): every service used (MongoDB Atlas, Upstash, Render, Vercel, Cloudinary, Brevo, Sentry, UptimeRobot), its limits, settings and how to rotate keys
 - [Launch checklist](docs/launch-checklist.md): everything to do before opening the portal to students
