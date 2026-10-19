@@ -108,6 +108,7 @@ apps/api/src/
 │   ├── items/                    # Lost/found reports, search
 │   ├── claims/                   # Claim workflow (state machine)
 │   ├── desk/                     # Security desk console routes (handovers waiting, items held)
+│   ├── matching/                 # Likely matches between lost and found posts (scored on request)
 │   ├── notifications/            # In-app notifications + email handlers
 │   ├── moderation/               # Flagging posts, admin review
 │   ├── admin/                    # Stats (read model), people management, activity log
@@ -198,8 +199,10 @@ classDiagram
         +slug
         +emailDomains: string[]
         +schools: string[]
+        +places: string[]
         +allowsEmail(email) bool
         +hasSchool(school) bool
+        +hasPlace(place) bool
         +updateSettings(settings, now) bool
     }
     class User {
@@ -415,6 +418,7 @@ sequenceDiagram
 | `AuditEventHandler`        | Account, item, claim, role and moderation events                                   | Writes the matching `audit_logs` entry (idempotent: one entry per event)                                                                                                                             |
 | `ItemModerationHandler`    | `ItemRemoved` (by an admin)                                                        | Tells the poster their post was removed, with the admin's reason (in the app and by email)                                                                                                           |
 | `ItemLifecycleHandler`     | `ItemExpiringSoon`, `ItemClosed` (expired)                                         | Reminds the reporter a week before the post closes (in the app and by email, with a link to keep it open); tells them in the app when it closed by itself                                            |
+| `TellOwnersOfLikelyFinds`  | `ItemReported` (found posts)                                                       | Tells the owners of up to 3 strongly matching lost posts, in the app and by email (matching module)                                                                                                  |
 
 **Scheduled jobs**, run by the same worker. A lease in the shared key-value store (Redis) makes each job run on only one instance per interval; if the lease can't be taken, that run is skipped and reported, never left to crash the process:
 
@@ -429,14 +433,23 @@ The worker runs inside the API process on the free tier (`WORKER_ENABLED=true`).
 
 ---
 
-## 8. Matching (planned, not built yet)
+## 8. Matching
 
-Designed for the next milestone: when an item is reported (the `ItemReported` event already exists), a `MatchingService` handler would search open items of the **opposite type** at the same university, in the same category, reported within ±14 days, and score them with a `MatchScorer` (Strategy pattern). Matches above a threshold would be saved as suggestions, and the owner of the lost item notified.
+**Campus places.** Each university lists its places (library, canteen, hostels, ...) in `seed/universities.json`, next to its schools. A post names one of them, checked like a school at sign-up, or none ("somewhere else"); the free-text `location` stays as the exact spot. Posts saved before places existed simply have none.
 
-- First scorer: MongoDB text score on title, description and location, plus category and date proximity.
-- Later: an image-similarity or embedding-based scorer implements the same interface; nothing else changes.
+**Scoring** (`modules/matching/domain/matchScore.ts`, a pure function). A lost post and a found post can only match if they share the **category** and the item was found from 2 days before (dates are picked by hand) to 30 days after it was lost. Then:
 
-Today only `AuditEventHandler` reacts to `ItemReported`.
+| Part  | Weight | How                                                                                                                                                                               |
+| ----- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Words | 45%    | Shared distinctive words of title and description (filler words such as "lost", "near" and plural endings ignored), relative to the shorter text, so a terse post isn't penalised |
+| Date  | 30%    | 1 on the same day, falling to 0 at 30 days apart                                                                                                                                  |
+| Place | 25%    | 1 for the same place, 0 for different places, 0.5 when either is unknown                                                                                                          |
+
+From 0.45 a pair is shown, from 0.65 it is a strong match. The threshold is above what the same category, date and an unknown place earn without a single shared word (0.43), so unrelated items of a category aren't suggested.
+
+**Where it shows.** `GET /items/:id/matches` gives the reporter of an open post up to 5 matches from the other side, best first, scored when asked from at most 50 recent candidates: nothing is stored, so a suggestion disappears as soon as either post closes. When a **found** post is reported, `TellOwnersOfLikelyFinds` (reacting to `ItemReported`) tells the owners of up to 3 strongly matching lost posts, in the app and by email. Sample posts of the demo only ever match sample posts.
+
+**Why rules, not search scores or embeddings:** a few hundred open posts per university make on-request scoring cheap, the reasons for a suggestion are easy to explain to a student, and every rule is a unit test. A smarter scorer (image similarity, embeddings) would replace one function.
 
 ---
 
@@ -510,7 +523,7 @@ Base path: `/api/v1`. Request and response bodies are JSON (except image uploads
 | PATCH                    | `/users/me`                   | user                 | Update profile                                                                                                                                                           |
 | PUT                      | `/users/me/avatar`            | user                 | Upload profile picture (multipart field `avatar`, ≤ 2 MB); the old file is deleted                                                                                       |
 | DELETE                   | `/users/me/avatar`            | user                 | Remove profile picture                                                                                                                                                   |
-| GET                      | `/universities/current`       | user                 | My university: name and schools                                                                                                                                          |
+| GET                      | `/universities/current`       | user                 | My university: name, schools and campus places                                                                                                                           |
 | **Account**              |                               |                      |                                                                                                                                                                          |
 | GET                      | `/account/export`             | user                 | Download my data: profile, posts, claims made and received, notifications (JSON file); 10 per hour                                                                       |
 | DELETE                   | `/account`                    | user                 | Delete my account (`password`); see "Deleting an account" in §9                                                                                                          |
@@ -518,6 +531,7 @@ Base path: `/api/v1`. Request and response bodies are JSON (except image uploads
 | GET                      | `/items`                      | user                 | Search and filter (`q` words, `type`, `category`, `status` = comma list, default `OPEN,RESERVED`; `cursor`, `limit` ≤ 50)                                                |
 | POST                     | `/items`                      | user                 | Report an item: multipart form, 1–3 photos in `photos` (≤ 5 MB each), optional `questions` (found items only); 20 per user per day                                       |
 | GET                      | `/items/:id`                  | user                 | Item details                                                                                                                                                             |
+| GET                      | `/items/:id/matches`          | owner                | Likely matches on the other side (lost ↔ found), up to 5, best first; see §8                                                                                             |
 | PATCH                    | `/items/:id`                  | owner                | Edit own item while `OPEN`                                                                                                                                               |
 | DELETE                   | `/items/:id`                  | owner, admin         | Soft delete (`REMOVED`): hidden everywhere, kept for moderation; photos deleted later by a clean-up job                                                                  |
 | POST                     | `/items/:id/close`            | owner                | Close an open post: `RETURNED` or `WITHDRAWN`; its open claims close                                                                                                     |
@@ -657,7 +671,7 @@ One `errorHandler` middleware converts `AppError` into the error format above. A
 - A fixed, controllable clock: expiry, deadlines, back-off and rate-limit windows are tested by moving time, not by waiting.
 - Every test server binds explicitly to `127.0.0.1`: with many test files running in parallel, supertest's default (all addresses) occasionally let requests reach another file's server.
 
-**Current numbers:** 420 API tests and 24 end-to-end tests (30 runs: the six marked `@mobile` also run on a phone). Coverage is 95% statements, 87% branches, 96% functions, 96% lines. The build fails below 93 / 84 / 95 / 95.
+**Current numbers:** 437 API tests and 25 end-to-end tests (31 runs: the six marked `@mobile` also run on a phone). Coverage is 95% statements, 87% branches, 96% functions, 96% lines. The build fails below 93 / 84 / 95 / 95.
 
 ### Continuous integration (`.github/workflows/ci.yml`)
 
