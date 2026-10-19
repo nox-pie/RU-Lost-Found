@@ -1,8 +1,6 @@
-import { z } from 'zod';
 import type { EventHandler, StoredEvent } from '../../../core/events/EventHandler';
+import { payloadOf, type DomainEventType } from '../../events';
 import type { ClaimService } from '../claim.service';
-
-const payload = z.object({ universityId: z.string() });
 
 /**
  * Items and claims live in separate modules. When an item is removed, the items module doesn't
@@ -10,12 +8,12 @@ const payload = z.object({ universityId: z.string() });
  */
 export class CloseClaimsOnItemRemoved implements EventHandler {
   readonly name = 'close-claims-on-item-removed';
-  readonly handles = ['ItemRemoved'] as const;
+  readonly handles = ['ItemRemoved'] as const satisfies readonly DomainEventType[];
 
   constructor(private readonly claims: ClaimService) {}
 
   async handle(event: StoredEvent): Promise<void> {
-    const { universityId } = payload.parse(event.payload);
+    const { universityId } = payloadOf(event, 'ItemRemoved');
     await this.claims.closeClaimsForRemovedItem({ universityId }, event.aggregateId);
   }
 }

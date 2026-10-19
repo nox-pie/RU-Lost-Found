@@ -1,6 +1,7 @@
 import type { AuditAction, AuditTargetType } from '@ru-lost-found/shared';
 import type { AuditTrail } from '../../core/audit/AuditTrail';
 import type { EventHandler, StoredEvent } from '../../core/events/EventHandler';
+import { isDomainEventType, type DomainEventType } from '../events';
 
 type Mapping = {
   action: AuditAction;
@@ -9,7 +10,7 @@ type Mapping = {
   actor: string | 'aggregate' | null;
 };
 
-const MAPPINGS: Record<string, Mapping> = {
+const MAPPINGS = {
   UserRegistered: { action: 'USER_REGISTERED', targetType: 'USER', actor: 'aggregate' },
   PasswordChanged: { action: 'PASSWORD_CHANGED', targetType: 'USER', actor: 'aggregate' },
   AccountDeleted: { action: 'ACCOUNT_DELETED', targetType: 'USER', actor: 'aggregate' },
@@ -26,7 +27,7 @@ const MAPPINGS: Record<string, Mapping> = {
   UserReactivated: { action: 'USER_REACTIVATED', targetType: 'USER', actor: 'actorId' },
   ItemFlagged: { action: 'ITEM_FLAGGED', targetType: 'REPORT', actor: 'actorId' },
   ReportResolved: { action: 'REPORT_RESOLVED', targetType: 'REPORT', actor: 'actorId' },
-};
+} satisfies Partial<Record<DomainEventType, Mapping>>;
 
 /** Fields copied into the audit entry when present (never secrets such as codes). */
 const METADATA_FIELDS = [
@@ -50,8 +51,8 @@ export class AuditEventHandler implements EventHandler {
   constructor(private readonly audit: AuditTrail) {}
 
   async handle(event: StoredEvent): Promise<void> {
-    const mapping = MAPPINGS[event.type];
-    if (!mapping) return;
+    if (!isDomainEventType(event.type) || !(event.type in MAPPINGS)) return;
+    const mapping: Mapping = MAPPINGS[event.type as keyof typeof MAPPINGS];
     const payload = event.payload;
     const text = (field: string) => (typeof payload[field] === 'string' ? payload[field] : null);
 

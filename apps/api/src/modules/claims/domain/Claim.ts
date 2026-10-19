@@ -8,6 +8,11 @@ import {
 } from '../../../core/errors/AppError';
 import type { Item } from '../../items/domain/Item';
 import { type ClaimState, claimStateFor } from './ClaimState';
+import { domainEvent, type DomainEventType, type EventPayloadInput } from '../../events';
+
+type ClaimEventType = Extract<DomainEventType, `Claim${string}`>;
+/** The people involved, carried by every claim event. */
+type ClaimEventBase = EventPayloadInput<'ClaimRequested'>;
 
 export const MAX_HANDOVER_ATTEMPTS = 5;
 
@@ -116,7 +121,7 @@ export class Claim extends AggregateRoot {
       updatedAt: now,
       version: 0,
     });
-    claim.recordEvent('ClaimRequested', now);
+    claim.recordEvent('ClaimRequested', now, {});
     return claim;
   }
 
@@ -303,7 +308,7 @@ export class Claim extends AggregateRoot {
       throw new InvalidStateTransitionError('The handover deadline has not passed yet.');
     }
     this.transitionTo(next, null, now);
-    this.recordEvent('ClaimExpired', now);
+    this.recordEvent('ClaimExpired', now, {});
   }
 
   private rejectWith(byUserId: string | null, reason: string | null, now: Date): void {
@@ -341,22 +346,23 @@ export class Claim extends AggregateRoot {
     this.state = claimStateFor(status);
   }
 
-  private recordEvent(type: string, now: Date, extra: Record<string, unknown> = {}): void {
-    this.record({
-      type,
-      aggregateId: this.id,
-      occurredAt: now,
-      payload: {
-        universityId: this.universityId,
-        itemId: this.itemId,
-        reporterId: this.reporterId,
-        claimantId: this.claimantId,
-        ownerId: this.ownerId,
-        finderId: this.finderId,
-        /** Who caused this event (the latest history entry); null for the system. */
-        actorId: this.props.history.at(-1)?.byUserId ?? null,
-        ...extra,
-      },
-    });
+  /** Records a claim event: the people involved, plus what this event adds (`extra`). */
+  private recordEvent<T extends ClaimEventType>(
+    type: T,
+    now: Date,
+    extra: Omit<EventPayloadInput<T>, keyof ClaimEventBase>,
+  ): void {
+    const base: ClaimEventBase = {
+      universityId: this.universityId,
+      itemId: this.itemId,
+      reporterId: this.reporterId,
+      claimantId: this.claimantId,
+      ownerId: this.ownerId,
+      finderId: this.finderId,
+      /** Who caused this event (the latest history entry); null for the system. */
+      actorId: this.props.history.at(-1)?.byUserId ?? null,
+    };
+    // Each event type's extra fields complete the base to its contract (checked per call site).
+    this.record(domainEvent(type, this.id, now, { ...base, ...extra } as EventPayloadInput<T>));
   }
 }

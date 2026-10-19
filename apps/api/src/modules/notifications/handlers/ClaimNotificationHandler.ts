@@ -1,24 +1,11 @@
-import { z } from 'zod';
 import type { EventHandler, StoredEvent } from '../../../core/events/EventHandler';
 import type { ClaimRepository } from '../../claims/domain/ClaimRepository';
+import { payloadOf, type DomainEventType } from '../../events';
 import type { ItemRepository } from '../../items/domain/ItemRepository';
 import type { User } from '../../users/domain/User';
 import type { UserRepository } from '../../users/domain/UserRepository';
 import type { NotificationEmails } from '../notification.emails';
 import type { NotificationService } from '../notification.service';
-
-/** Every claim event carries who is involved (see Claim.recordEvent). */
-const claimEventPayload = z.object({
-  universityId: z.string(),
-  itemId: z.string(),
-  reporterId: z.string(),
-  claimantId: z.string(),
-  ownerId: z.string(),
-  deadline: z.string().optional(),
-  automatic: z.boolean().optional(),
-  cancelledBy: z.string().nullable().optional(),
-  wasApproved: z.boolean().optional(),
-});
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-IN', {
@@ -41,7 +28,7 @@ export class ClaimNotificationHandler implements EventHandler {
     'ClaimCancelled',
     'ClaimCompleted',
     'ClaimExpired',
-  ] as const;
+  ] as const satisfies readonly DomainEventType[];
 
   constructor(
     private readonly notifications: NotificationService,
@@ -52,7 +39,8 @@ export class ClaimNotificationHandler implements EventHandler {
   ) {}
 
   async handle(event: StoredEvent): Promise<void> {
-    const p = claimEventPayload.parse(event.payload);
+    // Every claim event carries the people involved; each case reads its own extra fields.
+    const p = payloadOf(event, event.type as ClaimNotificationHandler['handles'][number]);
     const scope = { universityId: p.universityId };
     const [item, people] = await Promise.all([
       this.items.findById(scope, p.itemId),
@@ -91,7 +79,7 @@ export class ClaimNotificationHandler implements EventHandler {
       }
 
       case 'ClaimApproved': {
-        const deadline = p.deadline ? formatDate(p.deadline) : 'the deadline';
+        const deadline = formatDate(payloadOf(event, 'ClaimApproved').deadline);
         const claimantIsOwner = p.ownerId === p.claimantId;
         const claim = claimantIsOwner ? await this.claims.findById(scope, event.aggregateId) : null;
         const body = `${nameOf(p.reporterId)} approved your claim on “${title}”. Arrange to meet before ${deadline}.`;
@@ -111,7 +99,8 @@ export class ClaimNotificationHandler implements EventHandler {
       }
 
       case 'ClaimRejected': {
-        const body = p.automatic
+        const { automatic } = payloadOf(event, 'ClaimRejected');
+        const body = automatic
           ? `“${title}” was handed over to someone else, so your claim was closed.`
           : `${nameOf(p.reporterId)} declined your claim on “${title}”.`;
         await this.notifications.notify({
@@ -120,18 +109,19 @@ export class ClaimNotificationHandler implements EventHandler {
           type: 'CLAIM_REJECTED',
           title: 'Your claim was declined',
           body,
-          email: p.automatic ? undefined : (r) => email(r, 'Your claim was declined', [body]),
+          email: automatic ? undefined : (r) => email(r, 'Your claim was declined', [body]),
         });
         return;
       }
 
       case 'ClaimCancelled': {
-        const byClaimant = p.cancelledBy === p.claimantId;
+        const { cancelledBy, wasApproved } = payloadOf(event, 'ClaimCancelled');
+        const byClaimant = cancelledBy === p.claimantId;
         const recipient = byClaimant ? p.reporterId : p.claimantId;
         const body =
-          p.cancelledBy === null || p.cancelledBy === undefined
+          cancelledBy === null
             ? `“${title}” was removed, so your claim was closed.`
-            : `${nameOf(p.cancelledBy)} cancelled the claim on “${title}”.`;
+            : `${nameOf(cancelledBy)} cancelled the claim on “${title}”.`;
         await this.notifications.notify({
           ...base,
           userId: recipient,
@@ -139,7 +129,7 @@ export class ClaimNotificationHandler implements EventHandler {
           title: 'A claim was cancelled',
           body,
           // Only worth an email if a handover had been arranged.
-          email: p.wasApproved ? (r) => email(r, 'A claim was cancelled', [body]) : undefined,
+          email: wasApproved ? (r) => email(r, 'A claim was cancelled', [body]) : undefined,
         });
         return;
       }

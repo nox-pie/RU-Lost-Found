@@ -4,6 +4,7 @@ import type { ImageRef } from '../../../core/domain/ImageRef';
 import type { Actor } from '../../../core/domain/Actor';
 import { ForbiddenError, InvalidStateTransitionError } from '../../../core/errors/AppError';
 import { RolePolicy } from './RolePolicy';
+import { domainEvent } from '../../events';
 
 export interface UserProfile {
   firstName: string;
@@ -66,12 +67,9 @@ export class User extends AggregateRoot {
       updatedAt: input.now,
       version: 0,
     });
-    user.record({
-      type: 'UserRegistered',
-      aggregateId: user.id,
-      occurredAt: input.now,
-      payload: { universityId: user.universityId },
-    });
+    user.record(
+      domainEvent('UserRegistered', user.id, input.now, { universityId: user.universityId }),
+    );
     return user;
   }
 
@@ -171,12 +169,7 @@ export class User extends AggregateRoot {
     this.assertEditable();
     this.props.passwordHash = passwordHash;
     this.touch(now);
-    this.record({
-      type: 'PasswordChanged',
-      aggregateId: this.id,
-      occurredAt: now,
-      payload: { via },
-    });
+    this.record(domainEvent('PasswordChanged', this.id, now, { via }));
   }
 
   /**
@@ -185,12 +178,7 @@ export class User extends AggregateRoot {
    */
   close(now: Date): ImageRef | null {
     this.assertEditable();
-    this.record({
-      type: 'AccountDeleted',
-      aggregateId: this.id,
-      occurredAt: now,
-      payload: { universityId: this.universityId },
-    });
+    this.record(domainEvent('AccountDeleted', this.id, now, { universityId: this.universityId }));
     return this.props.profile.avatar;
   }
 
@@ -220,12 +208,13 @@ export class User extends AggregateRoot {
     }
     this.props.status = 'SUSPENDED';
     this.touch(now);
-    this.record({
-      type: 'UserSuspended',
-      aggregateId: this.id,
-      occurredAt: now,
-      payload: { universityId: this.universityId, actorId: by.userId, reason },
-    });
+    this.record(
+      domainEvent('UserSuspended', this.id, now, {
+        universityId: this.universityId,
+        actorId: by.userId,
+        reason,
+      }),
+    );
   }
 
   reactivate(by: Actor, now: Date): void {
@@ -235,12 +224,12 @@ export class User extends AggregateRoot {
     }
     this.props.status = 'ACTIVE';
     this.touch(now);
-    this.record({
-      type: 'UserReactivated',
-      aggregateId: this.id,
-      occurredAt: now,
-      payload: { universityId: this.universityId, actorId: by.userId },
-    });
+    this.record(
+      domainEvent('UserReactivated', this.id, now, {
+        universityId: this.universityId,
+        actorId: by.userId,
+      }),
+    );
   }
 
   private assertManageableBy(actor: Actor): void {
@@ -257,12 +246,14 @@ export class User extends AggregateRoot {
     const previous = this.props.role;
     this.props.role = role;
     this.touch(now);
-    this.record({
-      type: 'UserRoleChanged',
-      aggregateId: this.id,
-      occurredAt: now,
-      payload: { universityId: this.universityId, actorId, from: previous, to: role },
-    });
+    this.record(
+      domainEvent('UserRoleChanged', this.id, now, {
+        universityId: this.universityId,
+        actorId,
+        from: previous,
+        to: role,
+      }),
+    );
   }
 
   private touch(now: Date): void {
