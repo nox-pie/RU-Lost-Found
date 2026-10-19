@@ -391,6 +391,40 @@ describe('editing and removing', () => {
   });
 });
 
+describe('campus places', () => {
+  it('puts a post at one of the university’s places, next to the exact spot', async () => {
+    const res = await report(asha, { place: 'Library', location: 'Second floor, near the lifts' });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ place: 'Library', location: 'Second floor, near the lifts' });
+  });
+
+  it('accepts no place ("somewhere else"), but not a place the university doesn’t have', async () => {
+    expect((await report(asha)).body.place).toBeNull();
+
+    const res = await report(asha, { place: 'Hogwarts' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.details).toEqual([
+      { path: 'body.place', message: 'Choose a place of Rishihood University' },
+    ]);
+  });
+
+  it('can be changed or cleared when the post is edited', async () => {
+    const id = (await report(asha, { place: 'Library' })).body.id as string;
+    const edit = (place: string | null) =>
+      api().patch(`/api/v1/items/${id}`).set('Authorization', asha.bearer).send({ place });
+
+    expect((await edit('Canteen')).body.place).toBe('Canteen');
+    expect((await edit(null)).body.place).toBeNull();
+    expect((await edit('Hogwarts')).status).toBe(400);
+  });
+
+  it('lists the places for the forms', async () => {
+    const res = await api().get('/api/v1/universities/current').set('Authorization', asha.bearer);
+    expect(res.body.places).toEqual(['Library', 'Canteen', 'Hostel']);
+  });
+});
+
 describe('closing and expiry', () => {
   const close = (user: SignedInUser, id: string, reason: string) =>
     api().post(`/api/v1/items/${id}/close`).set('Authorization', user.bearer).send({ reason });

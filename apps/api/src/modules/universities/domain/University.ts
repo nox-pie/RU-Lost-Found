@@ -9,6 +9,8 @@ export interface UniversityProps {
   slug: string;
   emailDomains: string[];
   schools: string[];
+  /** Campus places a post can name (library, canteen, ...): for finding and matching posts. */
+  places: string[];
   status: UniversityStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -33,8 +35,9 @@ function normaliseDomains(domains: readonly string[]): string[] {
   return emailDomains;
 }
 
-const normaliseSchools = (schools: readonly string[]) => [
-  ...new Set(schools.map((s) => s.trim()).filter(Boolean)),
+/** Trimmed, without blanks or repeats, in the order given (it is the order of the dropdowns). */
+const normaliseList = (values: readonly string[]) => [
+  ...new Set(values.map((value) => value.trim()).filter(Boolean)),
 ];
 
 /**
@@ -52,6 +55,7 @@ export class University extends AggregateRoot {
     slug: string;
     emailDomains: string[];
     schools: string[];
+    places?: string[];
     now: Date;
   }): University {
     return new University({
@@ -59,7 +63,8 @@ export class University extends AggregateRoot {
       name: input.name.trim(),
       slug: input.slug.trim().toLowerCase(),
       emailDomains: normaliseDomains(input.emailDomains),
-      schools: normaliseSchools(input.schools),
+      schools: normaliseList(input.schools),
+      places: normaliseList(input.places ?? []),
       status: 'ACTIVE',
       createdAt: input.now,
       updatedAt: input.now,
@@ -82,6 +87,9 @@ export class University extends AggregateRoot {
   }
   get schools(): readonly string[] {
     return this.props.schools;
+  }
+  get places(): readonly string[] {
+    return this.props.places;
   }
   get status() {
     return this.props.status;
@@ -129,20 +137,27 @@ export class University extends AggregateRoot {
    * Returns false when nothing changed.
    */
   updateSettings(
-    settings: { name: string; emailDomains: readonly string[]; schools: readonly string[] },
+    settings: {
+      name: string;
+      emailDomains: readonly string[];
+      schools: readonly string[];
+      places?: readonly string[];
+    },
     now: Date,
   ): boolean {
     const next = {
       name: settings.name.trim(),
       emailDomains: normaliseDomains(settings.emailDomains),
-      schools: normaliseSchools(settings.schools),
+      schools: normaliseList(settings.schools),
+      places: normaliseList(settings.places ?? []),
     };
     const same = (a: readonly string[], b: readonly string[]) =>
       a.length === b.length && a.every((value, index) => value === b[index]);
     if (
       next.name === this.props.name &&
       same(next.emailDomains, this.props.emailDomains) &&
-      same(next.schools, this.props.schools)
+      same(next.schools, this.props.schools) &&
+      same(next.places, this.props.places)
     ) {
       return false;
     }
@@ -152,5 +167,9 @@ export class University extends AggregateRoot {
 
   hasSchool(school: string): boolean {
     return this.props.schools.includes(school);
+  }
+
+  hasPlace(place: string): boolean {
+    return this.props.places.includes(place);
   }
 }

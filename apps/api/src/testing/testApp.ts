@@ -140,6 +140,7 @@ export async function seedUniversity(
     slug: 'rishihood',
     emailDomains: ['rishihood.edu.in'],
     schools: ['Newton School of Technology', 'School of Entrepreneurship'],
+    places: ['Library', 'Canteen', 'Hostel'],
     ...overrides,
   });
   await new MongoUniversityRepository(connection).create(university);

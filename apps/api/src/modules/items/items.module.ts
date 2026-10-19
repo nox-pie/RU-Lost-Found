@@ -9,6 +9,7 @@ export function createItemsModule(kernel: Kernel) {
   const service = new ItemService(
     repositories.items,
     repositories.users,
+    repositories.universities,
     storage,
     ids,
     clock,

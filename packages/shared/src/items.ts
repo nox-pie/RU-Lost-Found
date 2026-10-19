@@ -54,11 +54,16 @@ const itemTextFields = {
   occurredOn: dateOnlySchema,
 };
 
+/** One of the university's campus places (checked by the API); absent or null = somewhere else. */
+const placeField = z.string().trim().max(60);
+
 /** Text fields of the multipart "report an item" form (photos travel in the `photos` field). */
 export const createItemSchema = z
   .object({
     type: z.enum(ITEM_TYPES),
     ...itemTextFields,
+    // A form field: an empty value means "somewhere else".
+    place: placeField.optional().transform((value) => value || undefined),
     heldAtSecurityDesk: formBoolean.default(false),
     questions: formStringList(
       z.string().trim().min(5, 'Each question needs at least 5 characters').max(150),
@@ -80,7 +85,11 @@ export const closeItemSchema = z
 export type CloseItemInput = z.infer<typeof closeItemSchema>;
 
 export const updateItemSchema = z
-  .object({ ...itemTextFields, heldAtSecurityDesk: z.boolean() })
+  .object({
+    ...itemTextFields,
+    place: placeField.min(1).nullable(),
+    heldAtSecurityDesk: z.boolean(),
+  })
   .partial()
   .strict()
   .refine((value) => Object.values(value).some((field) => field !== undefined), {
@@ -173,6 +182,8 @@ export interface ItemDto {
   title: string;
   description: string;
   location: string;
+  /** One of the university's campus places, or null (somewhere else, or posted before places). */
+  place: string | null;
   /** YYYY-MM-DD */
   occurredOn: string;
   photos: string[];

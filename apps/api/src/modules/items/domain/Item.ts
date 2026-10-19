@@ -48,6 +48,8 @@ export interface ItemProps {
   title: string;
   description: string;
   location: string;
+  /** One of the university's campus places, or null (somewhere else). */
+  place: string | null;
   occurredOn: Date;
   images: ImageRef[];
   verificationQuestions: VerificationQuestion[];
@@ -67,7 +69,7 @@ export interface ItemProps {
 
 export type EditableItemFields = Pick<
   ItemProps,
-  'category' | 'title' | 'description' | 'location' | 'occurredOn' | 'heldAtSecurityDesk'
+  'category' | 'title' | 'description' | 'location' | 'place' | 'occurredOn' | 'heldAtSecurityDesk'
 >;
 
 /**
@@ -91,6 +93,7 @@ export class Item extends AggregateRoot {
     title: string;
     description: string;
     location: string;
+    place?: string | null;
     occurredOn: Date;
     images: ImageRef[];
     questions?: string[];
@@ -126,6 +129,7 @@ export class Item extends AggregateRoot {
       title: input.title.trim(),
       description: input.description.trim(),
       location: input.location.trim(),
+      place: input.place ?? null,
       occurredOn: input.occurredOn,
       images: [...input.images],
       verificationQuestions: questions.map((question, index) => ({
@@ -178,6 +182,9 @@ export class Item extends AggregateRoot {
   }
   get location() {
     return this.props.location;
+  }
+  get place() {
+    return this.props.place;
   }
   get occurredOn() {
     return this.props.occurredOn;

@@ -50,6 +50,7 @@ interface ItemDocument extends VersionedDocument {
   title: string;
   description: string;
   location: string;
+  place?: string | null;
   occurredOn: Date;
   images: ImageRef[];
   verificationQuestions: VerificationQuestion[];
@@ -73,6 +74,7 @@ const itemSchema = defineSchema(
     title: { type: String, required: true },
     description: { type: String, required: true },
     location: { type: String, required: true },
+    place: { type: String, default: null },
     occurredOn: { type: Date, required: true },
     images: { type: [imageRefSchema], required: true },
     verificationQuestions: {
@@ -225,6 +227,7 @@ export class MongoItemRepository
       title: doc.title,
       description: doc.description,
       location: doc.location,
+      place: doc.place ?? null,
       occurredOn: doc.occurredOn,
       images: doc.images.map((i) => ({ url: i.url, publicId: i.publicId })),
       verificationQuestions: doc.verificationQuestions.map((q) => ({
@@ -253,6 +256,7 @@ export class MongoItemRepository
       title: item.title,
       description: item.description,
       location: item.location,
+      place: item.place,
       occurredOn: item.occurredOn,
       images: [...item.images],
       verificationQuestions: [...item.verificationQuestions],

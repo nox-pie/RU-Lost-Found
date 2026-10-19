@@ -19,6 +19,7 @@ interface UniversityDocument extends VersionedDocument {
   slug: string;
   emailDomains: string[];
   schools: string[];
+  places?: string[];
   status: UniversityStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +31,7 @@ const universitySchema = defineSchema(
     slug: { type: String, required: true },
     emailDomains: { type: [String], required: true },
     schools: { type: [String], default: [] },
+    places: { type: [String], default: [] },
     status: { type: String, enum: ['ACTIVE', 'DISABLED'], required: true },
     createdAt: { type: Date, required: true },
     updatedAt: { type: Date, required: true },
@@ -90,6 +92,7 @@ export class MongoUniversityRepository
       slug: doc.slug,
       emailDomains: doc.emailDomains,
       schools: doc.schools,
+      places: doc.places ?? [],
       status: doc.status,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
@@ -104,6 +107,7 @@ export class MongoUniversityRepository
       slug: university.slug,
       emailDomains: [...university.emailDomains],
       schools: [...university.schools],
+      places: [...university.places],
       status: university.status,
       createdAt: university.createdAt,
       updatedAt: university.updatedAt,

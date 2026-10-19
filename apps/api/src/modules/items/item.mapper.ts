@@ -17,6 +17,7 @@ export function toItemDto({ item, reporter }: ItemView, viewerId: string): ItemD
     title: item.title,
     description: item.description,
     location: item.location,
+    place: item.place,
     occurredOn: item.occurredOn.toISOString().slice(0, 10),
     photos: item.images.map((image) => image.url),
     status: item.status,

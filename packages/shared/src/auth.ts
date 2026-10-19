@@ -138,4 +138,6 @@ export interface UniversityDto {
   id: string;
   name: string;
   schools: string[];
+  /** Campus places a post can name; empty if the university has none configured. */
+  places: string[];
 }

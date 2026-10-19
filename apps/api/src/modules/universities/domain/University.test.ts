@@ -66,4 +66,25 @@ describe('University', () => {
       expect(() => aUniversity({ emailDomains })).toThrow(ValidationError);
     },
   );
+
+  it('keeps its campus places tidy, and notices when the list changes', () => {
+    const university = aUniversity({ places: [' Library ', 'Canteen', 'Library', ''] });
+
+    expect(university.places).toEqual(['Library', 'Canteen']);
+    expect(university.hasPlace('Canteen')).toBe(true);
+    expect(university.hasPlace('Hogwarts')).toBe(false);
+
+    const settings = {
+      name: university.name,
+      emailDomains: [...university.emailDomains],
+      schools: [...university.schools],
+    };
+    expect(university.updateSettings({ ...settings, places: ['Library', 'Canteen'] }, T0)).toBe(
+      false,
+    );
+    expect(university.updateSettings({ ...settings, places: ['Library', 'Hostel'] }, T0)).toBe(
+      true,
+    );
+    expect(university.places).toEqual(['Library', 'Hostel']);
+  });
 });
