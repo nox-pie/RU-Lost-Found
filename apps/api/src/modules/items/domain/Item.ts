@@ -13,6 +13,7 @@ import {
   InvalidStateTransitionError,
   ValidationError,
 } from '../../../core/errors/AppError';
+import { domainEvent } from '../../events';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -125,17 +126,14 @@ export class Item extends AggregateRoot {
       version: 0,
     });
 
-    item.record({
-      type: 'ItemReported',
-      aggregateId: item.id,
-      occurredAt: input.now,
-      payload: {
+    item.record(
+      domainEvent('ItemReported', item.id, input.now, {
         universityId: item.universityId,
         reporterId: item.reporterId,
         itemType: item.type,
         category: item.category,
-      },
-    });
+      }),
+    );
     return item;
   }
 
@@ -229,12 +227,7 @@ export class Item extends AggregateRoot {
     this.requireStatus('RESERVED', 'resolved');
     this.transition('RESOLVED', now);
     this.props.resolvedAt = now;
-    this.record({
-      type: 'ItemResolved',
-      aggregateId: this.id,
-      occurredAt: now,
-      payload: { universityId: this.universityId },
-    });
+    this.record(domainEvent('ItemResolved', this.id, now, { universityId: this.universityId }));
   }
 
   /** `reason` is given by moderators, and shown to the reporter. */
@@ -247,19 +240,16 @@ export class Item extends AggregateRoot {
     }
     const previousStatus = this.props.status;
     this.transition('REMOVED', now);
-    this.record({
-      type: 'ItemRemoved',
-      aggregateId: this.id,
-      occurredAt: now,
-      payload: {
+    this.record(
+      domainEvent('ItemRemoved', this.id, now, {
         universityId: this.universityId,
         removedBy: actor.userId,
         byModerator: !this.isReportedBy(actor.userId),
         reason,
         previousStatus,
         imagePublicIds: this.props.images.map((image) => image.publicId),
-      },
-    });
+      }),
+    );
   }
 
   /**

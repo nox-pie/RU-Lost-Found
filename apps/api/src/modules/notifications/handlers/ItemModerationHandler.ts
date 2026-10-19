@@ -1,19 +1,13 @@
-import { z } from 'zod';
 import type { EventHandler, StoredEvent } from '../../../core/events/EventHandler';
+import { payloadOf, type DomainEventType } from '../../events';
 import type { ItemRepository } from '../../items/domain/ItemRepository';
 import type { NotificationEmails } from '../notification.emails';
 import type { NotificationService } from '../notification.service';
 
-const payload = z.object({
-  universityId: z.string(),
-  byModerator: z.boolean().optional(),
-  reason: z.string().nullable().optional(),
-});
-
 /** Tells reporters when an admin removes their post, and why. */
 export class ItemModerationHandler implements EventHandler {
   readonly name = 'item-moderation-notifications';
-  readonly handles = ['ItemRemoved'] as const;
+  readonly handles = ['ItemRemoved'] as const satisfies readonly DomainEventType[];
 
   constructor(
     private readonly notifications: NotificationService,
@@ -22,7 +16,7 @@ export class ItemModerationHandler implements EventHandler {
   ) {}
 
   async handle(event: StoredEvent): Promise<void> {
-    const p = payload.parse(event.payload);
+    const p = payloadOf(event, 'ItemRemoved');
     if (!p.byModerator) return;
     const item = await this.items.findById({ universityId: p.universityId }, event.aggregateId);
     if (!item) return;

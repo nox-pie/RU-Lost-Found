@@ -75,8 +75,8 @@ ru-lost-found/
 apps/api/src/
 ├── main.ts                       # Bootstrap: load config, build container, start HTTP server + worker
 ├── worker.ts                     # The background worker alone (when run as a separate process)
-├── app.ts                        # createApp(container): Express app with middleware and routes
-├── container.ts                  # Composition root: the ONE place where concrete classes are created
+├── app.ts                        # createApp(container): Express app; mounts every module's routes
+├── container.ts                  # Composition root: builds the kernel and lists the modules
 ├── config/env.ts                 # Environment variables validated with Zod at startup
 ├── core/                         # Shared kernel: interfaces and helpers, no business logic
 │   ├── domain/                   # AggregateRoot, Actor (roles), Clock, IdGenerator, ImageRef
@@ -84,6 +84,7 @@ apps/api/src/
 │   ├── http/                     # authenticate / authorize / authorizeCurrent, rate limiter, middleware/
 │   │                             #   (requestLogger, security, validate, imageUpload, concurrencyLimit, errorHandler)
 │   ├── events/                   # DomainEvent, EventHandler, EventHandlerRegistry
+│   ├── modules/ · jobs/          # AppModule (routes, handlers, jobs of a module), ScheduledJob
 │   ├── persistence/              # Repository, TenantScope, UnitOfWork, cursor Pagination
 │   ├── audit/ · cache/ · email/ · health/ · observability/ · security/ · storage/   # ports (interfaces)
 │   └── logger/                   # pino logger (redacts credentials)
@@ -98,6 +99,8 @@ apps/api/src/
 │   ├── worker/                   # BackgroundWorker, JobScheduler
 │   └── observability/            # SentryErrorReporter
 ├── modules/
+│   ├── kernel.ts                 # What every module may use: settings, providers, repositories, middleware
+│   ├── events.ts                 # The domain events and their payload schemas (contracts between modules)
 │   ├── auth/                     # Codes, register, login, refresh, logout, password reset/change
 │   ├── users/                    # Profile, avatar, RolePolicy, AdminAccounts (ADMIN_EMAILS)
 │   ├── account/                  # Download my data, delete my account (uses items, claims, ...)
@@ -131,8 +134,13 @@ modules/claims/
 ├── claim.routes.ts
 ├── claim.mapper.ts               # Entity → response DTO (never leaks internal fields)
 ├── handlers/                     # Reactions to other modules' events (CloseClaimsOnItemRemoved)
+├── claims.module.ts              # Builds the module: service, controller, routes, handlers, jobs
 └── *.test.ts                     # Tests sit next to the code they test
 ```
+
+**How a module plugs in.** Each module's `*.module.ts` builds everything the module offers from the **kernel** (`modules/kernel.ts`: settings, providers, repositories, shared middleware) and returns an `AppModule`: its routes, its event handlers and its scheduled jobs. When it needs another module's service, that service is a named parameter, so the dependencies between modules are visible in one place, `container.ts`. The container lists the modules; `app.ts` mounts their routes in that order, the outbox worker collects their handlers and the scheduler their jobs. Adding a module is a new folder and one line in the list.
+
+**Layers, checked by lint** (`apps/api/eslint.config.js`): `core` imports neither modules nor infrastructure; domain code imports no framework, SDK, infrastructure, controller, route or service; and a module uses another module's repository interface, never its MongoDB implementation. Tests are exempt.
 
 ---
 
@@ -393,7 +401,9 @@ sequenceDiagram
 - **Idempotent handlers:** in-app notifications have a unique index on (event id, recipient), and each notification records when its email went out (`emailedAt`), so even a redelivered event can't notify or email anyone twice. An email that failed is still sent on the retry.
 - **Housekeeping:** delivered events are deleted after 7 days; notifications after 180 days (TTL index).
 
-**Observer pattern:** handlers subscribe to event types through the `EventHandlerRegistry`. Adding a new reaction, such as push notifications, means adding a handler; the module that raised the event doesn't change.
+**Observer pattern:** handlers subscribe to event types through the `EventHandlerRegistry`. Adding a new reaction means adding a handler to a module; the module that raised the event doesn't change.
+
+**Event contracts:** `modules/events.ts` lists every event with a schema for its payload. Aggregates build events with `domainEvent(type, …)`, so the compiler checks the payload; handlers read it with `payloadOf(event, type)`, which checks it again at run time, because stored events may come from an older version (fields added later are optional or have a default). Handlers declare their event types against the catalogue, so a misspelt name doesn't compile, and a test checks that every handled event exists.
 
 | Handler                    | Reacts to                                                                          | Does                                                                                                                                                                          |
 | -------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -606,7 +616,7 @@ One `errorHandler` middleware converts `AppError` into the error format above. A
 | Unit of Work          | `MongoUnitOfWork`                                                                                                      | Atomic changes across claim, item and outbox                                                                                                        |
 | Observer              | Outbox events → handlers                                                                                               | Decouple side effects from use cases                                                                                                                |
 | Transactional Outbox  | `outbox_events` + `OutboxProcessor`                                                                                    | Reliable notifications without a message broker                                                                                                     |
-| Composition Root / DI | `container.ts`                                                                                                         | One place to see and change the object graph                                                                                                        |
+| Composition Root / DI | `container.ts` builds the kernel and lists the modules; each `*.module.ts` wires its own classes                       | One place to see the modules and how they depend on each other; each module's wiring stays next to its code                                         |
 | CQRS (read model)     | `StatsReader` / `MongoStatsReader`: dashboard counts come straight from database aggregations, not from domain objects | Reads shaped for the screen; writes keep the rich domain model                                                                                      |
 | Policy                | `RolePolicy` (who may manage whom, which roles they may give), used by the `User` aggregate                            | One place for the authorisation rule; tested without HTTP                                                                                           |
 | DTO / Mapper          | `*.mapper.ts`                                                                                                          | Never leak internal or private fields                                                                                                               |
@@ -641,7 +651,7 @@ One `errorHandler` middleware converts `AppError` into the error format above. A
 - A fixed, controllable clock: expiry, deadlines, back-off and rate-limit windows are tested by moving time, not by waiting.
 - Every test server binds explicitly to `127.0.0.1`: with many test files running in parallel, supertest's default (all addresses) occasionally let requests reach another file's server.
 
-**Current numbers:** 403 API tests and 23 end-to-end tests (29 runs: the six marked `@mobile` also run on a phone). Coverage is 95% statements, 87% branches, 96% functions, 96% lines. The build fails below 93 / 84 / 95 / 95.
+**Current numbers:** 408 API tests and 23 end-to-end tests (29 runs: the six marked `@mobile` also run on a phone). Coverage is 95% statements, 87% branches, 96% functions, 96% lines. The build fails below 93 / 84 / 95 / 95.
 
 ### Continuous integration (`.github/workflows/ci.yml`)
 

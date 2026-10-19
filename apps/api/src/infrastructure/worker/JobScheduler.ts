@@ -1,12 +1,7 @@
 import type { KeyValueStore } from '../../core/cache/KeyValueStore';
 import type { Logger } from '../../core/logger/logger';
+import type { ScheduledJob } from '../../core/jobs/ScheduledJob';
 import { noErrorReporting, type ErrorReporter } from '../../core/observability/ErrorReporter';
-
-export interface ScheduledJob {
-  name: string;
-  intervalSeconds: number;
-  run(): Promise<unknown>;
-}
 
 /**
  * Runs jobs on a fixed interval. With several API instances, a lease in the shared key-value

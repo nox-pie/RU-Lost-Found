@@ -6,7 +6,6 @@ import type {
   ListClaimsQuery,
   ListMyClaimsQuery,
   Page,
-  PageQuery,
   RejectClaimInput,
   SubmitClaimInput,
 } from '@ru-lost-found/shared';
@@ -48,13 +47,6 @@ export class ClaimController {
   listReceived: RequestHandler = async (req, res) => {
     const actor = actorOf(req);
     res.json(this.toPage(await this.claims.listReceived(actor, scopeOf(req), queryOf(req)), actor));
-  };
-
-  listAwaitingHandover: RequestHandler = async (req, res) => {
-    const query = req.query as unknown as PageQuery;
-    res.json(
-      this.toPage(await this.claims.listAwaitingHandover(scopeOf(req), query), actorOf(req)),
-    );
   };
 
   get: RequestHandler = async (req, res) => {

@@ -2,6 +2,7 @@ import type { ModerationDecision, ReportReason, ReportStatus } from '@ru-lost-fo
 import { AggregateRoot } from '../../../core/domain/AggregateRoot';
 import { isModerator, type Actor } from '../../../core/domain/Actor';
 import { ForbiddenError, InvalidStateTransitionError } from '../../../core/errors/AppError';
+import { domainEvent } from '../../events';
 
 export interface ModerationReportProps {
   id: string;
@@ -56,17 +57,14 @@ export class ModerationReport extends AggregateRoot {
       updatedAt: input.now,
       version: 0,
     });
-    report.record({
-      type: 'ItemFlagged',
-      aggregateId: report.id,
-      occurredAt: input.now,
-      payload: {
+    report.record(
+      domainEvent('ItemFlagged', report.id, input.now, {
         universityId: report.universityId,
         itemId: report.itemId,
         actorId: report.flaggedBy,
         reason: report.reason,
-      },
-    });
+      }),
+    );
     return report;
   }
 
@@ -120,16 +118,13 @@ export class ModerationReport extends AggregateRoot {
     this.props.resolvedAt = now;
     this.props.resolutionNote = note?.trim() || null;
     this.props.updatedAt = now;
-    this.record({
-      type: 'ReportResolved',
-      aggregateId: this.id,
-      occurredAt: now,
-      payload: {
+    this.record(
+      domainEvent('ReportResolved', this.id, now, {
         universityId: this.universityId,
         itemId: this.itemId,
         actorId: by.userId,
         decision,
-      },
-    });
+      }),
+    );
   }
 }

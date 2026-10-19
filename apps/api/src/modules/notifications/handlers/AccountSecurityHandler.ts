@@ -1,12 +1,8 @@
-import { z } from 'zod';
 import type { EmailSender } from '../../../core/email/EmailSender';
 import type { EventHandler, StoredEvent } from '../../../core/events/EventHandler';
+import { payloadOf, type DomainEventType } from '../../events';
 import type { UserRepository } from '../../users/domain/UserRepository';
 import type { NotificationEmails } from '../notification.emails';
-
-const suspendedPayload = z.object({ reason: z.string() });
-/** Older events have no `via`; they were all resets. */
-const passwordPayload = z.object({ via: z.enum(['RESET', 'SETTINGS']).default('RESET') });
 
 /**
  * Account notices by email: a password change (in case it wasn't them), and an admin
@@ -15,7 +11,11 @@ const passwordPayload = z.object({ via: z.enum(['RESET', 'SETTINGS']).default('R
  */
 export class AccountSecurityHandler implements EventHandler {
   readonly name = 'account-security';
-  readonly handles = ['PasswordChanged', 'UserSuspended', 'UserReactivated'] as const;
+  readonly handles = [
+    'PasswordChanged',
+    'UserSuspended',
+    'UserReactivated',
+  ] as const satisfies readonly DomainEventType[];
 
   constructor(
     private readonly users: UserRepository,
@@ -29,7 +29,7 @@ export class AccountSecurityHandler implements EventHandler {
     const to = { to: user.email, firstName: user.profile.firstName };
 
     if (event.type === 'UserSuspended') {
-      const { reason } = suspendedPayload.parse(event.payload);
+      const { reason } = payloadOf(event, 'UserSuspended');
       await this.emailSender.send(
         this.emails.compose({
           ...to,
@@ -57,7 +57,7 @@ export class AccountSecurityHandler implements EventHandler {
       return;
     }
 
-    const { via } = passwordPayload.parse(event.payload);
+    const { via } = payloadOf(event, 'PasswordChanged');
     await this.emailSender.send(
       this.emails.compose({
         ...to,
