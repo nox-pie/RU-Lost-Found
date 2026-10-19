@@ -1,4 +1,3 @@
-import type { RequestHandler } from 'express';
 import type { Env } from './config/env';
 import type { KeyValueStore } from './core/cache/KeyValueStore';
 import { type Clock, SystemClock } from './core/domain/Clock';
@@ -13,7 +12,6 @@ import { RateLimiter } from './core/http/rateLimit';
 import type { Logger } from './core/logger/logger';
 import type { ErrorReporter } from './core/observability/ErrorReporter';
 import type { PasswordHasher } from './core/security/PasswordHasher';
-import { generateNumericCode } from './core/security/randomCode';
 import type { StorageProvider } from './core/storage/StorageProvider';
 import { FallbackKeyValueStore } from './infrastructure/cache/FallbackKeyValueStore';
 import { InMemoryKeyValueStore } from './infrastructure/cache/InMemoryKeyValueStore';
@@ -37,49 +35,33 @@ import { SanitizingStorageProvider } from './infrastructure/storage/SanitizingSt
 import { SharpImageProcessor } from './infrastructure/storage/SharpImageProcessor';
 import { BackgroundWorker } from './infrastructure/worker/BackgroundWorker';
 import { JobScheduler } from './infrastructure/worker/JobScheduler';
-import { AdminDashboardService } from './modules/admin/admin-dashboard.service';
-import { AdminController } from './modules/admin/admin.controller';
-import { MongoStatsReader } from './modules/admin/infrastructure/MongoStatsReader';
-import { UserAdminService } from './modules/admin/user-admin.service';
-import { AuditEventHandler } from './modules/audit/AuditEventHandler';
+import type { AppModule } from './core/modules/AppModule';
+import { createAccountModule } from './modules/account/account.module';
+import { createAdminModule } from './modules/admin/admin.module';
+import { createAuditModule } from './modules/audit/audit.module';
 import { MongoAuditTrail } from './modules/audit/MongoAuditTrail';
-import { AuthController } from './modules/auth/auth.controller';
-import { AuthEmails } from './modules/auth/auth.emails';
-import { AuthService } from './modules/auth/auth.service';
+import { createAuthModule } from './modules/auth/auth.module';
 import { MongoSessionRepository } from './modules/auth/infrastructure/MongoSessionRepository';
-import { LoginThrottle } from './modules/auth/LoginThrottle';
-import { OtpService } from './modules/auth/OtpService';
-import { SessionManager } from './modules/auth/SessionManager';
-import { ClaimController } from './modules/claims/claim.controller';
-import { ClaimService } from './modules/claims/claim.service';
-import { CloseClaimsOnItemRemoved } from './modules/claims/handlers/CloseClaimsOnItemRemoved';
+import type { ClaimService } from './modules/claims/claim.service';
+import { createClaimsModule } from './modules/claims/claims.module';
 import { MongoClaimRepository } from './modules/claims/infrastructure/MongoClaimRepository';
-import { DemoClock } from './modules/demo/DemoClock';
-import { DEMO_RESET_INTERVAL_SECONDS, DemoSeeder } from './modules/demo/DemoSeeder';
-import { MongoDemoDataStore } from './modules/demo/infrastructure/MongoDemoDataStore';
-import { HealthController } from './modules/health/health.controller';
-import { HealthService } from './modules/health/health.service';
+import { createDemoModule } from './modules/demo/demo.module';
+import type { DemoSeeder } from './modules/demo/DemoSeeder';
+import { createDeskModule } from './modules/desk/desk.module';
+import { createHealthModule } from './modules/health/health.module';
 import { MongoItemRepository } from './modules/items/infrastructure/MongoItemRepository';
-import { ItemController } from './modules/items/item.controller';
-import { ItemService } from './modules/items/item.service';
+import type { ItemService } from './modules/items/item.service';
+import { createItemsModule } from './modules/items/items.module';
+import type { Kernel } from './modules/kernel';
 import { MongoModerationReportRepository } from './modules/moderation/infrastructure/MongoModerationReportRepository';
-import { ModerationController } from './modules/moderation/moderation.controller';
-import { ModerationService } from './modules/moderation/moderation.service';
-import { AccountSecurityHandler } from './modules/notifications/handlers/AccountSecurityHandler';
-import { ClaimNotificationHandler } from './modules/notifications/handlers/ClaimNotificationHandler';
-import { ItemModerationHandler } from './modules/notifications/handlers/ItemModerationHandler';
+import { createModerationModule } from './modules/moderation/moderation.module';
 import { MongoNotificationRepository } from './modules/notifications/infrastructure/MongoNotificationRepository';
-import { NotificationController } from './modules/notifications/notification.controller';
-import { NotificationEmails } from './modules/notifications/notification.emails';
-import { NotificationService } from './modules/notifications/notification.service';
+import { createNotificationsModule } from './modules/notifications/notifications.module';
 import { MongoUniversityRepository } from './modules/universities/infrastructure/MongoUniversityRepository';
-import { UniversityController } from './modules/universities/university.controller';
-import { AdminAccounts } from './modules/users/AdminAccounts';
+import { createUniversitiesModule } from './modules/universities/universities.module';
+import type { AdminAccounts } from './modules/users/AdminAccounts';
 import { MongoUserRepository } from './modules/users/infrastructure/MongoUserRepository';
-import { UserController } from './modules/users/user.controller';
-import { UserService } from './modules/users/user.service';
-import { AccountController } from './modules/account/account.controller';
-import { AccountService } from './modules/account/account.service';
+import { createUsersModule } from './modules/users/users.module';
 
 /**
  * Everything the HTTP layer needs, fully wired.
@@ -88,29 +70,11 @@ import { AccountService } from './modules/account/account.service';
 export interface Container {
   env: Env;
   logger: Logger;
-  middleware: {
-    authenticate: RequestHandler;
-    rateLimiter: RateLimiter;
-    /** Shared by every upload route: at most a few uploads are processed at once. */
-    uploadSlot: RequestHandler;
-    /** Admin routes: checks the role stored now, not the one in the token. */
-    requireAdmin: RequestHandler;
-    /** Security desk console: desk staff and admins, by the role stored now. */
-    requireStaff: RequestHandler;
-  };
-  controllers: {
-    health: HealthController;
-    auth: AuthController;
-    users: UserController;
-    account: AccountController;
-    items: ItemController;
-    claims: ClaimController;
-    notifications: NotificationController;
-    universities: UniversityController;
-    moderation: ModerationController;
-    admin: AdminController;
-  };
-  /** Application services used outside HTTP requests (scheduled jobs, event handlers). */
+  /** The business modules, in the order their routes are mounted. */
+  modules: readonly AppModule[];
+  /** For the general per-IP cap on writes, which app.ts applies in front of every module. */
+  rateLimiter: RateLimiter;
+  /** Application services used outside HTTP requests (scripts, start-up, tests). */
   services: {
     adminAccounts: AdminAccounts;
     claims: ClaimService;
@@ -248,176 +212,80 @@ export async function buildContainer(
     clock,
   );
   const rateLimiter = new RateLimiter(keyValueStore);
+  const currentAccount = (userId: string) => repositories.users.findById(userId);
 
-  // Auth
-  const emailLayout = new EmailLayout({
-    name: env.BRAND_NAME,
-    primaryColor: env.BRAND_PRIMARY_COLOR,
-    backgroundColor: env.BRAND_BACKGROUND_COLOR,
-  });
-  const notificationEmails = new NotificationEmails(emailLayout, env.APP_URL);
-
-  const loginThrottle = new LoginThrottle(keyValueStore);
-  const adminAccounts = new AdminAccounts(env.ADMIN_EMAILS, repositories.users, clock, logger);
-  const sessions = new SessionManager(
-    repositories.sessions,
+  const kernel: Kernel = {
+    env,
+    logger,
+    clock,
+    ids,
+    connection,
     unitOfWork,
-    ids,
-    clock,
-    logger,
+    repositories,
     audit,
-    repositories.users,
-  );
-  const authService = new AuthService({
-    users: repositories.users,
-    universities: repositories.universities,
-    otp: new OtpService(keyValueStore, deriveKey(env.APP_SECRET, 'one-time-code')),
-    sessions,
-    tokens,
-    passwords: passwordHasher,
-    email: emailSender,
-    emails: new AuthEmails(emailLayout),
-    adminAccounts,
-    ids,
-    clock,
-    audit,
-    loginThrottle,
-    logger,
-    demoSignIn: env.DEMO_MODE,
-  });
-
-  // Users
-  const userService = new UserService(
-    repositories.users,
-    repositories.universities,
+    keyValueStore,
     storage,
-    clock,
-    logger,
-  );
-
-  // Items
-  const itemService = new ItemService(
-    repositories.items,
-    repositories.users,
-    storage,
-    ids,
-    clock,
-    logger,
-  );
-
-  // Claims
-  const claimService = new ClaimService({
-    claims: repositories.claims,
-    items: repositories.items,
-    users: repositories.users,
-    unitOfWork,
-    ids,
-    clock,
-    generateHandoverCode: () => generateNumericCode(6),
-    logger,
-    audit,
-  });
-
-  // The person's own account as a whole (download my data, delete my account)
-  const accountService = new AccountService({
-    users: repositories.users,
-    items: repositories.items,
-    claims: repositories.claims,
-    notifications: repositories.notifications,
-    sessions: repositories.sessions,
-    itemService,
-    claimService,
-    storage,
-    passwords: passwordHasher,
-    loginThrottle,
     emailSender,
-    emails: notificationEmails,
-    clock,
-    logger,
-  });
-
-  // Sample data: claims are played through a ClaimService on its own clock, so the demo
-  // history is dated over past weeks.
-  const demoClock = new DemoClock();
-  const demo = new DemoSeeder({
-    universities: repositories.universities,
-    users: repositories.users,
-    items: repositories.items,
-    claims: new ClaimService({
-      claims: repositories.claims,
-      items: repositories.items,
-      users: repositories.users,
-      unitOfWork,
-      ids,
-      clock: demoClock,
-      generateHandoverCode: () => generateNumericCode(6),
-      logger,
-      audit,
+    emailLayout: new EmailLayout({
+      name: env.BRAND_NAME,
+      primaryColor: env.BRAND_PRIMARY_COLOR,
+      backgroundColor: env.BRAND_BACKGROUND_COLOR,
     }),
-    clock: demoClock,
-    store: new MongoDemoDataStore(connection),
-    storage,
     passwords: passwordHasher,
-    ids,
-    logger,
-    universitySlug: 'rishihood',
-  });
+    tokens,
+    http: {
+      authenticate: authenticate(tokens),
+      rateLimiter,
+      uploadSlot: limitConcurrency(4),
+      requireAdmin: authorizeCurrent(currentAccount, 'UNIVERSITY_ADMIN', 'PLATFORM_ADMIN'),
+      requireStaff: authorizeCurrent(
+        currentAccount,
+        'SECURITY_DESK',
+        'UNIVERSITY_ADMIN',
+        'PLATFORM_ADMIN',
+      ),
+    },
+  };
 
-  // Moderation and administration
-  const moderationService = new ModerationService({
-    reports: repositories.reports,
-    items: repositories.items,
-    users: repositories.users,
-    unitOfWork,
-    ids,
-    clock,
-  });
-  const adminController = new AdminController(
-    new UserAdminService(repositories.users, sessions, clock),
-    new AdminDashboardService(new MongoStatsReader(connection), audit, repositories.users, clock),
-    itemService,
-  );
+  // Business modules. A module receives the kernel plus the services of other modules it
+  // names explicitly, so the dependencies between modules are visible here.
+  const users = createUsersModule(kernel);
+  const notifications = createNotificationsModule(kernel);
+  const auth = createAuthModule(kernel, { adminAccounts: users.adminAccounts });
+  const items = createItemsModule(kernel);
+  const claims = createClaimsModule(kernel);
+  const moderation = createModerationModule(kernel);
+  const demo = createDemoModule(kernel);
+  const modules: AppModule[] = [
+    createHealthModule(providers.healthIndicators),
+    auth.module,
+    users.module,
+    createAccountModule(kernel, {
+      itemService: items.service,
+      claimService: claims.service,
+      loginThrottle: auth.loginThrottle,
+      emails: notifications.emails,
+    }),
+    items.module,
+    notifications.module,
+    createUniversitiesModule(kernel),
+    claims.module,
+    moderation.module,
+    createAdminModule(kernel, {
+      sessions: auth.sessions,
+      itemService: items.service,
+      moderation: moderation.controller,
+      auditLog: audit,
+    }),
+    createDeskModule(kernel, { claimService: claims.service, itemService: items.service }),
+    createAuditModule(audit),
+    demo.module,
+  ];
 
-  // Notifications
-  const notificationService = new NotificationService(
-    repositories.notifications,
-    repositories.users,
-    emailSender,
-    ids,
-    clock,
-  );
-
-  // Background work: event handlers (Observer) and scheduled jobs
-  const handlers = new EventHandlerRegistry([
-    new ClaimNotificationHandler(
-      notificationService,
-      repositories.claims,
-      repositories.items,
-      repositories.users,
-      notificationEmails,
-    ),
-    new AccountSecurityHandler(repositories.users, emailSender, notificationEmails),
-    new ItemModerationHandler(notificationService, repositories.items, notificationEmails),
-    new CloseClaimsOnItemRemoved(claimService),
-    new AuditEventHandler(audit),
-  ]);
+  // Background work: every module's event handlers (Observer) and scheduled jobs
   const scheduler = new JobScheduler(
     [
-      { name: 'expire-claims', intervalSeconds: 5 * 60, run: () => claimService.expireOverdue() },
-      {
-        name: 'purge-removed-item-photos',
-        intervalSeconds: 60 * 60,
-        run: () => itemService.purgeRemovedPhotos(30),
-      },
-      ...(env.DEMO_MODE
-        ? [
-            {
-              name: 'reset-demo-data',
-              intervalSeconds: DEMO_RESET_INTERVAL_SECONDS,
-              run: () => demo.reset(clock.now()),
-            },
-          ]
-        : []),
+      ...modules.flatMap((module) => module.jobs ?? []),
       {
         name: 'prune-outbox',
         intervalSeconds: 24 * 60 * 60,
@@ -429,6 +297,7 @@ export async function buildContainer(
     logger,
     errorReporter,
   );
+  const handlers = new EventHandlerRegistry(modules.flatMap((module) => module.handlers ?? []));
   const worker = new BackgroundWorker(
     new OutboxProcessor(outbox, handlers, clock, logger, errorReporter),
     scheduler,
@@ -440,39 +309,13 @@ export async function buildContainer(
   return {
     env,
     logger,
-    middleware: {
-      authenticate: authenticate(tokens),
-      rateLimiter,
-      uploadSlot: limitConcurrency(4),
-      requireAdmin: authorizeCurrent(
-        (userId) => repositories.users.findById(userId),
-        'UNIVERSITY_ADMIN',
-        'PLATFORM_ADMIN',
-      ),
-      requireStaff: authorizeCurrent(
-        (userId) => repositories.users.findById(userId),
-        'SECURITY_DESK',
-        'UNIVERSITY_ADMIN',
-        'PLATFORM_ADMIN',
-      ),
-    },
-    controllers: {
-      health: new HealthController(new HealthService(providers.healthIndicators)),
-      auth: new AuthController(authService, { secureCookies: env.NODE_ENV === 'production' }),
-      users: new UserController(userService),
-      account: new AccountController(accountService),
-      items: new ItemController(itemService),
-      claims: new ClaimController(claimService),
-      notifications: new NotificationController(notificationService),
-      universities: new UniversityController(repositories.universities),
-      moderation: new ModerationController(moderationService),
-      admin: adminController,
-    },
+    modules,
+    rateLimiter,
     services: {
-      adminAccounts,
-      demo,
-      claims: claimService,
-      items: itemService,
+      adminAccounts: users.adminAccounts,
+      demo: demo.seeder,
+      claims: claims.service,
+      items: items.service,
       audit,
     },
     errorReporter,
