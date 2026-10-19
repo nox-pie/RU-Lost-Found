@@ -91,6 +91,10 @@ export const itemsApi = {
   update: (id: string, changes: UpdateItemInput) =>
     api<ItemDto>(`/items/${id}`, { method: 'PATCH', json: changes }),
   remove: (id: string) => api<void>(`/items/${id}`, { method: 'DELETE' }),
+  close: (id: string, reason: 'RETURNED' | 'WITHDRAWN') =>
+    api<ItemDto>(`/items/${id}/close`, { method: 'POST', json: { reason } }),
+  /** Another stretch for an open post, or opens a closed one again. */
+  keepOpen: (id: string) => api<ItemDto>(`/items/${id}/keep-open`, { method: 'POST', json: {} }),
   /** Reports a post to the admins (spam, scam, ...). */
   flag: (id: string, input: FlagItemInput) =>
     api<MessageResponse>(`/items/${id}/reports`, { method: 'POST', json: input }),

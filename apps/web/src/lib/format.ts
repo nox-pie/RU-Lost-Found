@@ -3,6 +3,7 @@ import {
   type AuditAction,
   type ClaimStatus,
   type ItemCategory,
+  type ItemCloseReason,
   type ItemStatus,
   type ReportReason,
   type Role,
@@ -25,7 +26,15 @@ export const ITEM_STATUS: Record<ItemStatus, { label: string; tone: Tone }> = {
   OPEN: { label: 'Open', tone: 'neutral' },
   RESERVED: { label: 'Handover arranged', tone: 'warning' },
   RESOLVED: { label: 'Returned', tone: 'success' },
+  CLOSED: { label: 'Closed', tone: 'muted' },
   REMOVED: { label: 'Removed', tone: 'muted' },
+};
+
+/** Why a post is closed, as its page says it. */
+export const CLOSE_REASON_LABELS: Record<ItemCloseReason, string> = {
+  RETURNED: 'It’s back with its owner',
+  WITHDRAWN: 'No longer needed',
+  EXPIRED: 'Closed after nobody kept it open',
 };
 
 export const CLAIM_STATUS: Record<ClaimStatus, { label: string; tone: Tone }> = {
@@ -62,6 +71,8 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   SESSION_REUSE_DETECTED: 'Stolen session blocked',
   ITEM_REPORTED: 'Posted an item',
   ITEM_REMOVED: 'Removed a post',
+  ITEM_CLOSED: 'Closed a post',
+  ITEM_REOPENED: 'Reopened a post',
   CLAIM_SUBMITTED: 'Made a claim',
   CLAIM_APPROVED: 'Approved a claim',
   CLAIM_REJECTED: 'Declined a claim',
