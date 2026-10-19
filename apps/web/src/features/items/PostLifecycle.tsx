@@ -44,11 +44,12 @@ export function PostLifecycleNotice({ item, now = Date.now() }: { item: ItemDto;
       <section className="flex flex-col gap-3 rounded-2xl bg-gray-100 p-4 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
         <p>
           <span className="font-semibold">This post is closed:</span>{' '}
-          {CLOSE_REASON_LABELS[item.closeReason].toLowerCase()}. Others no longer see it.
+          {CLOSE_REASON_LABELS[item.closeReason].toLowerCase()}. It no longer appears in the feed.
         </p>
         <Button
           size="sm"
           variant="outline"
+          className="shrink-0 whitespace-nowrap"
           loading={keepOpen.isPending}
           onClick={() => keepOpen.mutate()}
         >
@@ -69,7 +70,12 @@ export function PostLifecycleNotice({ item, now = Date.now() }: { item: ItemDto;
           <span className="font-semibold">{formatDateTime(item.expiresAt)}</span>. Still looking?
         </span>
       </p>
-      <Button size="sm" loading={keepOpen.isPending} onClick={() => keepOpen.mutate()}>
+      <Button
+        size="sm"
+        className="shrink-0 whitespace-nowrap"
+        loading={keepOpen.isPending}
+        onClick={() => keepOpen.mutate()}
+      >
         Keep it open
       </Button>
     </section>
@@ -128,7 +134,7 @@ export function ClosePostDialog({
               value={option.value}
               checked={reason === option.value}
               onChange={() => setReason(option.value)}
-              className="mt-1 h-4 w-4 text-primary focus:ring-primary"
+              className="mt-1 h-4 w-4 accent-primary"
             />
             <span>
               <span className="block text-sm font-medium text-gray-900">{option.label}</span>
