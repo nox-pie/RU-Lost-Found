@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <LegalLayout
       title="Privacy policy"
-      updated="18 October 2026"
+      updated="21 October 2026"
       intro={
         <p>
           {productName} helps the {organisation.name} community return lost items to their owners.
@@ -52,11 +52,14 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>The other person on an approved claim</strong> sees your email address, and your
-            phone number if you chose to share it, so you can arrange the handover.
+            phone number if you chose to share it, so you can arrange the handover. When the item is
+            collected at the security desk, nothing is shared: the desk hands it over.
           </li>
           <li>
             <strong>Security desk staff</strong> see the claims waiting for a handover, with the
-            names of the two people, so they can hand items back in person.
+            names of the two people, so they can hand items back in person. For items held at the
+            desk, they also see the claims on them, with the answers to the finder’s questions, and
+            decide on them.
           </li>
           <li>
             <strong>University administrators</strong> see account details, posts, reports and the
