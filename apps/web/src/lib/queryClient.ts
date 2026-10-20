@@ -40,6 +40,8 @@ export const queryKeys = {
     detail: (id: string) => ['claims', 'detail', id] as const,
     /** Security desk console: approved claims waiting for their handover. */
     desk: ['claims', 'desk'] as const,
+    /** Security desk console: claims waiting for a decision on items held at the desk. */
+    deskDecisions: ['claims', 'desk', 'decisions'] as const,
   },
   notifications: ['notifications'] as const,
   admin: {
