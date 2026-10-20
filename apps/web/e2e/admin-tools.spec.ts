@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { appoint, choose, describePage, reportFoundItem, signUp, uniqueEmail } from './support';
 
@@ -76,4 +77,30 @@ test('an admin removes any post from the Posts tab and filters the activity log'
     await expect(log.getByText('Posted an item')).toBeVisible();
     await expect(log.getByText('Ana Admin')).toHaveCount(0);
   });
+});
+
+test('an admin sees where things go missing and downloads the posts of a period', async ({
+  page,
+}) => {
+  const email = uniqueEmail('insights');
+  await signUp(page, { email, first: 'Ivy', last: 'Admin' });
+  await reportFoundItem(page, `Library charger ${Date.now().toString(36)}`); // in the Library
+  appoint(email, 'UNIVERSITY_ADMIN');
+  await page.goto('/admin');
+
+  const where = page.getByRole('region', { name: 'Where' });
+  await expect(page.getByRole('heading', { name: 'What gets lost and found' })).toBeVisible();
+  await expect(where.getByText('Library')).toBeVisible();
+
+  await page.getByLabel('From').fill(localDay(-1));
+  await page.getByLabel('To').fill(localDay());
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download CSV' }).click();
+  const file = await downloading;
+
+  expect(file.suggestedFilename()).toBe(`posts-${localDay(-1)}-to-${localDay()}.csv`);
+  const csv = readFileSync(await file.path(), 'utf8');
+  expect(csv.split('\r\n')[0]).toContain('Posted on,Type,Category,Title,Campus place');
+  expect(csv).toContain('Library charger');
+  expect(csv).not.toContain(email);
 });

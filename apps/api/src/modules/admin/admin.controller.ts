@@ -1,5 +1,6 @@
 import type { Request, RequestHandler } from 'express';
 import type {
+  ExportPostsQuery,
   AdminUserDto,
   AuditEntryDto,
   ChangeRoleInput,
@@ -16,6 +17,11 @@ import type { ItemService } from '../items/item.service';
 import { toAdminUserDto, toAuditEntryDto } from './admin.mapper';
 import type { AdminDashboardService } from './admin-dashboard.service';
 import type { UserAdminService } from './user-admin.service';
+import type { PostExportReader } from './PostExportReader';
+import { postsCsv } from './postsCsv';
+
+/** Rows in one export: years of posts for a university, far below what a spreadsheet takes. */
+const EXPORT_LIMIT = 20_000;
 
 const idOf = (req: Request) => (req.params as { id: string }).id;
 
@@ -24,6 +30,7 @@ export class AdminController {
     private readonly users: UserAdminService,
     private readonly dashboard: AdminDashboardService,
     private readonly items: ItemService,
+    private readonly exports: PostExportReader,
   ) {}
 
   listItems: RequestHandler = async (req, res) => {
@@ -36,6 +43,18 @@ export class AdminController {
       data: page.items.map((view) => toItemDto(view, viewerId)),
       nextCursor: page.nextCursor,
     } satisfies Page<ItemDto>);
+  };
+
+  /** The posts reported in a period, as a CSV file named after it. */
+  exportPosts: RequestHandler = async (req, res) => {
+    const { from, until } = req.query as unknown as ExportPostsQuery;
+    const posts = await this.exports.postsReported(scopeOf(req), { from, until }, EXPORT_LIMIT);
+    const day = (date: Date | undefined, fallback: string) =>
+      date ? date.toISOString().slice(0, 10) : fallback;
+    res
+      .attachment(`posts-${day(from, 'start')}-to-${day(until, 'now')}.csv`)
+      .type('text/csv; charset=utf-8')
+      .send(postsCsv(posts));
   };
 
   stats: RequestHandler = async (req, res) => {

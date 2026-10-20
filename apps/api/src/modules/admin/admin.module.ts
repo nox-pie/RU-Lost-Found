@@ -7,6 +7,7 @@ import type { ModerationController } from '../moderation/moderation.controller';
 import { AdminDashboardService } from './admin-dashboard.service';
 import { AdminController } from './admin.controller';
 import { createAdminRouter } from './admin.routes';
+import { MongoPostExport } from './infrastructure/MongoPostExport';
 import { MongoStatsReader } from './infrastructure/MongoStatsReader';
 import { UserAdminService } from './user-admin.service';
 
@@ -30,6 +31,7 @@ export function createAdminModule(
       clock,
     ),
     deps.itemService,
+    new MongoPostExport(connection),
   );
   return {
     name: 'admin',

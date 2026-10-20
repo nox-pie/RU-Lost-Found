@@ -107,6 +107,12 @@ export function whereOf(item: { place: string | null; location: string }): strin
   return item.place ? `${item.place} · ${item.location}` : item.location;
 }
 
+/** "2026-10-03" (a day in the viewer's time zone) → the moment it starts, as an ISO string. */
+export function startOfLocalDay(day: string, plusDays = 0): string {
+  const [year, month, date] = day.split('-').map(Number);
+  return new Date(year ?? 1970, (month ?? 1) - 1, (date ?? 1) + plusDays).toISOString();
+}
+
 /** "2026-10-01" (a calendar day) → "1 Oct 2026". */
 export function formatDay(isoDay: string): string {
   const [year, month, day] = isoDay.split('-').map(Number);
