@@ -73,6 +73,11 @@ export type HandoverResult = 'COMPLETED' | 'WRONG_CODE' | 'LOCKED';
  * Legal status changes are delegated to ClaimState (State pattern); this class enforces
  * who may perform each action and keeps the data and history consistent.
  */
+/** Where the item of a claim is kept: at the security desk, staff may decide on its claims. */
+export interface ItemPlacement {
+  atDesk?: boolean;
+}
+
 export class Claim extends AggregateRoot {
   private state: ClaimState;
 
@@ -217,8 +222,9 @@ export class Claim extends AggregateRoot {
     actor: Actor,
     handover: { code: string; deadline: Date; sharePhone?: boolean },
     now: Date,
+    item: ItemPlacement = {},
   ): void {
-    this.requireReporter(actor, 'approve');
+    this.requireDecider(actor, item, 'approve');
     const next = this.state.approve();
     this.props.handover = { code: handover.code, deadline: handover.deadline, failedAttempts: 0 };
     this.props.reporterSharesPhone = handover.sharePhone ?? false;
@@ -226,8 +232,8 @@ export class Claim extends AggregateRoot {
     this.recordEvent('ClaimApproved', now, { deadline: handover.deadline.toISOString() });
   }
 
-  reject(actor: Actor, reason: string | null, now: Date): void {
-    this.requireReporter(actor, 'reject');
+  reject(actor: Actor, reason: string | null, now: Date, item: ItemPlacement = {}): void {
+    this.requireDecider(actor, item, 'reject');
     this.rejectWith(actor.userId, reason?.trim() || null, now);
   }
 
@@ -323,10 +329,18 @@ export class Claim extends AggregateRoot {
     this.recordEvent('ClaimRejected', now, { automatic: byUserId === null });
   }
 
-  private requireReporter(actor: Actor, action: string): void {
-    if (actor.userId !== this.props.reporterId) {
-      throw new ForbiddenError(`Only the person who reported the item can ${action} claims.`);
-    }
+  /**
+   * The reporter decides on claims. For an item held at the security desk, the desk works as a
+   * team: any staff member may decide too, but never on a claim of their own.
+   */
+  private requireDecider(actor: Actor, item: ItemPlacement, action: string): void {
+    if (actor.userId === this.props.reporterId) return;
+    if (item.atDesk && isStaff(actor) && actor.userId !== this.props.claimantId) return;
+    throw new ForbiddenError(
+      item.atDesk
+        ? `Only the reporter or the security desk can ${action} claims on this item.`
+        : `Only the person who reported the item can ${action} claims.`,
+    );
   }
 
   private requireHandover(): Handover {

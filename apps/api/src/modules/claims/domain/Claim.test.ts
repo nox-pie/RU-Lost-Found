@@ -157,6 +157,37 @@ describe('Claim.reject', () => {
   });
 });
 
+describe('decisions on an item held at the security desk', () => {
+  const handover = { code: CODE, deadline: DEADLINE };
+
+  it('may be taken by any desk staff member, as the desk works as a team', () => {
+    const claim = aClaimOn(aFoundItem());
+    claim.approve(anActor('SECURITY_DESK'), handover, LATER, { atDesk: true });
+    expect(claim.status).toBe('APPROVED');
+
+    const other = aClaimOn(aFoundItem());
+    other.reject(anActor('UNIVERSITY_ADMIN'), 'Wrong colour', LATER, { atDesk: true });
+    expect(other.status).toBe('REJECTED');
+  });
+
+  it('are the reporter’s alone when the item is not at the desk', () => {
+    const claim = aClaimOn(aFoundItem());
+    expect(() => claim.approve(anActor('SECURITY_DESK'), handover, LATER)).toThrow(ForbiddenError);
+  });
+
+  it('are never for students other than the reporter, nor for staff on their own claim', () => {
+    const item = aFoundItem();
+    expect(() => aClaimOn(item).approve(anActor(), handover, LATER, { atDesk: true })).toThrow(
+      ForbiddenError,
+    );
+
+    const staff = anActor('SECURITY_DESK');
+    expect(() => aClaimOn(item, staff).approve(staff, handover, LATER, { atDesk: true })).toThrow(
+      ForbiddenError,
+    );
+  });
+});
+
 describe('Claim.cancel', () => {
   it('lets the claimant withdraw a request', () => {
     const item = aFoundItem();

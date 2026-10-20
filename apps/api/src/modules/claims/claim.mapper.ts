@@ -1,5 +1,5 @@
 import type { ClaimDto, ClaimRole, ContactDto } from '@ru-lost-found/shared';
-import type { Actor } from '../../core/domain/Actor';
+import { type Actor, isStaff } from '../../core/domain/Actor';
 import type { Item } from '../items/domain/Item';
 import type { User } from '../users/domain/User';
 import { toPersonSummary } from '../users/person.mapper';
@@ -22,8 +22,13 @@ function roleOf(claim: Claim, viewer: Actor): ClaimRole {
  * The other person's email (and phone, if they opted in), shown only to the two people involved
  * and only once the claim is approved. Before that, both see just a name and picture.
  */
-function contactFor({ claim, claimant, reporter }: ClaimView, role: ClaimRole): ContactDto | null {
+function contactFor(
+  { claim, item, claimant, reporter }: ClaimView,
+  role: ClaimRole,
+): ContactDto | null {
   if (claim.status !== 'APPROVED' && claim.status !== 'COMPLETED') return null;
+  // Collected at the security desk: the two never need to reach each other.
+  if (item?.heldAtSecurityDesk) return null;
   if (role === 'STAFF') return null;
 
   const other = role === 'CLAIMANT' ? reporter : claimant;
@@ -72,6 +77,10 @@ export function toClaimDto(view: ClaimView, viewer: Actor): ClaimDto {
         }
       : null,
     rejectionReason: claim.rejectionReason,
+    atDesk: item?.heldAtSecurityDesk ?? false,
+    canDecide:
+      viewer.userId === claim.reporterId ||
+      (Boolean(item?.heldAtSecurityDesk) && isStaff(viewer) && viewer.userId !== claim.claimantId),
     history: claim.history.map((entry) => ({ status: entry.to, at: entry.at.toISOString() })),
     createdAt: claim.createdAt.toISOString(),
     updatedAt: claim.updatedAt.toISOString(),

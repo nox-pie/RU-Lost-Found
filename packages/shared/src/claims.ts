@@ -106,6 +106,10 @@ export interface ClaimDto {
     viewerEntersCode: boolean;
   } | null;
   rejectionReason: string | null;
+  /** The item is held at the security desk: it is collected there, and no contacts are shared. */
+  atDesk: boolean;
+  /** The viewer may approve or decline it: its reporter, or desk staff for an item at the desk. */
+  canDecide: boolean;
   history: { status: ClaimStatus; at: string }[];
   createdAt: string;
   updatedAt: string;

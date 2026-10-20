@@ -8,6 +8,8 @@ export interface ClaimSearchCriteria {
   claimantId?: string;
   reporterId?: string;
   itemId?: string;
+  /** Claims on any of these items. */
+  itemIds?: readonly string[];
   statuses?: readonly ClaimStatus[];
 }
 
