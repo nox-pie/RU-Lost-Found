@@ -1,6 +1,7 @@
 import { Router, type RequestHandler } from 'express';
 import {
   changeRoleSchema,
+  exportPostsQuerySchema,
   itemIdParamsSchema,
   listAdminItemsQuerySchema,
   listAuditQuerySchema,
@@ -30,6 +31,7 @@ export function createAdminRouter(deps: {
   router.use(deps.authenticate, deps.requireAdmin);
 
   router.get('/stats', admin.stats);
+  router.get('/export/posts', validate({ query: exportPostsQuerySchema }), admin.exportPosts);
 
   router.get('/users', validate({ query: listUsersQuerySchema }), admin.listUsers);
   router.patch(

@@ -2,6 +2,7 @@ import {
   CLAIM_STATUSES,
   ITEM_STATUSES,
   ROLES,
+  type ItemCategory,
   type UniversityStatsDto,
 } from '@ru-lost-found/shared';
 import type { Connection } from 'mongoose';
@@ -44,6 +45,33 @@ const byWeek = (field: string) => [
   },
 ];
 
+type BreakdownRow = { _id: string | null; lost: number; found: number; returned: number };
+
+const countWhere = (condition: object) => ({ $sum: { $cond: [condition, 1, 0] } });
+
+/** Lost, found and returned posts per value of `key`, removed posts aside. */
+const breakdownBy = (key: unknown) => [
+  { $match: { status: { $ne: 'REMOVED' } } },
+  {
+    $group: {
+      _id: key,
+      lost: countWhere({ $eq: ['$type', 'LOST'] }),
+      found: countWhere({ $eq: ['$type', 'FOUND'] }),
+      returned: countWhere({ $eq: ['$status', 'RESOLVED'] }),
+    },
+  },
+];
+
+/** Biggest first, then by name; posts without a value (no place) last. */
+function sortBreakdown(rows: BreakdownRow[] = []): BreakdownRow[] {
+  return [...rows].sort(
+    (a, b) =>
+      Number(a._id === null) - Number(b._id === null) ||
+      b.lost + b.found - (a.lost + a.found) ||
+      String(a._id).localeCompare(String(b._id)),
+  );
+}
+
 /** One aggregation per collection, each split into several counts with $facet. */
 export class MongoStatsReader implements StatsReader {
   constructor(private readonly connection: Connection) {}
@@ -78,6 +106,8 @@ export class MongoStatsReader implements StatsReader {
           timeToReturn: { avgMs: number | null }[];
           weeklyReported: Counted[];
           weeklyReturned: Counted[];
+          byCategory: BreakdownRow[];
+          byPlace: BreakdownRow[];
         }>([
           { $match: { universityId } },
           {
@@ -106,6 +136,8 @@ export class MongoStatsReader implements StatsReader {
                 { $match: { resolvedAt: { $gte: firstWeek } } },
                 ...byWeek('resolvedAt'),
               ],
+              byCategory: breakdownBy('$category'),
+              byPlace: breakdownBy({ $ifNull: ['$place', null] }),
             },
           },
         ])
@@ -161,6 +193,20 @@ export class MongoStatsReader implements StatsReader {
           returned: weekCount(items?.weeklyReturned, week),
         };
       }),
+      breakdown: {
+        byCategory: sortBreakdown(items?.byCategory).map(({ _id, lost, found, returned }) => ({
+          category: _id as ItemCategory,
+          lost,
+          found,
+          returned,
+        })),
+        byPlace: sortBreakdown(items?.byPlace).map(({ _id, lost, found, returned }) => ({
+          place: _id,
+          lost,
+          found,
+          returned,
+        })),
+      },
     };
   }
 }

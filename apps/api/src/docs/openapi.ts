@@ -12,6 +12,7 @@ import {
   claimIdParamsSchema,
   closeItemSchema,
   createItemSchema,
+  exportPostsQuerySchema,
   deleteAccountSchema,
   demoSignInSchema,
   deskItemsQuerySchema,
@@ -564,6 +565,17 @@ export const OPERATIONS: Operation[] = [
     summary: 'University statistics',
     access: 'admin',
     ok: { 200: 'UniversityStatsDto' },
+  },
+  {
+    method: 'get',
+    path: '/admin/export/posts',
+    tag: 'Admin',
+    summary: 'Posts of a period as a CSV file',
+    description:
+      'Posts reported from `from` (inclusive) until `until` (exclusive), oldest first: what happened to each (status, why it closed, when it was returned, days to return), never who reported or claimed it. Cells a spreadsheet would run as formulas are kept as text.',
+    access: 'admin',
+    query: exportPostsQuerySchema,
+    ok: { 200: 'CSV file (text/csv)' },
   },
   {
     method: 'get',

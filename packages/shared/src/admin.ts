@@ -7,6 +7,7 @@ import {
   ROLES,
   USER_STATUSES,
   type ClaimStatus,
+  type ItemCategory,
   type ItemStatus,
   type Role,
   type UserStatus,
@@ -39,6 +40,17 @@ const instantSchema = z
   .string()
   .datetime({ offset: true, message: 'Use an ISO 8601 date and time' })
   .transform((value) => new Date(value));
+
+/** Posts reported in a period, as a CSV file (from inclusive, until exclusive; both optional). */
+export const exportPostsQuerySchema = z
+  .object({ from: instantSchema.optional(), until: instantSchema.optional() })
+  .strict()
+  .refine((query) => !query.from || !query.until || query.from < query.until, {
+    path: ['until'],
+    message: 'Must be after "from"',
+  });
+
+export type ExportPostsQuery = z.infer<typeof exportPostsQuerySchema>;
 
 export const listAuditQuerySchema = z
   .object({
@@ -114,6 +126,12 @@ export interface AuditEntryDto {
   occurredAt: string;
 }
 
+export interface BreakdownCounts {
+  lost: number;
+  found: number;
+  returned: number;
+}
+
 export interface UniversityStatsDto {
   generatedAt: string;
   users: {
@@ -137,4 +155,12 @@ export interface UniversityStatsDto {
   moderation: { openReports: number };
   /** Oldest first: the last 8 weeks, each starting on Monday (UTC). */
   weekly: { weekStart: string; reported: number; returned: number }[];
+  /**
+   * Posts that weren't removed, by category and by campus place (`null`: none named); the
+   * biggest first. `returned` counts handovers through the portal.
+   */
+  breakdown: {
+    byCategory: ({ category: ItemCategory } & BreakdownCounts)[];
+    byPlace: ({ place: string | null } & BreakdownCounts)[];
+  };
 }

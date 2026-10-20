@@ -255,6 +255,65 @@ describe('statistics', () => {
   });
 });
 
+describe('insights', () => {
+  it('breaks the posts down by category and by campus place, removed ones aside', async () => {
+    await reportItem(t, asha, { title: 'Black phone', place: 'Library' });
+    await reportItem(t, ravi, { type: 'LOST', title: 'Grey phone', place: 'Library' });
+    await reportItem(t, ravi, {
+      type: 'LOST',
+      category: 'BOTTLE',
+      title: 'Bottle',
+      place: 'Canteen',
+    });
+    await reportItem(t, asha, { category: 'KEYS', title: 'Keys' });
+    const removed = await reportItem(t, asha, { category: 'KEYS', title: 'Spam', place: 'Hostel' });
+    await api().delete(`/api/v1/items/${removed}`).set('Authorization', asha.bearer).expect(204);
+
+    const { breakdown } = (await get(priya, 'stats').expect(200)).body;
+
+    expect(breakdown.byCategory).toEqual([
+      { category: 'ELECTRONICS', lost: 1, found: 1, returned: 0 },
+      { category: 'BOTTLE', lost: 1, found: 0, returned: 0 },
+      { category: 'KEYS', lost: 0, found: 1, returned: 0 },
+    ]);
+    expect(breakdown.byPlace).toEqual([
+      { place: 'Library', lost: 1, found: 1, returned: 0 },
+      { place: 'Canteen', lost: 1, found: 0, returned: 0 },
+      { place: null, lost: 0, found: 1, returned: 0 },
+    ]);
+  });
+
+  it('exports the posts of a period as a CSV file, without anyone’s personal details', async () => {
+    await reportItem(t, asha, {
+      title: 'Black phone',
+      place: 'Library',
+      location: 'Desk 4, near "B"',
+    });
+    await reportItem(t, ravi, { type: 'LOST', title: '=HYPERLINK("http://x.example")' });
+    const from = new Date(t.clock.now().getTime() - 60_000).toISOString();
+    const until = new Date(t.clock.now().getTime() + 60_000).toISOString();
+
+    const res = await get(priya, `export/posts?from=${from}&until=${until}`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/^text\/csv/);
+    expect(res.headers['content-disposition']).toMatch(/^attachment; filename="?posts-.*\.csv"?$/);
+    const lines = res.text.trim().split('\r\n');
+    expect(lines[0]).toBe(
+      'Posted on,Type,Category,Title,Campus place,Exact spot,Happened on,Status,Closed because,Returned on,Days to return,Held at the security desk',
+    );
+    expect(lines).toHaveLength(3);
+    expect(lines[1]).toContain('FOUND,ELECTRONICS,Black phone,Library,"Desk 4, near ""B"""');
+    // A title that looks like a formula is kept as text, so a spreadsheet won't run it.
+    expect(lines[2]).toContain(`"'=HYPERLINK(""http://x.example"")"`);
+    expect(res.text).not.toMatch(/asha|ravi|@rishihood/i);
+  });
+
+  it('is for admins only', async () => {
+    expect((await get(meera, 'export/posts')).status).toBe(403);
+  });
+});
+
 describe('activity log', () => {
   it('shows the university’s audit entries newest first, with who did what', async () => {
     await reportItem(t, asha, { title: 'Black phone' });
