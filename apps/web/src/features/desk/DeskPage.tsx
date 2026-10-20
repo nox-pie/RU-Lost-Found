@@ -1,13 +1,13 @@
 import type { ClaimDto, ItemDto } from '@ru-lost-found/shared';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
-import { ChevronRight, Handshake, Lock, PackageOpen } from 'lucide-react';
+import { ChevronRight, Handshake, Inbox, Lock, PackageOpen } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Field';
 import { Badge, EmptyState, ErrorState, PageLoader } from '../../components/ui/misc';
 import { deskApi } from '../../lib/api/endpoints';
-import { ITEM_STATUS, formatDateTime, formatDay, whereOf } from '../../lib/format';
+import { ITEM_STATUS, formatDateTime, formatDay, timeAgo, whereOf } from '../../lib/format';
 import { useDebouncedValue } from '../../lib/hooks';
 import { queryKeys } from '../../lib/queryClient';
 
@@ -19,16 +19,19 @@ const LIVE = { staleTime: 0, refetchInterval: 30_000 } as const;
 
 const VIEWS = [
   { id: 'handovers', label: 'Handovers waiting' },
+  { id: 'claims', label: 'Claims to decide' },
   { id: 'items', label: 'Items at the desk' },
 ] as const;
+type View = (typeof VIEWS)[number]['id'];
 
 /**
- * The security desk console: approved claims waiting for their handover, and the found items
- * handed in at the desk. Confirming a handover happens on the claim's page.
+ * The security desk console: approved claims waiting for their handover, claims to decide on
+ * items held at the desk (the desk works as a team), and the found items it holds. Deciding
+ * and confirming a handover happen on the claim's page.
  */
 export default function DeskPage() {
   const [params, setParams] = useSearchParams();
-  const view = params.get('view') === 'items' ? 'items' : 'handovers';
+  const view: View = VIEWS.find((v) => v.id === params.get('view'))?.id ?? 'handovers';
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -39,7 +42,10 @@ export default function DeskPage() {
         the item is in its owner’s hands.
       </p>
 
-      <div role="tablist" className="mt-6 inline-flex rounded-full bg-white p-1 shadow-xs">
+      <div
+        role="tablist"
+        className="mt-6 inline-flex max-w-full overflow-x-auto rounded-full bg-white p-1 shadow-xs"
+      >
         {VIEWS.map((v) => (
           <button
             key={v.id}
@@ -47,14 +53,22 @@ export default function DeskPage() {
             type="button"
             aria-selected={view === v.id}
             onClick={() => setParams(v.id === 'handovers' ? {} : { view: v.id })}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium ${view === v.id ? 'bg-primary text-white' : 'text-gray-600'}`}
+            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${view === v.id ? 'bg-primary text-white' : 'text-gray-600'}`}
           >
             {v.label}
           </button>
         ))}
       </div>
 
-      <div className="mt-6">{view === 'items' ? <ItemsAtDesk /> : <HandoversWaiting />}</div>
+      <div className="mt-6">
+        {view === 'items' ? (
+          <ItemsAtDesk />
+        ) : view === 'claims' ? (
+          <ClaimsToDecide />
+        ) : (
+          <HandoversWaiting />
+        )}
+      </div>
     </div>
   );
 }
@@ -83,6 +97,50 @@ function HandoversWaiting() {
       <ul className="divide-y overflow-hidden rounded-2xl bg-white shadow-xs">
         {claims.map((claim) => (
           <HandoverRow key={claim.id} claim={claim} />
+        ))}
+      </ul>
+      <LoadMore query={query} />
+    </>
+  );
+}
+
+function ClaimsToDecide() {
+  const query = useInfiniteQuery({
+    queryKey: queryKeys.claims.deskDecisions,
+    queryFn: ({ pageParam }) => deskApi.claims(pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    ...LIVE,
+  });
+  const claims = query.data?.pages.flatMap((page) => page.data) ?? [];
+
+  if (query.isPending) return <PageLoader />;
+  if (query.isError) return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
+  if (claims.length === 0) {
+    return (
+      <EmptyState icon={<Inbox className="h-10 w-10" />} title="No claims to decide">
+        Claims on items held at the desk show up here; any of the desk staff can decide on them.
+      </EmptyState>
+    );
+  }
+  return (
+    <>
+      <ul className="divide-y overflow-hidden rounded-2xl bg-white shadow-xs">
+        {claims.map((claim) => (
+          <li key={claim.id}>
+            <Link
+              to={`/claims/${claim.id}`}
+              className="flex items-center gap-4 p-4 hover:bg-gray-50"
+            >
+              <Thumbnail url={claim.item.photo} />
+              <div className="min-w-0 grow">
+                <p className="truncate font-medium text-gray-900">{claim.item.title}</p>
+                <p className="truncate text-sm text-gray-500">Claimed by {claim.claimant.name}</p>
+                <p className="text-xs text-gray-500">{timeAgo(claim.createdAt)}</p>
+              </div>
+              <ChevronRight className="h-5 w-5 shrink-0 text-gray-400" aria-hidden />
+            </Link>
+          </li>
         ))}
       </ul>
       <LoadMore query={query} />

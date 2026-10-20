@@ -162,6 +162,10 @@ function ClaimView({ claim }: { claim: ClaimDto }) {
                       </a>
                     )}
                   </div>
+                ) : claim.atDesk ? (
+                  <p className="mt-3 text-xs text-gray-500">
+                    Handed over at the security desk: no contact details are shared.
+                  </p>
                 ) : (
                   claim.status === 'REQUESTED' && (
                     <p className="mt-3 text-xs text-gray-500">
@@ -222,7 +226,7 @@ function DecisionPanel({ claim }: { claim: ClaimDto }) {
     'Claim declined.',
   );
 
-  if (claim.myRole !== 'REPORTER' || claim.status !== 'REQUESTED') return null;
+  if (!claim.canDecide || claim.status !== 'REQUESTED') return null;
 
   return (
     <section className="rounded-2xl border-2 border-primary/20 bg-white p-5 shadow-xs">
@@ -230,9 +234,11 @@ function DecisionPanel({ claim }: { claim: ClaimDto }) {
         {claim.kind === 'OWNERSHIP' ? 'Is this the owner?' : 'Did they find your item?'}
       </h2>
       <p className="mt-1 text-sm text-gray-600">
-        {claim.kind === 'OWNERSHIP'
-          ? 'Compare their answers with what you know about the item. Approving shares your email with them and starts a 7-day handover window.'
-          : 'Approving shares your email with them and gives you a code to show when they hand it over.'}
+        {claim.atDesk
+          ? 'The item is held at the security desk. Approving reserves it for them to collect there with their student ID, within 7 days; no contact details are shared.'
+          : claim.kind === 'OWNERSHIP'
+            ? 'Compare their answers with what you know about the item. Approving shares your email with them and starts a 7-day handover window.'
+            : 'Approving shares your email with them and gives you a code to show when they hand it over.'}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Button onClick={() => setApproving(true)}>
@@ -252,13 +258,15 @@ function DecisionPanel({ claim }: { claim: ClaimDto }) {
         onClose={() => setApproving(false)}
       >
         <p>The item will be reserved for this person and other claims will wait.</p>
-        <div className="mt-4">
-          <Checkbox
-            label="Also share my phone number with them"
-            checked={sharePhone}
-            onChange={(event) => setSharePhone(event.target.checked)}
-          />
-        </div>
+        {!claim.atDesk && (
+          <div className="mt-4">
+            <Checkbox
+              label="Also share my phone number with them"
+              checked={sharePhone}
+              onChange={(event) => setSharePhone(event.target.checked)}
+            />
+          </div>
+        )}
       </ConfirmDialog>
 
       <Modal open={declining} onClose={() => setDeclining(false)} title="Decline this claim?">
@@ -331,6 +339,28 @@ function HandoverPanel({ claim }: { claim: ClaimDto }) {
         >
           <ShieldCheck className="h-4 w-4" /> Confirm handover
         </Button>
+      </section>
+    );
+  }
+
+  // Collected at the security desk: staff confirm it in person, no code changes hands.
+  if (claim.atDesk) {
+    return (
+      <section className="flex gap-3 rounded-2xl border-2 border-secondary/40 bg-white p-5 shadow-xs">
+        <ShieldCheck className="h-6 w-6 shrink-0 text-secondary-dark" aria-hidden />
+        <p className="text-sm text-gray-700">
+          {claim.myRole === 'CLAIMANT' ? (
+            <>
+              Collect it at the <span className="font-semibold">security desk</span> before{' '}
+              {deadline}. Bring your student ID: staff hand it over once they have checked it’s you.
+            </>
+          ) : (
+            <>
+              The <span className="font-semibold">security desk</span> hands it over to its owner
+              before {deadline}.
+            </>
+          )}
+        </p>
       </section>
     );
   }

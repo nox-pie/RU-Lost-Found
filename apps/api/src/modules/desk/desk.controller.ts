@@ -27,6 +27,20 @@ export class DeskController {
     res.json(body);
   };
 
+  /** Claims waiting for a decision on items held at the desk. */
+  listClaims: RequestHandler = async (req, res) => {
+    const actor = actorOf(req);
+    const page = await this.claims.listAwaitingDeskDecision(
+      scopeOf(req),
+      req.query as unknown as PageQuery,
+    );
+    const body: Page<ClaimDto> = {
+      data: page.items.map((view) => toClaimDto(view, actor)),
+      nextCursor: page.nextCursor,
+    };
+    res.json(body);
+  };
+
   /** Found items held at the desk. */
   listItems: RequestHandler = async (req, res) => {
     const viewerId = actorOf(req).userId;

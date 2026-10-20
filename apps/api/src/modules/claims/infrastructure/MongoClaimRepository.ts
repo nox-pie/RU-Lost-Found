@@ -179,6 +179,7 @@ export class MongoClaimRepository
     if (criteria.claimantId) filter.claimantId = toObjectId(criteria.claimantId);
     if (criteria.reporterId) filter.reporterId = toObjectId(criteria.reporterId);
     if (criteria.itemId) filter.itemId = toObjectId(criteria.itemId);
+    if (criteria.itemIds) filter.itemId = { $in: criteria.itemIds.map((id) => toObjectId(id)) };
     if (criteria.statuses) filter.status = { $in: criteria.statuses };
     if (page.cursor) {
       const after = decodeCursor(page.cursor);

@@ -19,5 +19,6 @@ export function createDeskRouter(
   router.use(deps.authenticate, deps.requireStaff);
   router.get('/handovers', validate({ query: pageQuerySchema }), controller.listHandovers);
   router.get('/items', validate({ query: deskItemsQuerySchema }), controller.listItems);
+  router.get('/claims', validate({ query: pageQuerySchema }), controller.listClaims);
   return router;
 }

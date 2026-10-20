@@ -136,6 +136,8 @@ export const claimsApi = {
 export const deskApi = {
   handovers: (cursor?: string) =>
     api<Page<ClaimDto>>('/desk/handovers', { query: { cursor, limit: 20 } }),
+  claims: (cursor?: string) =>
+    api<Page<ClaimDto>>('/desk/claims', { query: { cursor, limit: 20 } }),
   items: (q: string | undefined, cursor?: string) =>
     api<Page<ItemDto>>('/desk/items', { query: { q, cursor, limit: 20 } }),
 };

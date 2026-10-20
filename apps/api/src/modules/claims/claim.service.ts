@@ -30,6 +30,8 @@ import type { ClaimView } from './claim.mapper';
 /** How long the two people have to meet after a claim is approved. */
 const HANDOVER_WINDOW_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** Open items at the desk whose claims the console lists (a desk holds far fewer). */
+const DESK_ITEMS = 200;
 
 export interface ClaimServiceDeps {
   claims: ClaimRepository;
@@ -98,13 +100,14 @@ export class ClaimService {
       const now = this.deps.clock.now();
 
       claim.approve(
-        actor,
+        await this.decider(actor, claim, item),
         {
           code: this.deps.generateHandoverCode(),
           deadline: new Date(now.getTime() + HANDOVER_WINDOW_DAYS * DAY_MS),
           sharePhone: input.sharePhone,
         },
         now,
+        { atDesk: item.heldAtSecurityDesk },
       );
       if (item.status !== 'OPEN') {
         throw new ConflictError(
@@ -129,7 +132,9 @@ export class ClaimService {
     reason: string | undefined,
   ): Promise<ClaimView> {
     const { claim, item } = await this.load(scope, claimId);
-    claim.reject(actor, reason ?? null, this.deps.clock.now());
+    claim.reject(await this.decider(actor, claim, item), reason ?? null, this.deps.clock.now(), {
+      atDesk: item.heldAtSecurityDesk,
+    });
     await this.deps.claims.update(claim);
     return this.view(claim, item);
   }
@@ -303,6 +308,27 @@ export class ClaimService {
     return this.search(scope, { statuses: ['APPROVED'] }, query);
   }
 
+  /**
+   * Security desk console: claims waiting for a decision on found items held at the desk, which
+   * any desk staff member may decide (the desk works as a team). Newest first.
+   */
+  async listAwaitingDeskDecision(
+    scope: TenantScope,
+    query: PageQuery,
+  ): Promise<PageResult<ClaimView>> {
+    const atDesk = await this.deps.items.search(
+      scope,
+      { type: 'FOUND', heldAtSecurityDesk: true, statuses: ['OPEN'] },
+      { limit: DESK_ITEMS },
+    );
+    if (atDesk.items.length === 0) return { items: [], nextCursor: null };
+    return this.search(
+      scope,
+      { itemIds: atDesk.items.map((item) => item.id), statuses: ['REQUESTED'] },
+      query,
+    );
+  }
+
   /** Claims others made on items I reported. */
   listReceived(
     actor: Actor,
@@ -354,6 +380,15 @@ export class ClaimService {
       throw new UnauthorizedError('Your session has ended. Please sign in again.');
     }
     return { userId: user.id, role: user.role };
+  }
+
+  /**
+   * Who decides on a claim: the reporter as they are, anyone else (desk staff, for an item at
+   * the desk) with the role stored now, so a demoted member of staff can't decide on a token.
+   */
+  private async decider(actor: Actor, claim: Claim, item: Item): Promise<Actor> {
+    if (actor.userId === claim.reporterId || !item.heldAtSecurityDesk) return actor;
+    return this.currentActor(actor);
   }
 
   /** Staff by token and by the stored role (the lookup only happens for staff tokens). */

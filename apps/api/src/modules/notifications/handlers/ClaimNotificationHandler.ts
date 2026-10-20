@@ -47,6 +47,10 @@ export class ClaimNotificationHandler implements EventHandler {
       this.users.findByIds([p.reporterId, p.claimantId]),
     ]);
     const nameOf = (id: string) => people.find((u) => u.id === id)?.fullName ?? 'Someone';
+    // Who decided: the reporter, or the security desk deciding for an item it holds.
+    const decider =
+      p.actorId && p.actorId !== p.reporterId ? 'The security desk' : nameOf(p.reporterId);
+    const atDesk = item?.heldAtSecurityDesk ?? false;
     const title = item?.title ?? 'an item';
     const action = { label: 'Open the claim', path: `/claims/${event.aggregateId}` };
     const base = { claimId: event.aggregateId, itemId: p.itemId, sourceEventId: event.id };
@@ -82,10 +86,14 @@ export class ClaimNotificationHandler implements EventHandler {
         const deadline = formatDate(payloadOf(event, 'ClaimApproved').deadline);
         const claimantIsOwner = p.ownerId === p.claimantId;
         const claim = claimantIsOwner ? await this.claims.findById(scope, event.aggregateId) : null;
-        const body = `${nameOf(p.reporterId)} approved your claim on “${title}”. Arrange to meet before ${deadline}.`;
-        const codeLine = claimantIsOwner
-          ? 'When you meet, show this code to the person handing it over:'
-          : 'When you meet, ask the owner for their code and enter it in the app.';
+        const body = atDesk
+          ? `${decider} approved your claim on “${title}”. Collect it at the security desk before ${deadline}. Bring your student ID.`
+          : `${decider} approved your claim on “${title}”. Arrange to meet before ${deadline}.`;
+        const codeLine = atDesk
+          ? 'Staff hand it over once they have checked who you are.'
+          : claimantIsOwner
+            ? 'When you meet, show this code to the person handing it over:'
+            : 'When you meet, ask the owner for their code and enter it in the app.';
         await this.notifications.notify({
           ...base,
           userId: p.claimantId,
@@ -93,7 +101,12 @@ export class ClaimNotificationHandler implements EventHandler {
           title: 'Your claim was approved',
           body,
           email: (r) =>
-            email(r, 'Your claim was approved', [body, codeLine], claim?.handover?.code),
+            email(
+              r,
+              'Your claim was approved',
+              [body, codeLine],
+              atDesk ? undefined : claim?.handover?.code,
+            ),
         });
         return;
       }
@@ -102,7 +115,7 @@ export class ClaimNotificationHandler implements EventHandler {
         const { automatic } = payloadOf(event, 'ClaimRejected');
         const body = automatic
           ? `“${title}” was handed over to someone else, so your claim was closed.`
-          : `${nameOf(p.reporterId)} declined your claim on “${title}”.`;
+          : `${decider} declined your claim on “${title}”.`;
         await this.notifications.notify({
           ...base,
           userId: p.claimantId,

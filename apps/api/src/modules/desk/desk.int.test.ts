@@ -118,6 +118,55 @@ describe('items held at the desk', () => {
   });
 });
 
+describe('the desk as a team', () => {
+  const atDesk = (title: string) => reportItem(t, asha, { title, heldAtSecurityDesk: 'true' });
+
+  it('lists the claims waiting for a decision on items held at the desk', async () => {
+    const waiting = await claimOn(await atDesk('Blue bottle'), ravi);
+    await claimOn(await reportItem(t, asha, { title: 'Grey hoodie' }), ravi); // not at the desk
+    await approvedClaim(await atDesk('Keys'), kabir); // already decided
+
+    const res = await get(meera, 'desk/claims');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.map((c: { id: string }) => c.id)).toEqual([waiting]);
+    expect(res.body.data[0]).toMatchObject({ atDesk: true, canDecide: true });
+  });
+
+  it('lets any desk staff member decide, and shares no contact details', async () => {
+    const claimId = await claimOn(await atDesk('Blue bottle'), ravi);
+
+    const approved = await post(meera, `claims/${claimId}/approve`);
+    await t.container.worker.drain();
+
+    expect(approved.status).toBe(200);
+    expect(approved.body).toMatchObject({ status: 'APPROVED', contact: null });
+    for (const person of [ravi, asha]) {
+      expect((await get(person, `claims/${claimId}`)).body.contact).toBeNull();
+    }
+    const [notice] = (await get(ravi, 'notifications')).body.data;
+    expect(notice.body).toBe(
+      'The security desk approved your claim on “Blue bottle”. Collect it at the security desk before ' +
+        notice.body.split('before ')[1],
+    );
+    expect(notice.body).toContain('Bring your student ID.');
+  });
+
+  it('keeps decisions on other items with their reporter', async () => {
+    const claimId = await claimOn(await reportItem(t, asha, { title: 'Grey hoodie' }), ravi);
+
+    expect((await post(meera, `claims/${claimId}/approve`)).status).toBe(403);
+    expect((await get(meera, `claims/${claimId}`)).body.canDecide).toBe(false);
+  });
+
+  it('checks the role stored now, not the one in the token', async () => {
+    const claimId = await claimOn(await atDesk('Blue bottle'), ravi);
+    await setStoredRole(t, meera, 'STUDENT');
+
+    expect((await post(meera, `claims/${claimId}/reject`)).status).toBe(403);
+  });
+});
+
 describe('access', () => {
   it('is for security desk staff and admins only, by the role stored now', async () => {
     const admin = await withRole(t, kabir, 'UNIVERSITY_ADMIN');

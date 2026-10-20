@@ -63,7 +63,7 @@ test('a person changes their password, downloads their data and deletes their ac
   });
 });
 
-test('a finder edits their post, and the security desk hands the item back', async ({
+test('a finder edits their post, and the security desk decides and hands the item back', async ({
   browser,
 }) => {
   const finder = await (await browser.newContext()).newPage();
@@ -104,20 +104,29 @@ test('a finder edits their post, and the security desk hands the item back', asy
     );
   });
 
-  await test.step('the owner claims it and the finder approves', async () => {
+  let claimUrl = '';
+  await test.step('the owner claims it, and the desk (not the finder) approves', async () => {
     await owner.goto(itemUrl);
     await owner.getByRole('button', { name: 'This is mine' }).click();
     await owner.getByRole('dialog').getByRole('button', { name: 'Send' }).click();
     await expect(owner.getByText('Waiting for reply').first()).toBeVisible();
+    claimUrl = owner.url();
 
-    await finder.reload();
-    await finder.getByRole('link', { name: 'Review' }).click();
-    await finder.getByRole('button', { name: 'Approve' }).click();
-    await finder.getByRole('dialog').getByRole('button', { name: 'Approve' }).click();
-    await expect(finder.getByText('Confirm the handover')).toBeVisible();
+    await desk.getByRole('tab', { name: 'Claims to decide' }).click();
+    await desk.getByRole('link', { name: new RegExp(title) }).click();
+    await desk.getByRole('button', { name: 'Approve' }).click();
+    await desk.getByRole('dialog').getByRole('button', { name: 'Approve' }).click();
+    await expect(desk.getByRole('button', { name: 'Confirm handover' })).toBeVisible();
+  });
+
+  await test.step('the owner is told to collect it at the desk, with no contacts shared', async () => {
+    await owner.goto(claimUrl);
+    await expect(owner.getByText(/Collect it at the\s+security desk/)).toBeVisible();
+    await expect(owner.getByText('no contact details are shared')).toBeVisible();
   });
 
   await test.step('the desk finds the handover waiting and confirms it in person', async () => {
+    await desk.goto('/desk');
     await desk.getByRole('tab', { name: 'Handovers waiting' }).click();
     await desk.getByRole('link', { name: new RegExp(title) }).click();
     await expect(desk.getByRole('heading', { name: 'Security desk' })).toBeVisible();

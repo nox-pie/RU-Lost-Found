@@ -427,6 +427,8 @@ export const OPERATIONS: Operation[] = [
     path: '/claims/:id/approve',
     tag: 'Claims',
     summary: 'Approve (reporter): reserves the item, issues the handover code',
+    description:
+      'By the item’s reporter, or by security desk staff (stored role) for an item held at the desk, where no contact details are shared.',
     access: 'user',
     params: claimIdParamsSchema,
     body: approveClaimSchema,
@@ -437,6 +439,8 @@ export const OPERATIONS: Operation[] = [
     path: '/claims/:id/reject',
     tag: 'Claims',
     summary: 'Decline (reporter)',
+    description:
+      'By the item’s reporter, or by security desk staff (stored role) for an item held at the desk, where no contact details are shared.',
     access: 'user',
     params: claimIdParamsSchema,
     body: rejectClaimSchema,
@@ -506,6 +510,17 @@ export const OPERATIONS: Operation[] = [
     summary: 'Approved claims waiting for their handover',
     description:
       'Every approved claim of the university, newest first, without handover codes or contact details. Desk staff and admins, by the role stored now.',
+    access: 'staff',
+    query: pageQuerySchema,
+    ok: { 200: `${PAGE} T = ClaimDto` },
+  },
+  {
+    method: 'get',
+    path: '/desk/claims',
+    tag: 'Security desk',
+    summary: 'Claims waiting for a decision on items held at the desk',
+    description:
+      'Any desk staff member may approve or decline these (the desk works as a team); newest first.',
     access: 'staff',
     query: pageQuerySchema,
     ok: { 200: `${PAGE} T = ClaimDto` },
