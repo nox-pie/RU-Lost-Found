@@ -574,7 +574,7 @@ export const OPERATIONS: Operation[] = [
     description:
       'Posts reported from `from` (inclusive) until `until` (exclusive), oldest first: what happened to each (status, why it closed, when it was returned, days to return), never who reported or claimed it. Cells a spreadsheet would run as formulas are kept as text.',
     access: 'admin',
-    query: exportPostsQuerySchema,
+    query: exportPostsQuerySchema.innerType(),
     ok: { 200: 'CSV file (text/csv)' },
   },
   {
