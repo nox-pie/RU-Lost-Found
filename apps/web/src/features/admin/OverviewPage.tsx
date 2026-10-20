@@ -1,11 +1,22 @@
 import { CLAIM_STATUSES, ROLES, type UniversityStatsDto } from '@ru-lost-found/shared';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Clock, Flag, Handshake, PackageOpen, Undo2 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { ArrowRight, Clock, Download, Flag, Handshake, PackageOpen, Undo2 } from 'lucide-react';
+import { useId, useState, type ReactNode } from 'react';
+import { toast } from 'sonner';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Field';
 import { Link } from 'react-router';
 import { ErrorState, PageLoader } from '../../components/ui/misc';
 import { adminApi } from '../../lib/api/endpoints';
-import { CLAIM_STATUS, ROLE_LABELS, formatDay, formatPercent } from '../../lib/format';
+import {
+  CATEGORY_LABELS,
+  CLAIM_STATUS,
+  ROLE_LABELS,
+  formatDay,
+  formatPercent,
+  startOfLocalDay,
+  todayIso,
+} from '../../lib/format';
 import { queryKeys } from '../../lib/queryClient';
 
 export default function OverviewPage() {
@@ -57,6 +68,29 @@ function Overview({ stats }: { stats: UniversityStatsDto }) {
       <WeeklyChart weeks={stats.weekly} />
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <Panel title="What gets lost and found">
+          <p className="mt-1 text-sm text-gray-500">Every post that wasn’t removed, by category.</p>
+          <SplitBreakdown
+            rows={stats.breakdown.byCategory.map((row) => ({
+              ...row,
+              label: CATEGORY_LABELS[row.category],
+            }))}
+          />
+        </Panel>
+        <Panel title="Where">
+          <p className="mt-1 text-sm text-gray-500">
+            The same posts, by the campus place they name.
+          </p>
+          <SplitBreakdown
+            rows={stats.breakdown.byPlace.map((row) => ({
+              ...row,
+              label: row.place ?? 'No place named',
+            }))}
+          />
+        </Panel>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="People">
           <p className="mt-1 text-sm text-gray-500">
             {users.total} accounts · {users.joinedLast30Days} joined in the last 30 days
@@ -76,7 +110,92 @@ function Overview({ stats }: { stats: UniversityStatsDto }) {
           />
         </Panel>
       </div>
+
+      <ExportPosts />
     </div>
+  );
+}
+
+/** Lost and found posts per category or place: the bar is the total, returns are noted. */
+function SplitBreakdown({
+  rows,
+}: {
+  rows: { label: string; lost: number; found: number; returned: number }[];
+}) {
+  if (rows.length === 0) return <p className="mt-4 text-sm text-gray-500">No posts yet.</p>;
+  const max = Math.max(1, ...rows.map((row) => row.lost + row.found));
+  return (
+    <dl className="mt-4 space-y-2">
+      {rows.map((row) => (
+        <div key={row.label} className="grid grid-cols-[8.5rem_1fr_auto] items-center gap-3">
+          <dt className="truncate text-sm text-gray-600">{row.label}</dt>
+          <div className="h-2 rounded-full bg-gray-100" aria-hidden>
+            <div
+              className="h-2 rounded-full bg-primary/70"
+              style={{ width: `${((row.lost + row.found) / max) * 100}%` }}
+            />
+          </div>
+          <dd className="text-right text-xs text-gray-600">
+            {row.lost} lost · {row.found} found
+            {row.returned > 0 && ` · ${row.returned} returned`}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** A report for the university: the posts of a period, as a spreadsheet file. */
+function ExportPosts() {
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const download = useMutation({
+    mutationFn: () =>
+      adminApi.exportPosts({
+        from: from ? startOfLocalDay(from) : undefined,
+        // Up to and including the "To" day.
+        until: to ? startOfLocalDay(to, 1) : undefined,
+      }),
+    onSuccess: (file) => {
+      const url = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `posts-${from || 'start'}-to-${to || todayIso()}.csv`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  return (
+    <Panel title="Download posts">
+      <p className="mt-1 text-sm text-gray-500">
+        A spreadsheet (CSV) of the posts reported in a period: what happened to each, never who
+        reported or claimed it. Leave the dates empty for every post.
+      </p>
+      <div className="mt-4 grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
+        <Input
+          label="From"
+          type="date"
+          value={from}
+          max={to || todayIso()}
+          onChange={(event) => setFrom(event.target.value)}
+        />
+        <Input
+          label="To"
+          type="date"
+          value={to}
+          min={from || undefined}
+          max={todayIso()}
+          onChange={(event) => setTo(event.target.value)}
+        />
+        <Button variant="outline" loading={download.isPending} onClick={() => download.mutate()}>
+          <Download className="h-4 w-4" /> Download CSV
+        </Button>
+      </div>
+    </Panel>
   );
 }
 
@@ -110,10 +229,17 @@ function ReportsWaiting({ count }: { count: number }) {
   );
 }
 
+/** A titled card; its heading names it, so screen readers can jump between them. */
 function Panel({ title, children }: { title: string; children: ReactNode }) {
+  const headingId = useId();
   return (
-    <section className="rounded-2xl bg-white p-5 shadow-card ring-1 ring-black/5">
-      <h2 className="font-display text-lg font-semibold">{title}</h2>
+    <section
+      aria-labelledby={headingId}
+      className="rounded-2xl bg-white p-5 shadow-card ring-1 ring-black/5"
+    >
+      <h2 id={headingId} className="font-display text-lg font-semibold">
+        {title}
+      </h2>
       {children}
     </section>
   );

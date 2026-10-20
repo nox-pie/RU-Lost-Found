@@ -137,6 +137,8 @@ export interface RequestOptions {
   json?: unknown;
   form?: FormData;
   query?: Record<string, string | number | boolean | undefined | null>;
+  /** How to read the answer: JSON (default), or a file to save. */
+  as?: 'json' | 'blob';
   signal?: AbortSignal;
 }
 
@@ -190,6 +192,7 @@ export async function api<T>(
   }
   if (!res.ok) throw await toApiError(res);
   if (res.status === 204) return undefined as T;
+  if (options.as === 'blob') return (await res.blob()) as T;
   return (await res.json()) as T;
 }
 

@@ -194,6 +194,9 @@ export const adminApi = {
       method: 'POST',
       json: reason ? { reason } : {},
     }),
+  /** Posts of a period as a CSV file (`from` inclusive, `until` exclusive, ISO moments). */
+  exportPosts: (period: { from?: string; until?: string }) =>
+    api<Blob>('/admin/export/posts', { query: period, as: 'blob' }),
   activity: (filters: ActivityFilters, cursor?: string) =>
     api<Page<AuditEntryDto>>('/admin/audit', { query: { ...filters, cursor, limit: 50 } }),
 };

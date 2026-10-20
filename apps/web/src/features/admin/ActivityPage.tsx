@@ -19,6 +19,7 @@ import {
   ROLE_LABELS,
   formatDateTime,
   todayIso,
+  startOfLocalDay,
 } from '../../lib/format';
 import { queryKeys } from '../../lib/queryClient';
 
@@ -58,12 +59,6 @@ function detailOf(entry: AuditEntryDto): string | null {
     default:
       return null;
   }
-}
-
-/** "2026-10-03" (a day in the viewer's time zone) → the moment it starts, as an ISO string. */
-function startOfLocalDay(day: string, plusDays = 0): string {
-  const [year, month, date] = day.split('-').map(Number);
-  return new Date(year ?? 1970, (month ?? 1) - 1, (date ?? 1) + plusDays).toISOString();
 }
 
 export default function ActivityPage() {
