@@ -127,7 +127,12 @@ function SplitBreakdown({
   return (
     <dl className="mt-4 space-y-2">
       {rows.map((row) => (
-        <div key={row.label} className="grid grid-cols-[8.5rem_1fr_auto] items-center gap-3">
+        // The counts get a column of their own from small screens up, so equal bars line up;
+        // on a phone they go under the bar.
+        <div
+          key={row.label}
+          className="grid grid-cols-[8.5rem_1fr] items-center gap-x-3 sm:grid-cols-[8.5rem_1fr_12rem]"
+        >
           <dt className="truncate text-sm text-gray-600">{row.label}</dt>
           <div className="h-2 rounded-full bg-gray-100" aria-hidden>
             <div
@@ -135,7 +140,7 @@ function SplitBreakdown({
               style={{ width: `${((row.lost + row.found) / max) * 100}%` }}
             />
           </div>
-          <dd className="text-right text-xs text-gray-600">
+          <dd className="col-start-2 text-xs text-gray-600 sm:col-start-auto sm:text-right">
             {row.lost} lost · {row.found} found
             {row.returned > 0 && ` · ${row.returned} returned`}
           </dd>
