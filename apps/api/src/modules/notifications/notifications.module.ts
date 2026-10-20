@@ -40,5 +40,5 @@ export function createNotificationsModule(kernel: Kernel) {
       new ItemLifecycleHandler(service, repositories.items, emails),
     ],
   };
-  return { module, emails };
+  return { module, emails, service };
 }

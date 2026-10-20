@@ -15,6 +15,7 @@ export class UniversityController {
       id: university.id,
       name: university.name,
       schools: [...university.schools],
+      places: [...university.places],
     };
     res.json(body);
   };

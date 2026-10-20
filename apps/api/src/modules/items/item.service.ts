@@ -23,6 +23,7 @@ import type { Logger } from '../../core/logger/logger';
 import type { PageResult } from '../../core/persistence/Pagination';
 import type { TenantScope } from '../../core/persistence/Repository';
 import type { ImageUpload, StorageProvider } from '../../core/storage/StorageProvider';
+import type { UniversityRepository } from '../universities/domain/UniversityRepository';
 import type { User } from '../users/domain/User';
 import type { UserRepository } from '../users/domain/UserRepository';
 import { Item, REMINDER_DAYS } from './domain/Item';
@@ -40,6 +41,7 @@ export class ItemService {
   constructor(
     private readonly items: ItemRepository,
     private readonly users: UserRepository,
+    private readonly universities: UniversityRepository,
     private readonly storage: StorageProvider,
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
@@ -57,6 +59,8 @@ export class ItemService {
     photos: ImageUpload[],
   ): Promise<ItemView> {
     const reporter = await this.assertMayChangePosts(actor);
+    // Checked before uploading, so a refused post leaves no photos behind.
+    const place = await this.validPlace(scope, input.place);
     if (photos.length === 0) {
       throw new ValidationError('Add at least one photo of the item.', [
         { path: 'photos', message: 'At least one photo is required' },
@@ -83,6 +87,7 @@ export class ItemService {
         title: input.title,
         description: input.description,
         location: input.location,
+        place,
         occurredOn: parseDateOnly(input.occurredOn),
         images: uploaded,
         questions: input.questions,
@@ -178,10 +183,15 @@ export class ItemService {
   ): Promise<ItemView> {
     await this.assertMayChangePosts(actor);
     const item = await this.requireVisible(scope, id);
-    const { occurredOn, ...rest } = changes;
+    const { occurredOn, place, ...rest } = changes;
+    if (place) await this.validPlace(scope, place);
     item.edit(
       actor,
-      { ...rest, ...(occurredOn ? { occurredOn: parseDateOnly(occurredOn) } : {}) },
+      {
+        ...rest,
+        ...(place !== undefined ? { place } : {}),
+        ...(occurredOn ? { occurredOn: parseDateOnly(occurredOn) } : {}),
+      },
       this.clock.now(),
     );
     await this.items.update(item);
@@ -279,6 +289,21 @@ export class ItemService {
       }
     }
     return purged;
+  }
+
+  /** A place must be one of the university's (like a school at sign-up); none means elsewhere. */
+  private async validPlace(scope: TenantScope, place: string | undefined): Promise<string | null> {
+    if (!place) return null;
+    const university = await this.universities.findById(scope.universityId);
+    if (!university?.hasPlace(place)) {
+      throw new ValidationError('The request is invalid.', [
+        {
+          path: 'body.place',
+          message: `Choose a place of ${university?.name ?? 'your university'}`,
+        },
+      ]);
+    }
+    return place;
   }
 
   private async requireVisible(scope: TenantScope, id: string): Promise<Item> {

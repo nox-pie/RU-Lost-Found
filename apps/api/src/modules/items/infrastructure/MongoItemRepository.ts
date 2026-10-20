@@ -50,6 +50,7 @@ interface ItemDocument extends VersionedDocument {
   title: string;
   description: string;
   location: string;
+  place?: string | null;
   occurredOn: Date;
   images: ImageRef[];
   verificationQuestions: VerificationQuestion[];
@@ -73,6 +74,7 @@ const itemSchema = defineSchema(
     title: { type: String, required: true },
     description: { type: String, required: true },
     location: { type: String, required: true },
+    place: { type: String, default: null },
     occurredOn: { type: Date, required: true },
     images: { type: [imageRefSchema], required: true },
     verificationQuestions: {
@@ -124,6 +126,30 @@ export class MongoItemRepository
     const objectIds = [...new Set(ids)].map(parseObjectId).filter((id) => id !== null);
     if (objectIds.length === 0) return Promise.resolve([]);
     return this.findMany({ universityId: toObjectId(scope.universityId), _id: { $in: objectIds } });
+  }
+
+  findMatchCandidates(
+    scope: TenantScope,
+    criteria: {
+      type: ItemType;
+      category: ItemCategory;
+      occurredFrom: Date;
+      occurredTo: Date;
+      excludeReporterId: string;
+    },
+    limit: number,
+  ): Promise<Item[]> {
+    return this.findMany(
+      {
+        universityId: toObjectId(scope.universityId),
+        status: 'OPEN',
+        type: criteria.type,
+        category: criteria.category,
+        occurredOn: { $gte: criteria.occurredFrom, $lte: criteria.occurredTo },
+        reporterId: { $ne: toObjectId(criteria.excludeReporterId) },
+      },
+      { sort: { createdAt: -1, _id: -1 }, limit },
+    );
   }
 
   findOpenNeedingReminder(expiringBy: Date, limit: number): Promise<Item[]> {
@@ -225,6 +251,7 @@ export class MongoItemRepository
       title: doc.title,
       description: doc.description,
       location: doc.location,
+      place: doc.place ?? null,
       occurredOn: doc.occurredOn,
       images: doc.images.map((i) => ({ url: i.url, publicId: i.publicId })),
       verificationQuestions: doc.verificationQuestions.map((q) => ({
@@ -253,6 +280,7 @@ export class MongoItemRepository
       title: item.title,
       description: item.description,
       location: item.location,
+      place: item.place,
       occurredOn: item.occurredOn,
       images: [...item.images],
       verificationQuestions: [...item.verificationQuestions],

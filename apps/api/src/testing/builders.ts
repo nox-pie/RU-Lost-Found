@@ -45,6 +45,7 @@ export function aUniversity(overrides: Partial<Parameters<typeof University.crea
     slug: `rishihood-${ids.next().slice(-6)}`,
     emailDomains: ['rishihood.edu.in'],
     schools: ['Newton School of Technology', 'School of Entrepreneurship'],
+    places: ['Library', 'Canteen', 'Hostel'],
     now: T0,
     ...overrides,
   });

@@ -10,6 +10,24 @@
       "School of Creativity",
       "School of Healthcare",
       "School of Public Leadership"
+    ],
+    "places": [
+      "Library",
+      "Academic block",
+      "Classroom",
+      "Computer lab",
+      "Canteen",
+      "Café",
+      "Boys' hostel",
+      "Girls' hostel",
+      "Sports ground",
+      "Gym",
+      "Auditorium",
+      "Admin block",
+      "Main gate",
+      "Parking",
+      "Campus bus",
+      "Security desk"
     ]
   }
 ]

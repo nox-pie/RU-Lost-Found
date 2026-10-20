@@ -2,7 +2,7 @@ import type { ItemDto } from '@ru-lost-found/shared';
 import { Calendar, MapPin, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 import { Badge } from '../../components/ui/misc';
-import { CATEGORY_LABELS, ITEM_STATUS, formatDay } from '../../lib/format';
+import { CATEGORY_LABELS, ITEM_STATUS, formatDay, whereOf } from '../../lib/format';
 
 const CARD =
   'group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card transition duration-300';
@@ -70,7 +70,7 @@ function ItemCardContent({ item }: { item: ItemDto }) {
         <div className="mt-auto space-y-1.5 pt-4 text-xs text-gray-500">
           <p className="flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 shrink-0" />{' '}
-            <span className="truncate">{item.location}</span>
+            <span className="truncate">{whereOf(item)}</span>
           </p>
           <p className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5 shrink-0" /> {formatDay(item.occurredOn)}

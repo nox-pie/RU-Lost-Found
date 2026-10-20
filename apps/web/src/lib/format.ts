@@ -102,6 +102,11 @@ const dateTimeFormat = new Intl.DateTimeFormat('en-IN', {
   minute: '2-digit',
 });
 
+/** Where a post's item was lost or found: "Library · 2nd floor", or just the spot. */
+export function whereOf(item: { place: string | null; location: string }): string {
+  return item.place ? `${item.place} · ${item.location}` : item.location;
+}
+
 /** "2026-10-01" (a calendar day) → "1 Oct 2026". */
 export function formatDay(isoDay: string): string {
   const [year, month, day] = isoDay.split('-').map(Number);

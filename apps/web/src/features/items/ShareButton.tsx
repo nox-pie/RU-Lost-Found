@@ -2,6 +2,7 @@ import type { ItemDto } from '@ru-lost-found/shared';
 import { Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { brand } from '../../brand/brand.config';
+import { whereOf } from '../../lib/format';
 
 /**
  * Shares a post: the phone's share sheet (WhatsApp, a class group…) where there is one,
@@ -9,7 +10,7 @@ import { brand } from '../../brand/brand.config';
  */
 export function ShareButton({ item }: { item: ItemDto }) {
   const url = `${window.location.origin}/items/${item.id}`;
-  const text = `${item.type === 'LOST' ? 'Lost' : 'Found'}: ${item.title} (${item.location}). Seen it? ${brand.productName}`;
+  const text = `${item.type === 'LOST' ? 'Lost' : 'Found'}: ${item.title} (${whereOf(item)}). Seen it? ${brand.productName}`;
 
   const share = async () => {
     if (navigator.share) {

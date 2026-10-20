@@ -10,6 +10,7 @@ import type {
   FlagItemInput,
   ItemCountsDto,
   ItemDto,
+  MatchDto,
   MeDto,
   MessageResponse,
   ModerateItemInput,
@@ -87,6 +88,8 @@ export const itemsApi = {
     api<ItemCountsDto>('/items/counts', { query: { ...filters } }),
   mine: (cursor?: string) => api<Page<ItemDto>>('/items/mine', { query: { cursor, limit: 12 } }),
   get: (id: string) => api<ItemDto>(`/items/${id}`),
+  /** Likely matches for my own post (lost ↔ found). */
+  matches: (id: string) => api<{ data: MatchDto[] }>(`/items/${id}/matches`),
   create: (form: FormData) => api<ItemDto>('/items', { method: 'POST', form }),
   update: (id: string, changes: UpdateItemInput) =>
     api<ItemDto>(`/items/${id}`, { method: 'PATCH', json: changes }),

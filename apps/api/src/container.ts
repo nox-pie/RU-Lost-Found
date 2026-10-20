@@ -52,6 +52,7 @@ import { createHealthModule } from './modules/health/health.module';
 import { MongoItemRepository } from './modules/items/infrastructure/MongoItemRepository';
 import type { ItemService } from './modules/items/item.service';
 import { createItemsModule } from './modules/items/items.module';
+import { createMatchingModule } from './modules/matching/matching.module';
 import type { Kernel } from './modules/kernel';
 import { MongoModerationReportRepository } from './modules/moderation/infrastructure/MongoModerationReportRepository';
 import { createModerationModule } from './modules/moderation/moderation.module';
@@ -278,6 +279,10 @@ export async function buildContainer(
       auditLog: audit,
     }),
     createDeskModule(kernel, { claimService: claims.service, itemService: items.service }),
+    createMatchingModule(kernel, {
+      notifications: notifications.service,
+      emails: notifications.emails,
+    }),
     createAuditModule(audit),
     demo.module,
   ];

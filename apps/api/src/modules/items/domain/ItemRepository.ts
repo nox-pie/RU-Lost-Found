@@ -35,6 +35,21 @@ export interface ItemRepository extends Repository<Item> {
   findOpenNeedingReminder(expiringBy: Date, limit: number): Promise<Item[]>;
   /** Open posts, across universities, past `expiredBy` whose reporter was reminded by `remindedBy`. */
   findOpenToClose(expiredBy: Date, remindedBy: Date, limit: number): Promise<Item[]>;
+  /**
+   * Open posts of the given type and category, reported by someone else, that happened
+   * between `occurredFrom` and `occurredTo`: the candidates for a match. Newest first.
+   */
+  findMatchCandidates(
+    scope: TenantScope,
+    criteria: {
+      type: ItemType;
+      category: ItemCategory;
+      occurredFrom: Date;
+      occurredTo: Date;
+      excludeReporterId: string;
+    },
+    limit: number,
+  ): Promise<Item[]>;
   /** Removed items, across all universities, still holding photos and removed before `before`. */
   findRemovedWithPhotos(before: Date, limit: number): Promise<Item[]>;
   /** Newest first. */
