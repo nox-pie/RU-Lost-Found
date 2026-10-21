@@ -436,7 +436,7 @@ The worker runs inside the API process on the free tier (`WORKER_ENABLED=true`).
 
 ## 8. Matching
 
-**Campus places.** Each university lists its places (library, canteen, hostels, ...) in `seed/universities.json`, next to its schools. A post names one of them, checked like a school at sign-up, or none ("somewhere else"); the free-text `location` stays as the exact spot. Posts saved before places existed simply have none.
+**Campus places.** Each university lists its places (library, blocks, residences, cafés, ...) in `seed/universities.json`, next to its schools. A post names one of them, checked like a school at sign-up, or none ("Other" in the form); the free-text `location` is then the exact spot inside the place (a room in a block), or for "Other" the place itself. Posts saved before places existed simply have none.
 
 **Scoring** (`modules/matching/domain/matchScore.ts`, a pure function). A lost post and a found post can only match if they share the **category** and the item was found from 2 days before (dates are picked by hand) to 30 days after it was lost. Then:
 

@@ -123,7 +123,7 @@ Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `a
 - **Photos:** a 12-megapixel photo over the 5 MB limit is shrunk in the browser, accepted and sent at a fraction of its size; on a phone the report form offers the camera.
 - **Interface:** a dialog keeps the keyboard focus while typing; a form doesn't block on a hidden question; an admin list keeps an open dialog while a search updates; a big phone photo becomes a profile picture; removing a post never flashes "not found"; the item page finds your claim on it.
 - **Post lifecycle:** a reporter closes their post with a reason and opens it again.
-- **Matching:** posts name a campus place and an exact spot; the owner of a lost post is notified about a matching find and sees it among the possible matches.
+- **Matching:** posts name a campus place and an exact spot (or "Other" and type the place; the hint steers a room in a listed block to that block, so it counts towards it); the owner of a lost post is notified about a matching find and sees it among the possible matches.
 - **Account and desk:** a person changes their password (this device stays signed in), downloads their data and deletes their account (a wrong password is refused first); a finder edits their post to say it is at the security desk, the desk sees it, the owner claims it, the desk approves the claim (the owner is told to collect it there, no contacts shared) and confirms the handover from its console; the privacy policy and terms open from the footer, also on a phone.
 - **Insights:** an admin sees the breakdown by place and downloads the posts of a period as CSV.
 - **Admin tools:** an admin removes a post from the Posts tab with a reason, then narrows the activity log to a day and to one person.
