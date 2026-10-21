@@ -62,7 +62,7 @@ export const createItemSchema = z
   .object({
     type: z.enum(ITEM_TYPES),
     ...itemTextFields,
-    // A form field: an empty value means "somewhere else".
+    // A form field: an empty value means "Other" (no campus place).
     place: placeField.optional().transform((value) => value || undefined),
     heldAtSecurityDesk: formBoolean.default(false),
     questions: formStringList(
