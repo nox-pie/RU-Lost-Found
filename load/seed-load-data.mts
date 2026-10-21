@@ -19,7 +19,18 @@ import { MongoUserRepository } from '../apps/api/src/modules/users/infrastructur
 const USERS = 300;
 const ITEMS = 600;
 const PASSWORD = 'Load-test-pass-1';
-const THINGS = ['keys', 'phone', 'wallet', 'bottle', 'charger', 'earphones', 'umbrella', 'ID card', 'notebook', 'calculator'];
+const THINGS = [
+  'keys',
+  'phone',
+  'wallet',
+  'bottle',
+  'charger',
+  'earphones',
+  'umbrella',
+  'ID card',
+  'notebook',
+  'calculator',
+];
 const COLOURS = ['black', 'blue', 'red', 'silver', 'green', 'white'];
 const PLACES = ['Library', 'Canteen', 'Hostel A', 'Sports complex', 'Auditorium', 'Lab 2'];
 
@@ -28,10 +39,12 @@ if (!uri) throw new Error('Set MONGODB_URI');
 const logger = createLogger({ NODE_ENV: 'production', LOG_LEVEL: 'warn' });
 const database = await MongoDatabase.connect(uri, logger);
 const ids = new ObjectIdGenerator();
-const pick = <T>(list: readonly T[], n: number) => list[n % list.length] as T;
+const pick = <T,>(list: readonly T[], n: number) => list[n % list.length] as T;
 
 try {
-  const university = await new MongoUniversityRepository(database.connection).findBySlug('rishihood');
+  const university = await new MongoUniversityRepository(database.connection).findBySlug(
+    'rishihood',
+  );
   if (!university) throw new Error('Run the seed first (docker compose up runs it).');
   const users = new MongoUserRepository(database.connection);
   const items = new MongoItemRepository(database.connection);
@@ -79,6 +92,8 @@ try {
       title: `${pick(COLOURS, n * 3)} ${thing}`,
       description: `A ${pick(COLOURS, n * 3)} ${thing}, seen near the ${pick(PLACES, n).toLowerCase()}.`,
       location: pick(PLACES, n),
+      // Every other post names a campus place, like real ones (the rest picked "Other").
+      place: n % 2 === 0 && university.places.length > 0 ? pick(university.places, n) : null,
       occurredOn: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())),
       images: [{ url: '/brand/symbol.png', publicId: `load/${n}` }],
       questions: [],

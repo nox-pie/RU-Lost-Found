@@ -12,7 +12,7 @@ services:
     ports: ['127.0.0.1:27018:27017']
 
   k6:
-    image: grafana/k6:latest
+    image: grafana/k6:2.3.0
     profiles: [load]
     # Paths are relative to the project directory (the repository root).
     volumes:

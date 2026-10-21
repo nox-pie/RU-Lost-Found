@@ -145,7 +145,10 @@ export function browse(data) {
   check(search, { 'search answered': (r) => r.status === 200 });
   think(1, 2);
 
-  const bell = http.get(`${BASE}/notifications?limit=15`, as(data, n, 'read', 'GET /notifications'));
+  const bell = http.get(
+    `${BASE}/notifications?limit=15`,
+    as(data, n, 'read', 'GET /notifications'),
+  );
   check(bell, { 'notifications loaded': (r) => r.status === 200 });
   const claims = http.get(
     `${BASE}/claims/mine?status=REQUESTED,APPROVED`,
@@ -165,7 +168,8 @@ export function post(data) {
       category: 'ELECTRONICS',
       title: 'Grey power bank',
       description: 'Found on a bench outside the library.',
-      location: 'Library',
+      place: 'Library',
+      location: 'Second floor, near the lifts',
       occurredOn: new Date().toISOString().slice(0, 10),
       photos: http.file(PHOTO, 'photo.png', 'image/png'),
     },
