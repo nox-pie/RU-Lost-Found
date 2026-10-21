@@ -49,6 +49,10 @@ jobs:
 
       - run: npm ci
 
+      # Production dependencies only: a high or critical advisory fails the build.
+      - name: Security advisories
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Typecheck
         run: |
           npm run typecheck -w @ru-lost-found/shared
@@ -137,14 +141,27 @@ jobs:
           retention-days: 14
 
   docker:
-    name: Docker images build
+    name: Docker · build and run the whole product
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
-      - name: Build the API image
-        run: docker build -f apps/api/Dockerfile -t ru-lost-found-api:ci .
+      # The images any Docker host would run (docs/deployment.md, "Scaling up").
+      - name: Build the images
+        run: docker compose build
 
-      - name: Build the web image
-        run: docker build -f apps/web/Dockerfile -t ru-lost-found-web:ci .
+      # Database, Redis, seed, API and web started together; --wait returns once every
+      # health check passes (or fails the step if one never does).
+      - name: Start everything
+        run: docker compose up -d --wait --wait-timeout 180
+
+      - name: The web app answers, and reaches the API through nginx
+        run: |
+          curl -fsS http://localhost:8080/ | grep -q 'id="root"'
+          curl -fsS http://localhost:8080/api/v1/health/ready | grep -q '"status":"ok"'
+          curl -fsS http://localhost:8080/api/v1/auth/demo | grep -q '"enabled":true'
+
+      - name: Logs of every service
+        if: failure()
+        run: docker compose logs --no-color
