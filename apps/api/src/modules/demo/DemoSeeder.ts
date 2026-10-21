@@ -188,6 +188,9 @@ export class DemoSeeder {
 
     for (const post of DEMO_POSTS) {
       const postedAt = new Date(now.getTime() - post.daysAgo * DAY_MS - 3 * HOUR_MS);
+      // The samples name Rishihood's campus places. A university without one of them still
+      // sees where it was: the place moves into the free-text spot.
+      const atPlace = university.hasPlace(post.place);
       const item = Item.report({
         id: ids.next(),
         universityId: university.id,
@@ -196,7 +199,8 @@ export class DemoSeeder {
         category: post.category,
         title: post.title,
         description: post.description,
-        location: post.location,
+        place: atPlace ? post.place : null,
+        location: atPlace ? post.location : `${post.place}, ${lowerFirst(post.location)}`,
         occurredOn: dayOf(postedAt),
         images: [
           { url: `/demo/${post.photo}.jpg`, publicId: `${SAMPLE_PHOTO_PREFIX}${post.photo}` },
@@ -271,4 +275,9 @@ export class DemoSeeder {
 /** The calendar day of a moment, as stored for `occurredOn` (UTC midnight). */
 function dayOf(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+/** "Near the counter" → "near the counter", to follow a place name. */
+function lowerFirst(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1);
 }

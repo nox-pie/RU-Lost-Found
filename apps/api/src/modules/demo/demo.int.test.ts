@@ -5,6 +5,7 @@ import { T0 } from '../../testing/builders';
 import { MongoUserRepository } from '../users/infrastructure/MongoUserRepository';
 import { reportItem, signUp, type SignedInUser } from '../../testing/signedIn';
 import { seedUniversity, useTestApp } from '../../testing/testApp';
+import seedFile from '../../../seed/universities.json';
 import { DEMO_RESET_INTERVAL_SECONDS } from './DemoSeeder';
 import { DEMO_POSTS } from './demoData';
 
@@ -25,7 +26,14 @@ async function feed(status = 'OPEN,RESERVED,RESOLVED') {
     .get(`/api/v1/items?status=${status}&limit=50`)
     .set('Authorization', visitor.bearer)
     .expect(200);
-  return res.body.data as { id: string; title: string; status: string; isSample: boolean }[];
+  return res.body.data as {
+    id: string;
+    title: string;
+    status: string;
+    isSample: boolean;
+    place: string | null;
+    location: string;
+  }[];
 }
 
 // Each test seeds 8 people and 20 posts through real claim flows: allow for a busy test run.
@@ -44,6 +52,42 @@ describe('sample data', { timeout: 30_000 }, () => {
     expect(count('OPEN')).toBe(DEMO_POSTS.length - 5);
     // Demo people never get real emails (their addresses are on a reserved domain).
     expect(t.email.sent).toHaveLength(0);
+  });
+
+  it('names only campus places that Rishihood University really has', () => {
+    const rishihood = seedFile.find((university) => university.slug === 'rishihood');
+
+    const unknown = DEMO_POSTS.filter((post) => !rishihood?.places.includes(post.place));
+
+    expect(unknown.map((post) => `${post.title}: ${post.place}`)).toEqual([]);
+  });
+
+  it('puts every sample post at its campus place, with the exact spot apart', async () => {
+    const places = [...new Set(DEMO_POSTS.map((post) => post.place))];
+    await t.connection
+      .collection('universities')
+      .updateOne({ slug: 'rishihood' }, { $set: { places } });
+
+    await demo().seed(T0);
+
+    const posts = await feed();
+    const wallet = posts.find((p) => p.title === 'Black bifold wallet');
+    expect(wallet).toMatchObject({ place: 'Library', location: 'Reading room' });
+    expect(posts.every((p) => p.place !== null)).toBe(true);
+  });
+
+  it('keeps the place in the spot where a university lacks it', async () => {
+    await demo().seed(T0); // the test university offers only Library, Canteen and Hostel
+
+    const posts = await feed();
+    expect(posts.find((p) => p.title === 'Black bifold wallet')).toMatchObject({
+      place: 'Library',
+      location: 'Reading room',
+    });
+    expect(posts.find((p) => p.title === 'White iPhone with a clear case')).toMatchObject({
+      place: null,
+      location: 'CCD, near the counter',
+    });
   });
 
   it('keeps reserved posts reserved until the next reset', async () => {
