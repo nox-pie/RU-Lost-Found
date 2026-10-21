@@ -680,16 +680,18 @@ One `errorHandler` middleware converts `AppError` into the error format above. A
 
 On every push to `main` and every pull request:
 
-1. **API job** (with a Redis service container): typecheck (shared + API) → lint (including type-aware rules that forbid un-awaited promises) → formatting → tests with coverage thresholds → production build → coverage report uploaded as an artifact.
+1. **API job** (with a Redis service container): known security advisories in production dependencies (`npm audit`, high or critical fails) → typecheck (shared, API and the load-test data script) → lint (including type-aware rules that forbid un-awaited promises) → formatting (code, docs, load test, YAML) → tests with coverage thresholds → production build → coverage report uploaded as an artifact.
 2. **Web job:** typecheck, lint and production build.
 3. **End-to-end job:** the Playwright tests on desktop and mobile, against the real API on an in-memory database.
-4. **Docker job:** builds the API and web images.
+4. **Docker job:** builds the images and starts the whole product with `docker-compose.yml` (database, Redis, seed, API, web), then checks that the web app answers and reaches the API through nginx. This is the image any Docker host would run (see [deployment.md §7](../deployment.md#7-scaling-up)).
 
 A newer push cancels the older run on the same branch; the MongoDB test binary and npm packages are cached. **Dependabot** opens grouped weekly pull requests for dependency updates (and monthly for the workflow's own actions), so security fixes arrive as reviewable PRs that CI checks automatically.
 
 `npm run check` runs the same checks locally.
 
 ## 15. Free tier now, paid later
+
+The step-by-step version, and why no code changes are needed, is in [deployment.md §7](../deployment.md#7-scaling-up).
 
 | Concern         | Free now                                                             | Paid switch                                                  | Code change                                                            |
 | --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------- |

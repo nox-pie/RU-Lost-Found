@@ -67,9 +67,9 @@ Design patterns and why each is there, security decisions, the data model and th
 |              |                                                                                                                                                                                                                                                                                                                                                      |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Tests**    | 450 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 26 Playwright tests in a real browser on desktop and a phone, including the full handover, the moderation flow, the security desk, account deletion and a sleeping server |
-| **Load**     | 200 simultaneous users on one instance: 95% of reads under 7 ms, writes under 25 ms, zero errors. Up to 1,000 simultaneous users (375 requests/s) without a single failed request. [Details](docs/load-test.md)                                                                                                                                      |
+| **Load**     | 200 simultaneous users on one instance: 95% of reads under 8 ms, writes under 35 ms, zero errors. Up to 1,000 simultaneous users (about 360 requests/s) without a single failed request, the point to add a second instance. [Details](docs/load-test.md)                                                                                            |
 | **Security** | Independent review with every finding fixed; strict content security policy; no personal data in logs or error reports. [Details](docs/architecture/backend.md#9-authentication-and-security)                                                                                                                                                        |
-| **CI**       | Typecheck, lint, formatting, tests with coverage, builds, end-to-end tests and Docker image builds on every push                                                                                                                                                                                                                                     |
+| **CI**       | Security advisories, typecheck, lint, formatting, tests with coverage, builds, end-to-end tests, and the Docker images built and started on every push                                                                                                                                                                                               |
 
 ## Tech stack
 
@@ -118,7 +118,7 @@ npm run set-role -w @ru-lost-found/api -- you@rishihood.edu.in UNIVERSITY_ADMIN 
 - [Demo data](docs/demo-data.md): the sample posts visitors see, their safeguards and how to remove them
 - [External services](docs/services.md): every service used (MongoDB Atlas, Upstash, Render, Vercel, Cloudinary, Brevo, Sentry, UptimeRobot), its limits, settings and how to rotate keys
 - [Launch checklist](docs/launch-checklist.md): everything to do before opening the portal to students
-- [Deployment runbook](docs/deployment.md): production setup, deploying from scratch, checks after a deploy, free-tier limits
+- [Deployment runbook](docs/deployment.md): production setup, deploying from scratch, checks after a deploy, scaling up from the free tiers
 - [Load test](docs/load-test.md): method, results, and the bottleneck it found
 - [Branding](docs/branding.md): running the portal for another organisation
 

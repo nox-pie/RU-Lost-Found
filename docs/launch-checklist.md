@@ -55,11 +55,11 @@ Do these in order: the API recreates the sample data at start-up while `DEMO_MOD
 
 ## 7. The first weeks
 
-| How often   | What                                                                                                                                                                                |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Daily       | Sentry issues, UptimeRobot alerts, Brevo bounces and blocks, Admin → Reports (flagged posts)                                                                                        |
-| Weekly      | Atlas storage (512 MB on M0), Upstash commands (10,000 a day free), Cloudinary credits, and that the latest backup exists                                                           |
-| When needed | Upgrade in the order of [deployment.md §7](deployment.md#7-free-tiers-and-what-to-upgrade-first): Render Starter first if people notice the 30-second wake-up or sign-ins slow down |
+| How often   | What                                                                                                                   |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Daily       | Sentry issues, UptimeRobot alerts, Brevo bounces and blocks, Admin → Reports (flagged posts)                           |
+| Weekly      | Atlas storage (512 MB on M0), Upstash commands (its Usage page), Cloudinary credits, and that the latest backup exists |
+| When needed | Scale up as [deployment.md §7](deployment.md#7-scaling-up) describes: Render Starter first if sign-ins slow down       |
 
 ## If something goes wrong
 

@@ -1,6 +1,6 @@
 # Deployment runbook
 
-How the product runs in production, how to deploy it from scratch and how to check a deploy. Every service is on a free tier; section 7 lists what to upgrade first.
+How the product runs in production, how to deploy it from scratch and how to check a deploy. Every service is on a free tier; section 7 explains how to scale up.
 
 ## 1. Production setup
 
@@ -85,18 +85,24 @@ Pushes to `main` deploy both the web app (Vercel) and the API (Render, `autoDepl
 | Uptime                               | UptimeRobot: HTTP monitor on `/api/v1/health/live` every 5 min (alerts + keeps the free instance awake); a second monitor on `/api/v1/health/ready` for alerts only (database or Redis down)                                                                                                                                                                                                                                                                  |
 | Security headers                     | `curl -sI https://ru-lost-found.vercel.app/` shows `Content-Security-Policy`; the browser console shows no "Refused to…" messages                                                                                                                                                                                                                                                                                                                             |
 
-## 7. Free tiers and what to upgrade first
+## 7. Scaling up
 
-| Limit                                                     | Effect                                                                                 | Upgrade                                                                                                                     |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Render free instance sleeps after 15 min idle; 512 MB RAM | First request after a quiet period takes ~30 s (the app shows "Waking up the server…") | Render Starter: always on; then run `dist/worker.js` as a separate background worker with `WORKER_ENABLED=false` on the API |
-| Atlas M0: 512 MB storage, shared CPU                      | Enough for years of posts (photos live in Cloudinary)                                  | M10 for backups and Atlas Search                                                                                            |
-| Upstash free: 10,000 commands/day                         | Each write request costs about one command (rate limit)                                | Pay-as-you-go                                                                                                               |
-| Brevo free: 300 emails/day                                | Sign-up codes and claim emails                                                         | Starter plan                                                                                                                |
-| Cloudinary free: 25 credits/month                         | Images are resized and re-encoded before upload, so usage stays small                  | Plus plan                                                                                                                   |
-| Sentry free: 5,000 errors/month                           | Errors only, no performance tracing                                                    | Team plan                                                                                                                   |
+Everything runs on free plans today, and moving to paid ones is a matter of settings: no code changes. Each service's limits are in [services.md](services.md).
 
-Every provider sits behind an interface (`StorageProvider`, `EmailSender`, `KeyValueStore`, `ErrorReporter`), so moving to another vendor is a new adapter plus a line in `container.ts`.
+**Why no code changes are needed.** The API keeps no state of its own. Sessions, posts and the event outbox are in MongoDB; codes, rate limits and job leases in Redis; photos in Cloudinary. So any number of API instances can run side by side. Each outbox event is claimed by exactly one worker, and each scheduled job runs on one instance at a time (a Redis lease). The code holds no free-plan limits either.
+
+| When                                             | Change                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Launch with real users                           | **Atlas:** upgrade the cluster in place to Flex or M10 for backups (the data stays; if Atlas shows a new connection string, update `MONGODB_URI` on Render). **Brevo:** a sending domain of your own, and a paid month if more than ~200 people may sign up on one day. See [launch-checklist.md](launch-checklist.md). |
+| Always on, without relying on UptimeRobot        | **Render:** `plan: free` → `starter` in `render.yaml` (or the dashboard): no sleeping and a full CPU. UptimeRobot then only alerts.                                                                                                                                                                                     |
+| One API instance is busy                         | **Render:** more instances (Scaling tab). Then run the worker on its own: uncomment the worker in `render.yaml`, give it the API's environment variables, and set `WORKER_ENABLED=false` on the API.                                                                                                                    |
+| More Redis commands than the free allowance      | **Upstash:** pay-as-you-go. Same `REDIS_URL`.                                                                                                                                                                                                                                                                           |
+| More photo traffic or errors than the free plans | **Cloudinary** Plus, **Sentry** Team. Same settings.                                                                                                                                                                                                                                                                    |
+| The website                                      | **Vercel:** Hobby is meant for personal, non-commercial projects; a university service should move to Pro. Same project and settings.                                                                                                                                                                                   |
+
+**After any hosting change** (another proxy or CDN in front of the API), check `TRUST_PROXY_HOPS` again with `/api/v1/health/client` (section 6).
+
+**Moving off a provider** works the same way: every provider sits behind an interface (`StorageProvider`, `EmailSender`, `KeyValueStore`, `ErrorReporter`), so another vendor is a new adapter plus a line in `container.ts`. The API image also runs on any Docker host; CI builds and starts it on every change (section 8).
 
 ## 8. Running everything locally with Docker
 

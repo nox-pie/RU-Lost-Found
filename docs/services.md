@@ -54,7 +54,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 - **Deploys:** automatically on every push to `main`. The health check is `/api/v1/health/live`; a deploy that doesn't become healthy keeps the previous version running.
 - **Limits:** the free instance sleeps after 15 minutes without traffic (UptimeRobot prevents this) and has 512 MB of memory and a share of a CPU. Free instance hours (750 a month) cover exactly one always-on service.
 - **Watch:** Logs (JSON lines with a `requestId`), Events (deploys), Metrics.
-- **Upgrade:** Starter plan (no sleeping, full CPU), then run `dist/worker.js` as a separate background worker with `WORKER_ENABLED=false` on the API.
+- **Upgrade:** Starter plan (no sleeping, full CPU), then more instances and the worker as its own service (a ready block in `render.yaml`). Steps in [deployment.md §7](deployment.md#7-scaling-up).
 
 ## Vercel
 
@@ -110,7 +110,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 - **Repository:** https://github.com/nox-pie/RU-Lost-Found (Actions for CI runs, Pull requests for Dependabot).
 - **What:** the repository `nox-pie/RU-Lost-Found`; pushes to `main` deploy both Render and Vercel.
-- **CI** (`.github/workflows/ci.yml`): on every push and pull request: API (typecheck, lint, formatting, tests with coverage, build), web (typecheck, lint, build), end-to-end tests in a real browser, and Docker image builds.
+- **CI** (`.github/workflows/ci.yml`): on every push and pull request: API (security advisories, typecheck, lint, formatting, tests with coverage, build), web (typecheck, lint, build), end-to-end tests in a real browser, and the Docker images built and started together.
 - **Dependabot** (`.github/dependabot.yml`): weekly grouped updates for npm (minor and patch only; major versions are upgraded by hand) and monthly for GitHub Actions. CI checks each pull request.
 
 ---
