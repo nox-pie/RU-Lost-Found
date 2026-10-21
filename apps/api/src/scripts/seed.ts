@@ -30,7 +30,7 @@ const seedFileSchema = z
       slug: z.string().regex(/^[a-z0-9-]{2,40}$/, 'use lowercase letters, digits and dashes'),
       emailDomains: z.array(z.string()).min(1),
       schools: z.array(z.string().trim().min(2)).min(1),
-      /** Campus places offered when posting ("Somewhere else" is always there too). */
+      /** Campus places offered when posting ("Other" is always there too). */
       places: z.array(z.string().trim().min(2).max(60)).default([]),
     }),
   )

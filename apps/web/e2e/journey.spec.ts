@@ -27,7 +27,7 @@ test('a found item gets back to its owner through a verified handover', async ({
     await dialog.getByLabel('Item name').fill('Bunch of keys');
     await choose(finder, 'Category', 'Keys', dialog);
     await dialog.getByLabel('Description').fill('Three keys on a red ring with a small torch.');
-    await choose(finder, 'Where did you find it?', 'Canteen', dialog);
+    await choose(finder, 'Where did you find it?', 'CCD', dialog);
     await dialog.getByLabel('Exact spot').fill('Near the counter');
     await dialog.getByRole('button', { name: 'Add a question' }).click();
     await dialog.getByLabel('Question 1', { exact: true }).fill('What is attached to the ring?');

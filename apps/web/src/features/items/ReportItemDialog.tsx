@@ -24,7 +24,7 @@ import { DemoLimitNotice } from '../demo/DemoBanner';
 import { PhotoPicker } from './PhotoPicker';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { CATEGORY_OPTIONS } from '../../lib/categories';
-import { ELSEWHERE, placeOptions, useCampusPlaces } from './campusPlaces';
+import { ELSEWHERE, placeOptions, spotField, useCampusPlaces } from './campusPlaces';
 import { itemDetailsFields } from './itemForm';
 
 const questionSchema = z.string().trim().min(5, 'At least 5 characters').max(150);
@@ -94,6 +94,7 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
   const type = watch('type');
   const places = useCampusPlaces();
   const whereLabel = type === 'LOST' ? 'Where did you lose it?' : 'Where did you find it?';
+  const spot = spotField(places, watch('place'), whereLabel);
 
   const onSubmit = handleSubmit(async (values) => {
     if (photos.length === 0) {
@@ -201,10 +202,9 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
           />
         )}
         <Input
-          label={places.length > 0 ? 'Exact spot' : whereLabel}
-          placeholder={
-            places.length > 0 ? 'e.g. 2nd floor, near the lifts' : 'e.g. Library, 2nd floor'
-          }
+          label={spot.label}
+          placeholder={spot.placeholder}
+          hint={spot.hint}
           error={errors.location?.message}
           {...register('location')}
         />

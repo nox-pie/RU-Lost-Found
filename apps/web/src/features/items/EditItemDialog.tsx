@@ -13,7 +13,7 @@ import { CATEGORY_OPTIONS } from '../../lib/categories';
 import { todayIso } from '../../lib/format';
 import { showFormError } from '../../lib/forms';
 import { queryKeys } from '../../lib/queryClient';
-import { ELSEWHERE, placeOptions, useCampusPlaces } from './campusPlaces';
+import { ELSEWHERE, placeOptions, spotField, useCampusPlaces } from './campusPlaces';
 import { itemDetailsFields } from './itemForm';
 
 const editSchema = z.object(itemDetailsFields);
@@ -43,6 +43,7 @@ function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
   const {
     register,
     control,
+    watch,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting, isDirty, dirtyFields },
@@ -59,12 +60,14 @@ function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
     },
   });
 
+  const spot = spotField(places, watch('place'), whereLabel);
+
   const onSubmit = handleSubmit(async (values) => {
     // Only what changed is sent, so an edit never overwrites more than the reporter touched.
     const changes = Object.fromEntries(
       Object.entries(values)
         .filter(([field]) => dirtyFields[field as keyof EditForm])
-        // "Somewhere else" clears the place.
+        // "Other" clears the place.
         .map(([field, value]) => [field, field === 'place' && value === ELSEWHERE ? null : value]),
     ) as UpdateItemInput;
     try {
@@ -120,7 +123,9 @@ function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
           />
         )}
         <Input
-          label={places.length > 0 ? 'Exact spot' : whereLabel}
+          label={spot.label}
+          placeholder={spot.placeholder}
+          hint={spot.hint}
           error={errors.location?.message}
           {...register('location')}
         />

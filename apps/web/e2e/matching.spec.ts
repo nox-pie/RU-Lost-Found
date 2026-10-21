@@ -29,7 +29,7 @@ test('the owner of a lost post is told about a found post that looks like it', a
     await choose(page, 'Category', 'Keys', dialog);
     await dialog.getByLabel('Description').fill(description);
     const where = kind === 'I lost something' ? 'Where did you lose it?' : 'Where did you find it?';
-    await choose(page, where, 'Canteen', dialog);
+    await choose(page, where, 'CCD', dialog);
     await dialog.getByLabel('Exact spot').fill('Near the counter');
     await dialog.getByRole('button', { name: 'Publish report' }).click();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();

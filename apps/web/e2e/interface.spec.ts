@@ -44,6 +44,41 @@ test('a decline reason can be typed in full: the dialog keeps the keyboard focus
   await expect(reason).toBeFocused();
 });
 
+test('a post names a campus place, or "Other" and types the place', async ({ page }) => {
+  await signUp(page, { email: uniqueEmail('placer'), first: 'Pia', last: 'Lal' });
+  await page.getByRole('button', { name: 'Report item' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Report an item' });
+  await dialog.getByText('I lost something').click();
+
+  // Nothing picked yet: "Other", and the text box asks for the place itself.
+  await expect(dialog.getByRole('button', { name: 'Where did you lose it?' })).toContainText(
+    'Other',
+  );
+  await expect(dialog.getByLabel('Which place?')).toBeVisible();
+  await expect(dialog.getByText(/like a room in a block\? Pick that place/)).toBeVisible();
+
+  await dialog.getByRole('button', { name: 'Where did you lose it?' }).click();
+  for (const place of ['A-Block', 'B-Block', 'Pushpa Devi Dining Hall', "Learner's Arena"]) {
+    await expect(page.getByRole('option', { name: place, exact: true })).toBeVisible();
+  }
+  await expect(page.getByRole('option', { name: 'Security desk' })).toHaveCount(0);
+  await page.getByRole('option', { name: 'A-Block', exact: true }).click();
+
+  // A listed place: the text box is for the exact spot inside it.
+  await expect(dialog.getByLabel('Which place?')).toHaveCount(0);
+  await expect(dialog.getByText(/Pick that place/)).toHaveCount(0);
+  await dialog.locator('input[type=file]').setInputFiles(FIXTURE_PHOTO);
+  await expect(dialog.getByRole('img', { name: 'Photo 1' })).toBeVisible();
+  await dialog.getByLabel('Item name').fill('Green notebook');
+  await choose(page, 'Category', 'Books', dialog);
+  await dialog.getByLabel('Description').fill('A green notebook with maths notes inside.');
+  await dialog.getByLabel('Exact spot').fill('Classroom 408');
+  await dialog.getByRole('button', { name: 'Publish report' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Green notebook' })).toBeVisible();
+  await expect(page.getByText('A-Block · Classroom 408')).toBeVisible();
+});
+
 test('a post switched from "found" to "lost" is not held back by a hidden question', async ({
   page,
 }) => {
