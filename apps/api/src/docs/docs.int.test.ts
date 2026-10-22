@@ -22,6 +22,24 @@ describe('API documentation', () => {
     }
   });
 
+  it('documents every route the modules serve', () => {
+    const documented = new Set(OPERATIONS.map((op) => `${op.method.toUpperCase()} ${op.path}`));
+    const served = t.container.modules.flatMap((module) =>
+      (module.routes ?? []).flatMap(({ path, router }) =>
+        router.stack.flatMap(({ route }) =>
+          route
+            ? Object.keys((route as unknown as { methods: object }).methods).map(
+                (method) => `${method.toUpperCase()} ${`${path}${route.path}`.replace(/\/$/, '')}`,
+              )
+            : [],
+        ),
+      ),
+    );
+
+    expect(served.length).toBeGreaterThan(40);
+    expect(served.filter((route) => !documented.has(route))).toEqual([]);
+  });
+
   it('serves the OpenAPI document with every operation', async () => {
     const res = await api().get('/api/v1/openapi.json').expect(200);
 

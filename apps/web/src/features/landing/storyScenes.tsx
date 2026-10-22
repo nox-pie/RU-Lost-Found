@@ -42,7 +42,8 @@ const item = (overrides: Partial<ItemDto>): ItemDto =>
     category: 'WALLET',
     title: 'Black bifold wallet',
     description: 'Found on a table in the library reading room after the evening session.',
-    location: 'Library reading room',
+    place: 'Library',
+    location: 'Reading room',
     occurredOn: '2026-10-03',
     photos: ['/landing/black-bifold-wallet.webp'],
     heldAtSecurityDesk: false,
@@ -103,7 +104,8 @@ const searchScene: Scene = {
             <ItemCardPreview
               item={item({
                 title: 'Brown leather wallet',
-                location: 'Auditorium',
+                place: 'Mini Audi',
+                location: 'Outside',
                 status: 'RESOLVED',
                 photos: ['/demo/worn-leather-wallet.jpg'],
               })}

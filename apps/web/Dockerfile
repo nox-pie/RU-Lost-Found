@@ -16,7 +16,7 @@ ARG VITE_SENTRY_DSN=
 ARG VITE_RELEASE=
 RUN npm run build --workspace @ru-lost-found/web
 
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.30-alpine AS runtime
 # Templates in this folder get environment variables (API_UPSTREAM) substituted at start-up.
 COPY apps/web/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html

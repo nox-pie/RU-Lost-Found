@@ -52,3 +52,20 @@ services:
       # The owners' accounts, made platform admins automatically (see apps/api/.env.example).
       - key: ADMIN_EMAILS
         sync: false
+
+  # Scaling up (docs/deployment.md, "Scaling up"): on a paid plan, change `plan: free` above to
+  # `starter` (always on, no sleep) and, when one instance is no longer enough, run the background
+  # worker as its own service. Uncomment the block below, give it the same environment variables
+  # as the API (an environment group shared by both is easiest), and set WORKER_ENABLED to 'false'
+  # on the API. No code changes: the API image already contains dist/worker.js. Background
+  # workers have no free plan on Render.
+  #
+  # - type: worker
+  #   name: ru-lost-found-worker
+  #   runtime: docker
+  #   dockerfilePath: ./apps/api/Dockerfile
+  #   dockerContext: .
+  #   dockerCommand: node dist/worker.js
+  #   plan: starter
+  #   region: singapore
+  #   autoDeploy: true
