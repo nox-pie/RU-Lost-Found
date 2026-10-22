@@ -1,12 +1,12 @@
 # Demo data
 
-Before the portal has real users, it shows **sample data** so visitors (recruiters, examiners, students) see how it looks and works: 8 fictional students and 20 posts across the categories, in every status (open, handover arranged, returned), dated over the last eight weeks.
+Before the portal has real users, it shows **sample data** so visitors (recruiters, examiners, students) see how it looks and works: 8 fictional students and 20 posts across the categories, in every status (open, handover arranged, returned), dated over the last eight weeks. Each post names one of Rishihood University's campus places with the exact spot ("Library · Reading room"), so places, matching and the admin breakdown by place show real-looking data. On a deployment whose university lacks one of these places, that post keeps the place in its spot text instead.
 
 Everything is created through the real domain and services: returned posts went through a real claim, approval and handover, so their history, notifications, activity-log entries and the admin statistics are exactly what real use produces. Sample posts can be claimed like real ones.
 
 ## Trying it without an account
 
-Signed-out visitors see a **landing page** at `/`: what the portal does, the three steps (post, claim, hand over) and a preview of sample posts. Its **"Try it now"** section signs them in with one click as one of two sample students:
+Signed-out visitors see a **landing page** at `/`: what the portal does, a carousel of sample posts, a short story of one handover played in a small app window, and the safeguards. Its **"Try it now"** section signs them in with one click as one of two sample students:
 
 | Person         | Role       | Suggested path                                                    |
 | -------------- | ---------- | ----------------------------------------------------------------- |
@@ -39,7 +39,7 @@ npm run demo -- remove    # delete all of it
 
 Against production, add `--env-file=.env.production` through `npx tsx --env-file=.env.production src/scripts/demo.ts <command>` (see [deployment.md](deployment.md#where-configuration-lives)).
 
-**`DEMO_MODE`** (API setting, default `false`): when `true`, the API creates the sample data at start-up if it is missing (if it exists, the demo accounts only get any profile picture they lack, so a new picture shows right after a deploy) and resets it every hour (`DEMO_RESET_INTERVAL_SECONDS`).
+**`DEMO_MODE`** (API setting, default `false`): when `true`, the API creates the sample data at start-up if it is missing (if it exists, the demo accounts only get any profile picture they lack, so a new picture shows right after a deploy) and resets it every hour (the `reset-demo-data` job; `DEMO_RESET_INTERVAL_SECONDS` in `DemoSeeder.ts`).
 
 ## Before real users arrive
 
@@ -55,6 +55,7 @@ Part of the [launch checklist](launch-checklist.md), which has the full order of
 - `apps/api/src/modules/demo/DemoSeeder.ts`: seed, remove, reset
 - `apps/api/src/modules/demo/infrastructure/MongoDemoDataStore.ts`: finds and deletes everything tied to demo accounts
 - `apps/web/public/demo/`: the photos
+- `apps/web/src/features/landing/samplePosts.ts`: the few sample posts pictured on the landing page (kept in step with `demoData.ts` by hand)
 
 ## Photo credits
 
