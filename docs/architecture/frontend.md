@@ -1,6 +1,6 @@
 # Frontend Architecture
 
-Status: Built and live · Last updated: 3 October 2026
+Status: Built and live · Last updated: 22 October 2026
 
 The web app is a React 18 single-page application (TypeScript, Vite, Tailwind CSS 4) organised **by feature**. It talks to the API only through one typed client, keeps server data in TanStack Query's cache, and validates forms with the **same Zod schemas the API uses** (from `packages/shared`), so the client and server can't disagree about what's valid.
 
@@ -33,10 +33,10 @@ apps/web/src/
     ├── landing/             # public landing page for signed-out visitors
     ├── demo/                # one-click sign-in as a sample student, demo banner and limits
     ├── auth/                # session provider, route guards, sign-in, 3-step sign-up and reset
-    ├── items/               # browse/search, report dialog, item page, my items
+    ├── items/               # browse/search, report and edit dialogs (campus places), item page (matches, closing), my items
     ├── claims/              # claim dialog, claim page (decision + handover), claims list
-    ├── desk/                # security desk console: handovers waiting, items held (desk staff and admins)
-    ├── admin/               # overview, reports queue, people, activity log (admins only)
+    ├── desk/                # security desk console: handovers waiting, claims to decide, items held (desk staff and admins)
+    ├── admin/               # overview (with the posts download), reports queue, people, posts, activity log (admins only)
     ├── moderation/          # "Report this post" dialog
     ├── notifications/       # bell with unread badge
     ├── legal/               # privacy policy and terms of use (public)
@@ -55,7 +55,7 @@ apps/web/src/
 | Page reload   | On start-up `AuthProvider` calls `POST /auth/refresh`; the httpOnly cookie restores the session. It does so only if this device has signed in before (a `localStorage` flag holding no secret): a first-time visitor sees the landing page at once instead of waiting for a possibly sleeping API to say "not signed in". Only an answer from the API refusing the session (401) signs the device out; a refresh that gets no answer (offline, the page left mid-request, a server error) keeps the session and the flag. |
 | Expired token | Any 401 triggers **one** refresh and a retry (except on `/auth/` endpoints, where a 401 means wrong credentials; changing the password is the one `/auth/` call that renews the token too). Concurrent requests share a single refresh call (the API rotates the refresh token on every use, so parallel refreshes would race).                                                                                                                                                                                           |
 | Session ended | If the refresh fails, listeners are told; the app clears its cache and returns to sign-in, then back to the page the user wanted.                                                                                                                                                                                                                                                                                                                                                                                         |
-| Cold start    | The free API instance sleeps after 15 quiet minutes, and the hosting layer answers 502/503/504 (HTML, not our JSON) while it starts. The app pings the API as soon as it opens, waits for its health check (up to 90 s) with a "Waking up the server…" notice, retries reads and the session restore by itself, and asks the person to resend a form instead of resending it automatically (it might have been processed).                                                                                                |
+| Cold start    | The free API instance restarts after each deploy, and would sleep after 15 quiet minutes if UptimeRobot didn't keep it awake; while it starts, the hosting layer answers 502/503/504 (HTML, not our JSON). The app pings the API as soon as it opens, waits for its health check (up to 90 s) with a "Waking up the server…" notice, retries reads and the session restore by itself, and asks the person to resend a form instead of resending it automatically (it might have been processed).                          |
 
 The Vite dev server proxies `/api` to the API, exactly like the Vercel rewrite in production, so cookies behave the same in both.
 
@@ -103,7 +103,7 @@ Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `a
 
 **Checked automatically:** the e2e suite runs [axe-core](https://github.com/dequelabs/axe-core) (WCAG 2.1 A and AA rules) on the landing, sign-in, browse, item (also scrolled, when the header turns translucent), claims, claim and profile pages on a desktop and a phone, and on the five admin sections; CI fails on any violation. The first run found only colour contrast problems, fixed at the source: the brand red was darkened slightly (`#C62835`) so white text on it and red text on light backgrounds reach 4.5:1, the Found tags use orange `#FFA500` with dark brown text (7.8:1; white on it would be 2.0:1) (each brand colour names its text colour, `contrast`), the two lightest text greys were darkened one step in the Tailwind theme, the footer and translucent header got stronger text, and avatar initials got an opaque base.
 
-**Lighthouse** (landing page, production build, simulated mid-range phone on slow 4G, 3 October 2026): Performance 89, Accessibility 100, Best practices 100, SEO 100. What it took: fonts self-hosted (no render-blocking stylesheet); the signed-in layout, the forms' libraries (zod, react-hook-form) and the story (built from real form and dropdown components) kept out of the first download (123 KB; `packages/shared` is marked side-effect free, and the demo personas sit in a zod-free module); the campus photo in three WebP sizes and the first carousel photo preloaded from `index.html`; Sentry loaded only once the page is idle; the sign-in background as a JPEG.
+**Lighthouse** (landing page on the live site, simulated mid-range phone on slow 4G, 22 October 2026, median of three runs): Performance 94, Accessibility 100, Best practices 100, SEO 100 (3 October, before Tailwind 4: 89). What it took: fonts self-hosted (no render-blocking stylesheet); the signed-in layout, the forms' libraries (zod, react-hook-form) and the story (built from real form and dropdown components) kept out of the first download (about 105 KB of compressed JavaScript; the story's code, about 40 KB, loads separately; `packages/shared` is marked side-effect free, and the demo personas sit in a zod-free module); the campus photo in three WebP sizes and the first carousel photo preloaded from `index.html`; Sentry loaded only once the page is idle; the sign-in background as a JPEG.
 
 **Motion budget (landing page):** sections fade up once as they appear; the carousel; the story; a slow zoom on the closing card's photo. Nothing else moves (no parallax). Everything runs only while on screen, has a pause button where it repeats, and is off for people who reduce motion (the story then shows each step's finished screen). The carousel starts moving after the visitor's first interaction (scroll, pointer, touch or key), so nothing moves while the headline is being read. This also keeps Lighthouse's Speed Index from counting slide changes as loading: without it the score reads about 80, with the same load times.
 
@@ -121,9 +121,9 @@ Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `a
 - **Journey 2** (desktop and a Pixel 7 phone): a visitor signs up with a Gmail address, the session survives a reload, sign-out returns to the landing page, sign-in brings the session back.
 - **Demo:** from the landing page a visitor signs in as Ravi with one click and claims the sample wallet, signs out, signs in as Asha and approves the claim; on a phone, a demo account sees that its profile can't be changed and is offered sign-up.
 - **Photos:** a 12-megapixel photo over the 5 MB limit is shrunk in the browser, accepted and sent at a fraction of its size; on a phone the report form offers the camera.
-- **Interface:** a dialog keeps the keyboard focus while typing; a form doesn't block on a hidden question; an admin list keeps an open dialog while a search updates; a big phone photo becomes a profile picture; removing a post never flashes "not found"; the item page finds your claim on it.
+- **Interface:** a dialog keeps the keyboard focus while typing; a form doesn't block on a hidden question; the report form offers the campus places, and "Other" asks which place (with a hint to pick the block for a room in it); an admin list keeps an open dialog while a search updates; a big phone photo becomes a profile picture; removing a post never flashes "not found"; the item page finds your claim on it.
 - **Post lifecycle:** a reporter closes their post with a reason and opens it again.
-- **Matching:** posts name a campus place and an exact spot (or "Other" and type the place; the hint steers a room in a listed block to that block, so it counts towards it); the owner of a lost post is notified about a matching find and sees it among the possible matches.
+- **Matching:** both posts name a campus place and an exact spot; the owner of a lost post is notified about a matching find and sees it among the possible matches.
 - **Account and desk:** a person changes their password (this device stays signed in), downloads their data and deletes their account (a wrong password is refused first); a finder edits their post to say it is at the security desk, the desk sees it, the owner claims it, the desk approves the claim (the owner is told to collect it there, no contacts shared) and confirms the handover from its console; the privacy policy and terms open from the footer, also on a phone.
 - **Insights:** an admin sees the breakdown by place and downloads the posts of a period as CSV.
 - **Admin tools:** an admin removes a post from the Posts tab with a reason, then narrows the activity log to a day and to one person.

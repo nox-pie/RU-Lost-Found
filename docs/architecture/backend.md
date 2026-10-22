@@ -1,8 +1,8 @@
 # Backend Architecture
 
-Status: Built and live · Last updated: 3 October 2026
+Status: Built and live · Last updated: 22 October 2026
 
-The backend is a **modular monolith** written in TypeScript on Node.js and Express 5. Each business capability lives in its own module. Business modules (auth, users, items, claims, moderation, notifications) are split into the same layers: routes, controller, service, repository and domain; small modules (health, audit, universities) have only the layers they need. Infrastructure (MongoDB, Redis, Cloudinary, email) sits behind interfaces, so any provider can be swapped without touching business logic.
+The backend is a **modular monolith** written in TypeScript on Node.js and Express 5. Each business capability lives in its own module. Business modules (auth, users, items, claims, matching, moderation, notifications) are split into the same layers: routes, controller, service, repository and domain; smaller modules (account, admin, desk, demo, health, audit, universities) have only the layers they need. Infrastructure (MongoDB, Redis, Cloudinary, email) sits behind interfaces, so any provider can be swapped without touching business logic.
 
 ---
 
@@ -64,10 +64,11 @@ ru-lost-found/
 │   └── shared/                   # Zod schemas, enums and DTO types used by both apps
 ├── docs/
 │   ├── architecture/             # backend.md (this document), frontend.md
-│   ├── deployment.md · load-test.md · branding.md
+│   ├── adr/                      # architecture decision records
+│   ├── deployment.md · services.md · launch-checklist.md · load-test.md · demo-data.md · branding.md
 │   └── screenshots/
-├── load/                         # k6 load test
-├── .github/workflows/            # CI pipeline
+├── load/                         # k6 load test and its data script
+├── .github/                      # CI pipeline (workflows/ci.yml), Dependabot
 └── package.json                  # npm workspaces root
 ```
 
@@ -104,15 +105,16 @@ apps/api/src/
 │   ├── auth/                     # Codes, register, login, refresh, logout, password reset/change
 │   ├── users/                    # Profile, avatar, RolePolicy, AdminAccounts (ADMIN_EMAILS)
 │   ├── account/                  # Download my data, delete my account (uses items, claims, ...)
-│   ├── universities/             # Tenants: each university's email domains and school list
-│   ├── items/                    # Lost/found reports, search
+│   ├── universities/             # Tenants: each university's email domains, schools and campus places
+│   ├── items/                    # Lost/found reports, search, post lifecycle (close, keep open, expiry)
 │   ├── claims/                   # Claim workflow (state machine)
-│   ├── desk/                     # Security desk console routes (handovers waiting, items held)
+│   ├── desk/                     # Security desk console routes (handovers waiting, claims to decide, items held)
 │   ├── matching/                 # Likely matches between lost and found posts (scored on request)
 │   ├── notifications/            # In-app notifications + email handlers
 │   ├── moderation/               # Flagging posts, admin review
-│   ├── admin/                    # Stats (read model), people management, activity log
+│   ├── admin/                    # Stats (read model), posts CSV export, people management, activity log
 │   ├── audit/                    # Audit log (audit_logs) and the handler that fills it
+│   ├── demo/                     # Sample data for visitors (DEMO_MODE): one-click sign-in, hourly reset
 │   └── health/                   # live / ready / client checks
 ├── docs/                         # OpenAPI document and Swagger UI
 ├── scripts/                      # seed, set-role, demo
@@ -227,16 +229,23 @@ classDiagram
         +title
         +description
         +location
+        +place
         +occurredOn: Date
         +images: ImageRef[]
         +reporterId
         +status: ItemStatus
+        +closeReason
+        +expiresAt: Date
         +verificationQuestions: VerificationQuestion[]
         +heldAtSecurityDesk: bool
         +edit(by, changes, now)
         +reserve(now)
         +reopen(now)
         +resolve(now)
+        +close(by, reason, now)
+        +keepOpen(by, now)
+        +remindOfExpiry(now) bool
+        +expire(now) bool
         +remove(by, now, reason)
         +releasePhotos() ImageRef[]
     }
@@ -249,8 +258,8 @@ classDiagram
         +message
         +answers: ClaimAnswer[]
         +status: ClaimStatus
-        +approve(by, handover, now)
-        +reject(by, reason, now)
+        +approve(by, handover, now, atDesk)
+        +reject(by, reason, now, atDesk)
         +cancel(by, now)
         +completeHandover(by, code, now) HandoverResult
         +completeHandoverAsStaff(by, now)
@@ -429,6 +438,7 @@ sequenceDiagram
 | `close-stale-posts`         | 1 hour | Reminds reporters of posts closing within a week and closes posts whose reminder is a week old           |
 | `purge-removed-item-photos` | 1 hour | Deletes photos of items removed more than 30 days ago (the moderation window)                            |
 | `prune-outbox`              | 1 day  | Deletes delivered events older than 7 days                                                               |
+| `reset-demo-data`           | 1 hour | Only with `DEMO_MODE=true`: puts the sample data back as it was ([demo-data.md](../demo-data.md))        |
 
 The worker runs inside the API process on the free tier (`WORKER_ENABLED=true`). On a paid plan it becomes a separate process (`npm run start:worker`, API with `WORKER_ENABLED=false`) with no code change.
 
@@ -519,6 +529,8 @@ Base path: `/api/v1`. Request and response bodies are JSON (except image uploads
 | POST                     | `/auth/logout`                | cookie                                   | Sign out this device: ends its whole session family in one atomic update, so a refresh racing the sign-out can't conflict or survive                                                           |
 | POST                     | `/auth/password/reset`        | –                                        | New password with the verification token; ends every session                                                                                                                                   |
 | POST                     | `/auth/password/change`       | user                                     | New password with the current one; ends every other session and returns this device's new one (like a sign-in)                                                                                 |
+| GET                      | `/auth/demo`                  | –                                        | Whether one-click demo sign-in is offered (`DEMO_MODE`)                                                                                                                                        |
+| POST                     | `/auth/demo`                  | –                                        | Sign in as a sample person (`persona`); 404 unless `DEMO_MODE=true`; rate limited per IP                                                                                                       |
 | **Users**                |                               |                                          |                                                                                                                                                                                                |
 | GET                      | `/users/me`                   | user                                     | Own profile                                                                                                                                                                                    |
 | PATCH                    | `/users/me`                   | user                                     | Update profile                                                                                                                                                                                 |
@@ -530,6 +542,7 @@ Base path: `/api/v1`. Request and response bodies are JSON (except image uploads
 | DELETE                   | `/account`                    | user                                     | Delete my account (`password`); see "Deleting an account" in §9                                                                                                                                |
 | **Items**                |                               |                                          |                                                                                                                                                                                                |
 | GET                      | `/items`                      | user                                     | Search and filter (`q` words, `type`, `category`, `status` = comma list, default `OPEN,RESERVED`; `cursor`, `limit` ≤ 50)                                                                      |
+| GET                      | `/items/counts`               | user                                     | How many posts each browse tab has (All, Lost, Found, Returned), for the same words and category                                                                                               |
 | POST                     | `/items`                      | user                                     | Report an item: multipart form, 1–3 photos in `photos` (≤ 5 MB each), optional `questions` (found items only); 20 per user per day                                                             |
 | GET                      | `/items/:id`                  | user                                     | Item details                                                                                                                                                                                   |
 | GET                      | `/items/:id/matches`          | owner                                    | Likely matches on the other side (lost ↔ found), up to 5, best first; see §8                                                                                                                   |
@@ -674,7 +687,7 @@ One `errorHandler` middleware converts `AppError` into the error format above. A
 - A fixed, controllable clock: expiry, deadlines, back-off and rate-limit windows are tested by moving time, not by waiting.
 - Every test server binds explicitly to `127.0.0.1`: with many test files running in parallel, supertest's default (all addresses) occasionally let requests reach another file's server.
 
-**Current numbers:** 450 API tests and 26 end-to-end tests (32 runs: the six marked `@mobile` also run on a phone). Coverage is 95% statements, 87% branches, 96% functions, 96% lines. The build fails below 93 / 84 / 95 / 95.
+**Current numbers:** 454 API tests and 27 end-to-end tests (33 runs: the six marked `@mobile` also run on a phone, one of them only there). Coverage is 95% statements, 88% branches, 97% functions, 97% lines. The build fails below 93 / 84 / 95 / 95. A test checks the OpenAPI document both ways: every documented operation is routed, and every route is documented.
 
 ### Continuous integration (`.github/workflows/ci.yml`)
 
@@ -720,6 +733,7 @@ The reasoning behind the main decisions, with the alternatives that were conside
 9. [Claim lifecycle as a state machine](../adr/0009-claim-state-machine.md)
 10. [Monorepo with a shared schema package](../adr/0010-monorepo-shared-schemas.md)
 11. [One branded deployment per organisation on a multi-tenant codebase](../adr/0011-branded-deployment-per-organisation.md)
+12. [Modules wire themselves; typed domain-event contracts](../adr/0012-self-wiring-modules-and-event-contracts.md)
 
 ---
 
@@ -739,6 +753,6 @@ An independent review of the API code found no critical or high issues; access c
 | 8   | Low      | A crafted cursor (`t: 1e300`) caused a 500                                                            | Cursor timestamp must be a finite date                                                                                                                                 |
 | 9   | Low      | 30-second rotation grace window can hide a replay                                                     | Accepted trade-off (documented above)                                                                                                                                  |
 
-**Dependencies:** `npm audit --omit=dev` finds no vulnerabilities in production dependencies. The only advisory left is a low-severity one in esbuild's development server on Windows, which never runs in production.
+**Dependencies:** `npm audit --omit=dev` finds no vulnerabilities in production dependencies, and CI fails if one with high or critical severity appears. The only advisory left is a low-severity one in esbuild's development server on Windows, which never runs in production.
 
 **Secrets:** no real secret has ever been committed; the repository history contains only placeholder values.
