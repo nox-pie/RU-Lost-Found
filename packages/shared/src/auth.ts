@@ -33,7 +33,8 @@ export const profileFieldsSchema = z.object({
   firstName: name('First name'),
   lastName: name('Last name'),
   year: z.coerce
-    .number()
+    // Also when none was chosen: the form sends nothing, which becomes NaN.
+    .number({ error: 'Select your year' })
     .int()
     .min(1, 'Select your year')
     .max(MAX_YEAR_OF_STUDY, 'Select your year'),
