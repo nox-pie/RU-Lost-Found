@@ -10,7 +10,7 @@ import { useTestDatabase } from '../../testing/testDatabase';
 import { InMemoryKeyValueStore } from '../cache/InMemoryKeyValueStore';
 import { MongoUnitOfWork } from '../database/MongoUnitOfWork';
 import { BackgroundWorker } from '../worker/BackgroundWorker';
-import { JobScheduler } from '../worker/JobScheduler';
+import { JOB_START_DELAY_MS, JobScheduler } from '../worker/JobScheduler';
 import { MongoOutbox } from './MongoOutbox';
 import { OUTBOX_MAX_ATTEMPTS, OutboxProcessor, retryDelaySeconds } from './OutboxProcessor';
 import { RecordingErrorReporter } from '../../testing/RecordingErrorReporter';
@@ -201,6 +201,87 @@ describe('BackgroundWorker', () => {
 });
 
 describe('JobScheduler', () => {
+  it('runs a job soon after start, then once per interval', async () => {
+    vi.useFakeTimers();
+    try {
+      let runs = 0;
+      const job = {
+        name: 'close-stale-posts',
+        intervalSeconds: 3600,
+        run: async () => (runs += 1),
+      };
+      const scheduler = new JobScheduler([job], new InMemoryKeyValueStore(clock), logger);
+
+      scheduler.start();
+      await vi.advanceTimersByTimeAsync(JOB_START_DELAY_MS);
+      expect(runs).toBe(1); // not a whole hour after a deploy
+      await vi.advanceTimersByTimeAsync(3_000_000);
+      expect(runs).toBe(1);
+      clock.set(minutesAfter(T0, 61)); // the lease window passes
+      await vi.advanceTimersByTimeAsync(600_000);
+      await scheduler.stop();
+
+      expect(runs).toBe(2);
+    } finally {
+      clock.set(T0);
+      vi.useRealTimers();
+    }
+  });
+
+  it('after a restart, runs a job only if no instance ran it within its interval', async () => {
+    vi.useFakeTimers();
+    try {
+      const leases = new InMemoryKeyValueStore(clock); // survives restarts, like Redis
+      let runs = 0;
+      const job = { name: 'prune-outbox', intervalSeconds: 86_400, run: async () => (runs += 1) };
+
+      const first = new JobScheduler([job], leases, logger);
+      first.start();
+      await vi.advanceTimersByTimeAsync(JOB_START_DELAY_MS);
+      await first.stop();
+      clock.set(minutesAfter(T0, 10)); // a deploy ten minutes later
+      const second = new JobScheduler([job], leases, logger);
+      second.start();
+      await vi.advanceTimersByTimeAsync(JOB_START_DELAY_MS);
+      await second.stop();
+      expect(runs).toBe(1);
+
+      clock.set(minutesAfter(T0, 25 * 60)); // a deploy the next day
+      const third = new JobScheduler([job], leases, logger);
+      third.start();
+      await vi.advanceTimersByTimeAsync(JOB_START_DELAY_MS);
+      await third.stop();
+      expect(runs).toBe(2);
+    } finally {
+      clock.set(T0);
+      vi.useRealTimers();
+    }
+  });
+
+  it('waits a whole interval for a job that asks not to run at start', async () => {
+    vi.useFakeTimers();
+    try {
+      let runs = 0;
+      const job = {
+        name: 'reset-demo-data',
+        intervalSeconds: 60,
+        runAtStart: false,
+        run: async () => (runs += 1),
+      };
+      const scheduler = new JobScheduler([job], new InMemoryKeyValueStore(clock), logger);
+
+      scheduler.start();
+      await vi.advanceTimersByTimeAsync(JOB_START_DELAY_MS);
+      expect(runs).toBe(0);
+      await vi.advanceTimersByTimeAsync(60_000);
+      await scheduler.stop();
+
+      expect(runs).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('runs each job on only one instance per interval', async () => {
     vi.useFakeTimers();
     try {
@@ -263,7 +344,7 @@ describe('JobScheduler', () => {
       const scheduler = new JobScheduler([job], leases, logger, reporter);
 
       scheduler.start();
-      await vi.advanceTimersByTimeAsync(60_000);
+      await vi.advanceTimersByTimeAsync(JOB_START_DELAY_MS); // its first try
       await scheduler.stop();
       vi.useRealTimers();
       await new Promise((resolve) => setImmediate(resolve)); // let any stray rejection surface

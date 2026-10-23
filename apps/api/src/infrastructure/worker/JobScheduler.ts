@@ -3,10 +3,18 @@ import type { Logger } from '../../core/logger/logger';
 import type { ScheduledJob } from '../../core/jobs/ScheduledJob';
 import { noErrorReporting, type ErrorReporter } from '../../core/observability/ErrorReporter';
 
+/** How long after start-up each job gets its first turn (the app settles first). */
+export const JOB_START_DELAY_MS = 30_000;
+
 /**
  * Runs jobs on a fixed interval. With several API instances, a lease in the shared key-value
  * store (Redis) makes sure each job runs on only one of them per interval. A job that is still
  * running when its next turn comes is skipped rather than started twice.
+ *
+ * Each job also gets a turn shortly after start-up, because every deploy restarts the process:
+ * otherwise an hourly job would wait an hour after each deploy, and a daily one would never run
+ * on a day with a deploy. The lease outlives the process, so a job that some instance ran within
+ * its interval is still skipped.
  */
 export class JobScheduler {
   private readonly timers: NodeJS.Timeout[] = [];
@@ -24,11 +32,16 @@ export class JobScheduler {
       const timer = setInterval(() => void this.trigger(job), job.intervalSeconds * 1000);
       timer.unref();
       this.timers.push(timer);
+      if (job.runAtStart !== false) {
+        const first = setTimeout(() => void this.trigger(job), JOB_START_DELAY_MS);
+        first.unref();
+        this.timers.push(first);
+      }
     }
   }
 
   async stop(): Promise<void> {
-    this.timers.forEach((timer) => clearInterval(timer));
+    this.timers.forEach((timer) => clearTimeout(timer));
     this.timers.length = 0;
     await Promise.allSettled(this.running.values());
   }
