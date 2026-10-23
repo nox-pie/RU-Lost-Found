@@ -20,7 +20,13 @@ export class RedisKeyValueStore implements KeyValueStore, HealthIndicator {
   ) {}
 
   static async connect(url: string, logger: Logger, prefix = 'rlf:'): Promise<RedisKeyValueStore> {
-    const redis = new Redis(url, { maxRetriesPerRequest: 2, lazyConnect: true });
+    const redis = new Redis(url, {
+      maxRetriesPerRequest: 2,
+      lazyConnect: true,
+      // ioredis 6 defaults to RESP3; RESP2 is what production (Upstash) has always been used
+      // with, so replies keep the shape this code was tested against.
+      protocol: 2,
+    });
     redis.on('error', (err) => logger.warn({ err }, 'Redis error'));
     await redis.connect();
     logger.info('Connected to Redis');
