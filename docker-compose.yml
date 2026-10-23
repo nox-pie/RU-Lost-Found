@@ -5,7 +5,9 @@
 
 services:
   mongo:
-    image: mongo:7
+    # The version Atlas runs. MongoDB 8.0 refuses to start on Linux kernels 6.19 and newer
+    # (SERVER-121912); Docker Desktop's kernel is older.
+    image: mongo:8.0
     # A one-member replica set: the API uses transactions, which need one.
     command: ['--replSet', 'rs0', '--bind_ip_all']
     volumes: [mongo-data:/data/db]

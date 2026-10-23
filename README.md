@@ -95,7 +95,7 @@ docker compose logs api          # sign-up codes are printed here
 
 ```bash
 npm ci
-docker run -d --name rlf-mongo -p 27017:27017 mongo:7 --replSet rs0
+docker run -d --name rlf-mongo -p 27017:27017 mongo:8.0 --replSet rs0
 docker exec rlf-mongo mongosh --quiet --eval "rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: '127.0.0.1:27017' }] })"
 cp apps/api/.env.example apps/api/.env     # works as is for local development
 npm run seed -w @ru-lost-found/api         # creates (or updates) the university
