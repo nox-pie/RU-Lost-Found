@@ -20,7 +20,7 @@ export const listNotificationsQuerySchema = z
     unread: z
       .enum(['true', 'false'])
       .transform((value) => value === 'true')
-      .default('false'),
+      .prefault('false'),
     cursor: z.string().max(200).optional(),
     limit: z.coerce.number().int().min(1).max(50).default(20),
   })

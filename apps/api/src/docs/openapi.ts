@@ -44,7 +44,7 @@ import {
   userIdParamsSchema,
   verifyOtpSchema,
 } from '@ru-lost-found/shared';
-import { z, type AnyZodObject, type ZodTypeAny } from 'zod';
+import { z, type ZodObject, type ZodTypeAny } from 'zod';
 
 // Adds `.openapi()` to Zod's prototype, which the generator uses for named components.
 extendZodWithOpenApi(z);
@@ -60,8 +60,8 @@ export interface Operation {
   summary: string;
   description?: string;
   access: Access;
-  params?: AnyZodObject;
-  query?: AnyZodObject;
+  params?: ZodObject;
+  query?: ZodObject;
   body?: ZodTypeAny;
   /** Multipart upload: the body fields plus file fields. */
   upload?: { fields?: ZodTypeAny; files: string; maxFiles: number };
@@ -574,7 +574,7 @@ export const OPERATIONS: Operation[] = [
     description:
       'Posts reported from `from` (inclusive) until `until` (exclusive), oldest first: what happened to each (status, why it closed, when it was returned, days to return), never who reported or claimed it. Cells a spreadsheet would run as formulas are kept as text.',
     access: 'admin',
-    query: exportPostsQuerySchema.innerType(),
+    query: exportPostsQuerySchema,
     ok: { 200: 'CSV file (text/csv)' },
   },
   {
@@ -623,8 +623,7 @@ export const OPERATIONS: Operation[] = [
     description:
       'Filter by action, person (`actorId`), record (`targetId`) and time (`from` inclusive, `until` exclusive).',
     access: 'admin',
-    // The object inside the refinement (the from-before-until rule still applies to requests).
-    query: listAuditQuerySchema.innerType(),
+    query: listAuditQuerySchema,
     ok: { 200: `${PAGE} T = AuditEntryDto` },
   },
   {

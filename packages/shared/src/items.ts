@@ -110,7 +110,8 @@ export const listItemsQuerySchema = z
       .string()
       .transform((value) => value.split(',').map((status) => status.trim()))
       .pipe(z.array(z.enum(LISTABLE_ITEM_STATUSES)).min(1))
-      .default('OPEN,RESERVED'),
+      // prefault: the default goes through the same parsing as a value that was sent.
+      .prefault('OPEN,RESERVED'),
     cursor: z.string().max(200).optional(),
     limit: z.coerce.number().int().min(1).max(50).default(20),
   })

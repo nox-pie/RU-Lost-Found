@@ -22,7 +22,7 @@
     "dev:worker": "tsx watch src/worker.ts"
   },
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^7.3.4",
+    "@asteasolutions/zod-to-openapi": "^9.1.0",
     "@ru-lost-found/shared": "*",
     "@sentry/node": "^11.6.0",
     "bcrypt": "^6.0.0",
@@ -40,7 +40,7 @@
     "pino-http": "^10.5.0",
     "sharp": "^0.35.5",
     "swagger-ui-dist": "^5.33.1",
-    "zod": "^3.25.0"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.0",
