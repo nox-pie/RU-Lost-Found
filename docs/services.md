@@ -29,7 +29,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 - **Access:** Database Access has the app's user (read and write). Network Access allows `0.0.0.0/0` because Render's free tier has no fixed outgoing IP; the password is the protection.
 - **Limits:** 512 MB storage and shared CPU. Photos are not stored here (Cloudinary), so this lasts a long time. Old data is pruned automatically: delivered events after 7 days, notifications after 180 days, ended sessions when they expire, audit entries after a year.
 - **Watch:** Clusters → Metrics (storage, connections).
-- **Backups:** M0 has no automatic backups. Before risky changes, export with `mongodump` (MongoDB Database Tools) using the connection string.
+- **Backups:** M0 has no automatic backups. Flex and above take daily snapshots; until then, `mongodump`. The steps for both, and a restore test, are in [launch-checklist.md §3](launch-checklist.md#3-a-week-before-data-safety).
 - **Rotate the password:** Database Access → Edit user → new password → update `MONGODB_URI` in Render (redeploys) and in `apps/api/.env.production`.
 - **Upgrade:** M10+ adds backups, more storage and Atlas Search (better text search).
 
