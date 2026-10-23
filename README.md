@@ -76,7 +76,7 @@ Design patterns and why each is there, security decisions, the data model and th
 | Area     | Choices                                                                                         |
 | -------- | ----------------------------------------------------------------------------------------------- |
 | Web      | React 18, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, React Hook Form + Zod |
-| API      | Node.js 22, Express 5, TypeScript, Mongoose 9, Zod, pino, sharp, JWT, bcrypt                    |
+| API      | Node.js 24, Express 5, TypeScript, Mongoose 9, Zod, pino, sharp, JWT, bcrypt                    |
 | Data     | MongoDB Atlas (transactions), Upstash Redis                                                     |
 | Services | Cloudinary (images), Brevo (email), Sentry (errors), UptimeRobot (uptime)                       |
 | Delivery | Vercel (web), Render (API, Docker), GitHub Actions                                              |
@@ -91,7 +91,7 @@ docker compose up --build        # → http://localhost:8080 · API docs at /api
 docker compose logs api          # sign-up codes are printed here
 ```
 
-**For development** (Node 22, plus Docker for MongoDB):
+**For development** (Node 24, plus Docker for MongoDB):
 
 ```bash
 npm ci
