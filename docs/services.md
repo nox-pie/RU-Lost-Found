@@ -60,7 +60,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 - **Dashboard:** [vercel.com](https://vercel.com) → **ru-lost-found** (tabs: Deployments, Settings → Environment Variables, Settings → Build and Deployment).
 - **What:** builds and serves the React website, adds its security headers, and rewrites `/api/*` to the Render API so the browser sees a single origin (needed for the refresh-token cookie).
-- **Where:** project **`ru-lost-found`**, Root Directory **`apps/web`**, framework Vite, Node 22. Address: `https://ru-lost-found.vercel.app`.
+- **Where:** project **`ru-lost-found`**, Root Directory **`apps/web`**, framework Vite, Node 24 (from `engines` in `apps/web/package.json`). Address: `https://ru-lost-found.vercel.app`.
 - **Settings:** `VITE_SENTRY_DSN` (Environment Variables). Rewrites and headers are in `apps/web/vercel.json`.
 - **Deploys:** automatically on every push to `main`; every earlier deployment can be promoted back in one click (Deployments → ⋯ → Promote to Production).
 - **Watch:** Deployments (build logs), Analytics if enabled.

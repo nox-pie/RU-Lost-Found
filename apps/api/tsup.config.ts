@@ -12,7 +12,7 @@ export default defineConfig({
   },
   format: ['esm'],
   platform: 'node',
-  target: 'node22',
+  target: 'node24',
   outDir: 'dist',
   clean: true,
   sourcemap: true,

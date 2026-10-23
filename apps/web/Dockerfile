@@ -3,7 +3,7 @@
 # (like the Vercel rewrite in production). Build from the repository root:
 #   docker build -f apps/web/Dockerfile -t ru-lost-found-web .
 
-FROM node:22-bookworm-slim AS build
+FROM node:24-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY apps/api/package.json apps/api/
