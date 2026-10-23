@@ -230,6 +230,16 @@ describe('sign-up', () => {
     ]);
   });
 
+  it('asks for the year in plain words when none was chosen', async () => {
+    const verificationToken = await verifiedToken(EMAIL, 'SIGNUP');
+    const res = await api()
+      .post('/api/v1/auth/register')
+      .send({ verificationToken, password: PASSWORD, ...profile, year: undefined });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.details).toEqual([{ path: 'body.year', message: 'Select your year' }]);
+  });
+
   it('enforces the password policy', async () => {
     const verificationToken = await verifiedToken(EMAIL, 'SIGNUP');
 

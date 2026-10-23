@@ -23,7 +23,7 @@ const envSchema = z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
     MONGODB_URI: z.string().regex(/^mongodb(\+srv)?:\/\//, 'must be a MongoDB connection string'),
-    CORS_ORIGINS: commaSeparatedList.default('http://localhost:5173'),
+    CORS_ORIGINS: commaSeparatedList.prefault('http://localhost:5173'),
     /**
      * Number of proxies in front of the app, used to find the client's real IP for rate limits.
      * Too low: every request seems to come from the proxy, so one person can exhaust everyone's
@@ -81,7 +81,7 @@ const envSchema = z
      */
     ADMIN_EMAILS: commaSeparatedList
       .pipe(z.array(z.string().trim().toLowerCase().email('must be email addresses')))
-      .default(''),
+      .prefault(''),
 
     /**
      * Sample data for visitors (modules/demo): when on, the API creates it at start-up if it is
