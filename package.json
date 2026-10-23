@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "dev:api": "npm run dev -w @ru-lost-found/api",
@@ -26,5 +26,12 @@
   },
   "devDependencies": {
     "prettier": "^3.9.10"
+  },
+  "allowScripts": {
+    "bcrypt": true,
+    "esbuild": true,
+    "mongodb-memory-server": true,
+    "@scarf/scarf": false,
+    "fsevents": false
   }
 }
