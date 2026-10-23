@@ -31,6 +31,9 @@ export function createDemoModule(kernel: Kernel) {
           {
             name: 'reset-demo-data',
             intervalSeconds: DEMO_RESET_INTERVAL_SECONDS,
+            // Start-up already sets up the sample data; a reset right after a deploy would only
+            // throw away what visitors were in the middle of.
+            runAtStart: false,
             run: () => seeder.reset(clock.now()),
           },
         ]
