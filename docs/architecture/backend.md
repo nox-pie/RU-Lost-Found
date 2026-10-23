@@ -430,7 +430,7 @@ sequenceDiagram
 | `ItemLifecycleHandler`     | `ItemExpiringSoon`, `ItemClosed` (expired)                                         | Reminds the reporter a week before the post closes (in the app and by email, with a link to keep it open); tells them in the app when it closed by itself                                            |
 | `TellOwnersOfLikelyFinds`  | `ItemReported` (found posts)                                                       | Tells the owners of up to 3 strongly matching lost posts, in the app and by email (matching module)                                                                                                  |
 
-**Scheduled jobs**, run by the same worker. A lease in the shared key-value store (Redis) makes each job run on only one instance per interval; if the lease can't be taken, that run is skipped and reported, never left to crash the process:
+**Scheduled jobs**, run by the same worker. A lease in the shared key-value store (Redis) makes each job run on only one instance per interval; if the lease can't be taken, that run is skipped and reported, never left to crash the process. Each job also gets a turn about 30 seconds after start-up, because every deploy restarts the process: without it an hourly job would wait an hour after each deploy and a daily one might never run. The lease outlives the process, so a job some instance ran within its interval is still skipped. The demo reset is the exception: it waits its first hour, since start-up already sets up the sample data.
 
 | Job                         | Every  | Does                                                                                                     |
 | --------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
@@ -687,7 +687,7 @@ One `errorHandler` middleware converts `AppError` into the error format above. A
 - A fixed, controllable clock: expiry, deadlines, back-off and rate-limit windows are tested by moving time, not by waiting.
 - Every test server binds explicitly to `127.0.0.1`: with many test files running in parallel, supertest's default (all addresses) occasionally let requests reach another file's server.
 
-**Current numbers:** 454 API tests and 27 end-to-end tests (33 runs: the six marked `@mobile` also run on a phone, one of them only there). Coverage is 95% statements, 88% branches, 97% functions, 97% lines. The build fails below 93 / 84 / 95 / 95. A test checks the OpenAPI document both ways: every documented operation is routed, and every route is documented.
+**Current numbers:** 457 API tests and 27 end-to-end tests (33 runs: the six marked `@mobile` also run on a phone, one of them only there). Coverage is 95% statements, 88% branches, 97% functions, 97% lines. The build fails below 93 / 84 / 95 / 95. A test checks the OpenAPI document both ways: every documented operation is routed, and every route is documented.
 
 ### Continuous integration (`.github/workflows/ci.yml`)
 
