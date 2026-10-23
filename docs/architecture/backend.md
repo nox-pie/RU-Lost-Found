@@ -683,7 +683,7 @@ One `errorHandler` middleware converts `AppError` into the error format above. A
 
 **Test infrastructure worth knowing:**
 
-- One in-memory MongoDB **replica set** for the whole run (transactions need one), a separate database per test file, collections emptied after each test.
+- One in-memory MongoDB **replica set** for the whole run (transactions need one), on MongoDB 8.0.34 like Atlas (`config.mongodbMemoryServer` in the workspaces' `package.json`, `MONGOMS_VERSION` in CI), a separate database per test file, collections emptied after each test.
 - A fixed, controllable clock: expiry, deadlines, back-off and rate-limit windows are tested by moving time, not by waiting.
 - Every test server binds explicitly to `127.0.0.1`: with many test files running in parallel, supertest's default (all addresses) occasionally let requests reach another file's server.
 

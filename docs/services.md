@@ -24,7 +24,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 - **Dashboard:** [cloud.mongodb.com](https://cloud.mongodb.com) → cluster **Lost-and-Found** → Browse Collections → **ru-lost-found-v2**.
 - **What:** all data: universities, users, sessions, posts, claims, notifications, moderation reports, the audit log and the outbox of pending events. Transactions (claim + item + events saved together) need a replica set, which every Atlas cluster is.
-- **Where:** project with the cluster **`Lost-and-Found`** (M0, AWS Mumbai `ap-south-1`). The app's database is **`ru-lost-found-v2`**; it creates its collections and indexes itself on start-up.
+- **Where:** project with the cluster **`Lost-and-Found`** (M0, AWS Mumbai `ap-south-1`, MongoDB 8.0; tests, CI and Docker use the same version, so check them after Atlas moves to a new major version). The app's database is **`ru-lost-found-v2`**; it creates its collections and indexes itself on start-up.
 - **Setting:** `MONGODB_URI` (connection string ending in `/ru-lost-found-v2`), in Render and in `apps/api/.env.production`.
 - **Access:** Database Access has the app's user (read and write). Network Access allows `0.0.0.0/0` because Render's free tier has no fixed outgoing IP; the password is the protection.
 - **Limits:** 512 MB storage and shared CPU. Photos are not stored here (Cloudinary), so this lasts a long time. Old data is pruned automatically: delivered events after 7 days, notifications after 180 days, ended sessions when they expire, audit entries after a year.

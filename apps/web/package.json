@@ -45,5 +45,10 @@
     "vite": "^8.3.1"
   },
   "author": "Prashant Kumar",
-  "description": "Lost & Found portal for Rishihood University"
+  "description": "Lost & Found portal for Rishihood University",
+  "config": {
+    "mongodbMemoryServer": {
+      "version": "8.0.34"
+    }
+  }
 }
