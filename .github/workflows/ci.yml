@@ -142,7 +142,9 @@ jobs:
 
   docker:
     name: Docker · build and run the whole product
-    runs-on: ubuntu-latest
+    # Pinned: MongoDB 8.0 refuses to start on Linux kernels 6.19 and newer (SERVER-121912), which
+    # the newest Ubuntu runners have; 22.04's kernel is older.
+    runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
