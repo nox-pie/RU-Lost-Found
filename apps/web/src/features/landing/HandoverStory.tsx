@@ -60,11 +60,11 @@ export function HandoverStory() {
     return () => clearInterval(timer);
   }, [playing]);
 
-  useEffect(() => {
-    if (elapsed < total) return;
-    setActive((index) => (index + 1) % STEPS.length);
+  // A finished step moves on to the next (adjusted while rendering, not in an effect).
+  if (elapsed >= total) {
+    setActive((active + 1) % STEPS.length);
     setElapsed(0);
-  }, [elapsed, total]);
+  }
 
   const show = (index: number) => {
     setActive(index);

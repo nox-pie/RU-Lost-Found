@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ItemCategory, ItemDto, UpdateItemInput } from '@ru-lost-found/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '../../components/ui/Button';
@@ -43,7 +43,6 @@ function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
   const {
     register,
     control,
-    watch,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting, isDirty, dirtyFields },
@@ -60,7 +59,7 @@ function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
     },
   });
 
-  const spot = spotField(places, watch('place'), whereLabel);
+  const spot = spotField(places, useWatch({ control, name: 'place' }), whereLabel);
 
   const onSubmit = handleSubmit(async (values) => {
     // Only what changed is sent, so an edit never overwrites more than the reporter touched.

@@ -8,7 +8,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -77,7 +77,6 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
     register,
     control,
     handleSubmit,
-    watch,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<ReportForm>({
@@ -91,10 +90,10 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
     },
   });
   const questions = useFieldArray({ control, name: 'questions' });
-  const type = watch('type');
+  const type = useWatch({ control, name: 'type' });
   const places = useCampusPlaces();
   const whereLabel = type === 'LOST' ? 'Where did you lose it?' : 'Where did you find it?';
-  const spot = spotField(places, watch('place'), whereLabel);
+  const spot = spotField(places, useWatch({ control, name: 'place' }), whereLabel);
 
   const onSubmit = handleSubmit(async (values) => {
     if (photos.length === 0) {

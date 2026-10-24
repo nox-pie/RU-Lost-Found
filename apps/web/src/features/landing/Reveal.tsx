@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useInView, usePrefersReducedMotion } from '../../lib/hooks';
 
 /**
@@ -10,9 +10,7 @@ export function Reveal({ children, className = '' }: { children: ReactNode; clas
   const inView = useInView(ref, 0.15);
   const reducedMotion = usePrefersReducedMotion();
   const [shown, setShown] = useState(reducedMotion);
-  useEffect(() => {
-    if (inView) setShown(true);
-  }, [inView]);
+  if (inView && !shown) setShown(true);
 
   return (
     <div
