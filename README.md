@@ -55,7 +55,7 @@ A **modular monolith** in layers (route → controller → service → domain �
 
 ```text
 apps/api          REST API (Express 5, Mongoose 9, Zod)          → docs/architecture/backend.md
-apps/web          React 18 SPA (Vite, Tailwind, TanStack Query)  → docs/architecture/frontend.md
+apps/web          React 19 SPA (Vite, Tailwind, TanStack Query)  → docs/architecture/frontend.md
 packages/shared   Zod schemas, enums and DTO types used by both, so client and server validate the same way
 load              k6 load test                                    → docs/load-test.md
 ```
@@ -73,14 +73,14 @@ Design patterns and why each is there, security decisions, the data model and th
 
 ## Tech stack
 
-| Area     | Choices                                                                                         |
-| -------- | ----------------------------------------------------------------------------------------------- |
-| Web      | React 18, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, React Hook Form + Zod |
-| API      | Node.js 24, Express 5, TypeScript, Mongoose 9, Zod, pino, sharp, JWT, bcrypt                    |
-| Data     | MongoDB Atlas (transactions), Upstash Redis                                                     |
-| Services | Cloudinary (images), Brevo (email), Sentry (errors), UptimeRobot (uptime)                       |
-| Delivery | Vercel (web), Render (API, Docker), GitHub Actions                                              |
-| Testing  | Vitest, Supertest, mongodb-memory-server, Playwright, k6                                        |
+| Area     | Choices                                                                                           |
+| -------- | ------------------------------------------------------------------------------------------------- |
+| Web      | React 19, TypeScript, Vite, Tailwind CSS 4, React Router 8, TanStack Query, React Hook Form + Zod |
+| API      | Node.js 24, Express 5, TypeScript, Mongoose 9, Zod, pino, sharp, JWT, bcrypt                      |
+| Data     | MongoDB Atlas (transactions), Upstash Redis                                                       |
+| Services | Cloudinary (images), Brevo (email), Sentry (errors), UptimeRobot (uptime)                         |
+| Delivery | Vercel (web), Render (API, Docker), GitHub Actions                                                |
+| Testing  | Vitest, Supertest, mongodb-memory-server, Playwright, k6                                          |
 
 ## Running it locally
 

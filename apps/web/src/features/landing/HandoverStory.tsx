@@ -175,7 +175,7 @@ export function HandoverStory() {
       </div>
 
       {/* A picture of the active step; its words are in the list above (read by screen readers). */}
-      <div aria-hidden {...({ inert: '' } as Record<string, string>)}>
+      <div aria-hidden inert>
         <AppWindow path={scene.path}>
           <div key={active} className="animate-fade-in">
             {scene.render(t)}

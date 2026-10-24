@@ -56,7 +56,7 @@ function useScrollToHash() {
   }, [hash]);
 }
 
-function Hero({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
+function Hero({ heroRef }: { heroRef: RefObject<HTMLElement | null> }) {
   const showDemo = useShowDemo();
   return (
     <section
@@ -69,9 +69,8 @@ function Hero({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
         alt=""
         width={1920}
         height={1027}
-        // The largest thing on screen: fetch it first. (React 18 only passes the lowercase
-        // HTML attribute through; React 19 adds `fetchPriority`.)
-        {...({ fetchpriority: 'high' } as Record<string, string>)}
+        // The largest thing on screen: fetch it first.
+        fetchPriority="high"
         className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_65%]"
       />
       <div
