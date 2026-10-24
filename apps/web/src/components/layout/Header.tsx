@@ -41,11 +41,13 @@ export function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close menus when navigating.
-  useEffect(() => {
+  // Close menus when navigating (adjusted while rendering, so no frame shows them open).
+  const [path, setPath] = useState(location.pathname);
+  if (path !== location.pathname) {
+    setPath(location.pathname);
     setMenuOpen(false);
     setAccountOpen(false);
-  }, [location.pathname]);
+  }
 
   useEffect(() => {
     if (!accountOpen) return;

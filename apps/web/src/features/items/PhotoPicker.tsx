@@ -23,7 +23,7 @@ export function PhotoPicker({ files, onChange, max, maxBytes, error }: PhotoPick
   const camera = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [preparing, setPreparing] = useState(false);
-  const canCapture = useMemo(hasTouchScreen, []);
+  const canCapture = useMemo(() => hasTouchScreen(), []);
   const [problem, setProblem] = useState<string>();
   const previews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
   useEffect(() => () => previews.forEach((url) => URL.revokeObjectURL(url)), [previews]);

@@ -181,3 +181,33 @@ test('an item page asks for your claim on that item, so an older claim is never 
   await expect(claimant.page.getByText("You've already made a claim on this item")).toBeVisible();
   await expect(claimant.page.getByRole('button', { name: 'This is mine' })).toHaveCount(0);
 });
+
+test('the phone menu closes once one of its links is followed @mobile', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, 'The menu button is for phones');
+  const email = uniqueEmail('desk-menu');
+  await signUp(page, { email, first: 'Mona', last: 'Menu' });
+  appoint(email, 'SECURITY_DESK');
+  await page.reload();
+
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  const menu = page.getByRole('navigation', { name: 'Mobile' });
+  await menu.getByRole('link', { name: 'Desk' }).click();
+
+  await expect(page).toHaveURL(/\/desk$/);
+  await expect(menu).toHaveCount(0);
+});
+
+test('the landing story fades in and moves on to its next step by itself', async ({ page }) => {
+  await page.goto('/');
+  const story = page.locator('#how-it-works');
+  await story.scrollIntoViewIfNeeded();
+
+  const heading = story.getByRole('heading', { name: 'From “I lost it” to “I got it back”' });
+  await expect(heading.locator('xpath=../..')).toHaveCSS('opacity', '1');
+  const current = story.locator('ol button[aria-current="step"]');
+  await expect(current).toContainText('Ravi searches for his wallet');
+  await expect(current).toContainText('Asha found it, and posts it');
+});

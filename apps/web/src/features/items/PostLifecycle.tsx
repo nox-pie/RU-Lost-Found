@@ -26,7 +26,8 @@ function useSavePost(item: ItemDto) {
  * For the reporter: a closed post can be opened again, and an open post closing within a week
  * can be kept open. Nothing otherwise.
  */
-export function PostLifecycleNotice({ item, now = Date.now() }: { item: ItemDto; now?: number }) {
+export function PostLifecycleNotice({ item }: { item: ItemDto }) {
+  const [now] = useState(Date.now);
   const save = useSavePost(item);
   const keepOpen = useMutation({
     mutationFn: () => itemsApi.keepOpen(item.id),

@@ -20,7 +20,7 @@ interface StoredEmail {
 }
 
 function emailsTo(address: string): StoredEmail[] {
-  let files: string[] = [];
+  let files: string[];
   try {
     files = readdirSync(EMAIL_DIR)
       .filter((file) => file.endsWith('.json'))
