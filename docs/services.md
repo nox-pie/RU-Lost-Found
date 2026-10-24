@@ -38,7 +38,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 - **Dashboard:** [console.upstash.com](https://console.upstash.com) → Redis → **ru-lost-found**.
 - **What:** short-lived shared state: one-time codes (stored as a hash, 10 minutes), rate-limit counters, failed-login counters and the leases that make each scheduled job run on one instance only. Losing it is harmless: codes must be requested again and counters restart.
 - **Where:** database **`ru-lost-found`**, region **AP-Southeast-1 (Singapore)**, next to the API.
-- **Setting:** `REDIS_URL`, which must start with `rediss://` (encrypted). The API refuses anything else at start-up.
+- **Setting:** `REDIS_URL`, which must start with `rediss://` (encrypted). The API refuses anything else at start-up. The API speaks the RESP2 protocol (`protocol: 2` in `RedisKeyValueStore`), which it has always used with Upstash; ioredis 6 would otherwise switch to RESP3.
 - **Limits:** the free plan has a command allowance and a size limit (see the database's **Usage** page). Each write request uses about one command for its rate limit; reads aren't counted.
 - **Watch:** Usage page (commands per day).
 - **Rotate the password:** database page → reset credentials → copy the new `rediss://…` URL into Render.
