@@ -25,7 +25,7 @@ export function usePrefersReducedMotion(): boolean {
 }
 
 /** True while the element is at least partly on screen (auto-play only what can be seen). */
-export function useInView<T extends Element>(ref: RefObject<T>, threshold = 0.3): boolean {
+export function useInView<T extends Element>(ref: RefObject<T | null>, threshold = 0.3): boolean {
   const [inView, setInView] = useState(false);
   useEffect(() => {
     const element = ref.current;

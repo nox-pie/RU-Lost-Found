@@ -14,7 +14,7 @@ const SECTIONS = [
  * The landing page's bar: transparent over the campus photo, frosted and light once the photo
  * has scrolled away. Links to the page's sections, with the one being read underlined.
  */
-export function LandingNav({ heroRef }: { heroRef: RefObject<HTMLElement> }) {
+export function LandingNav({ heroRef }: { heroRef: RefObject<HTMLElement | null> }) {
   const [overHero, setOverHero] = useState(true);
   const [current, setCurrent] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
