@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NotFoundError, ValidationError } from '../../core/errors/AppError';
+import { UnauthorizedError, ValidationError } from '../../core/errors/AppError';
 import { createLogger } from '../../core/logger/logger';
 import { FixedClock, aUniversity, aUser } from '../../testing/builders';
 import { InMemoryStorageProvider } from '../../testing/InMemoryStorageProvider';
@@ -106,11 +106,11 @@ describe('UserService', () => {
     expect(updated.profile.avatar?.publicId).toBe('avatars/test-2');
   });
 
-  it('refuses a missing picture, unknown users and schools of other universities', async () => {
+  it('refuses a missing picture and schools of other universities; a deleted account’s session has ended', async () => {
     const { service, user } = setup();
 
     await expect(service.changeAvatar(user.id, undefined)).rejects.toBeInstanceOf(ValidationError);
-    await expect(service.getById('unknown')).rejects.toBeInstanceOf(NotFoundError);
+    await expect(service.getById('unknown')).rejects.toBeInstanceOf(UnauthorizedError);
     await expect(service.updateProfile(user.id, { school: 'Hogwarts' })).rejects.toBeInstanceOf(
       ValidationError,
     );

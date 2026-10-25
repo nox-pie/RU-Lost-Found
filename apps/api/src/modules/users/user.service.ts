@@ -1,7 +1,7 @@
 import type { UpdateProfileInput } from '@ru-lost-found/shared';
 import type { Clock } from '../../core/domain/Clock';
 import type { ImageRef } from '../../core/domain/ImageRef';
-import { NotFoundError, ValidationError } from '../../core/errors/AppError';
+import { UnauthorizedError, ValidationError } from '../../core/errors/AppError';
 import type { Logger } from '../../core/logger/logger';
 import type { ImageUpload, StorageProvider } from '../../core/storage/StorageProvider';
 import type { UniversityRepository } from '../universities/domain/UniversityRepository';
@@ -17,9 +17,13 @@ export class UserService {
     private readonly logger: Logger,
   ) {}
 
+  /**
+   * The signed-in person's own account. Gone means deleted (on another device) while this
+   * access token still lives: the session has ended, so the app signs out instead of failing.
+   */
   async getById(userId: string): Promise<User> {
     const user = await this.users.findById(userId);
-    if (!user) throw new NotFoundError('User');
+    if (!user) throw new UnauthorizedError('Your session has ended. Please sign in again.');
     return user;
   }
 
