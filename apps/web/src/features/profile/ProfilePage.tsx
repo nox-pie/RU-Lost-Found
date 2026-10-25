@@ -95,11 +95,11 @@ function AvatarSection({ user, onChange }: { user: MeDto; onChange: (user: MeDto
   return (
     <section className="mt-8 flex items-center gap-5 rounded-2xl bg-white p-5 shadow-xs">
       <Avatar name={`${user.firstName} ${user.lastName}`} url={user.avatarUrl} size="lg" />
-      <div>
-        <p className="font-medium text-gray-900">
+      <div className="min-w-0">
+        <p className="wrap-break-word font-medium text-gray-900">
           {user.firstName} {user.lastName}
         </p>
-        <p className="text-sm text-gray-500">{user.email}</p>
+        <p className="wrap-break-word text-sm text-gray-500">{user.email}</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
             size="sm"

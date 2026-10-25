@@ -129,10 +129,16 @@ export function appoint(email: string, role: 'SECURITY_DESK' | 'UNIVERSITY_ADMIN
 
 /** Posts a found item through the report dialog and waits for its page. */
 export async function reportFoundItem(page: Page, title: string) {
-  await page.getByRole('button', { name: 'Report item' }).click();
+  // "Report item" in the header; on phones also "Report an item" in the bottom bar.
+  await page
+    .getByRole('button', { name: /^Report (item|an item)$/ })
+    .filter({ visible: true })
+    .first()
+    .click();
   const dialog = page.getByRole('dialog', { name: 'Report an item' });
   await dialog.getByText('I found something').click();
-  await dialog.locator('input[type=file]').setInputFiles(FIXTURE_PHOTO);
+  // Phones also get a second input that opens the camera.
+  await dialog.locator('input[type=file]:not([capture])').setInputFiles(FIXTURE_PHOTO);
   await expect(dialog.getByRole('img', { name: 'Photo 1' })).toBeVisible();
   await dialog.getByLabel('Item name').fill(title);
   await choose(page, 'Category', 'Electronics', dialog);

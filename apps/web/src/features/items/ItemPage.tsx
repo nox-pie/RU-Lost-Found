@@ -59,7 +59,7 @@ function ItemView({ item }: { item: ItemDto }) {
       >
         <ArrowLeft className="h-4 w-4" /> Back to browsing
       </Link>
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div>
           <button
             type="button"
@@ -111,7 +111,9 @@ function ItemView({ item }: { item: ItemDto }) {
             <span className="text-xs text-gray-500">{CATEGORY_LABELS[item.category]}</span>
           </div>
           <div className="mt-3 flex items-start justify-between gap-3">
-            <h1 className="font-display text-3xl font-bold text-gray-900">{item.title}</h1>
+            <h1 className="min-w-0 wrap-break-word font-display text-3xl font-bold text-gray-900">
+              {item.title}
+            </h1>
             <ShareButton item={item} />
           </div>
           {item.isSample && (
@@ -120,12 +122,14 @@ function ItemView({ item }: { item: ItemDto }) {
               claim it like a real one.
             </p>
           )}
-          <p className="mt-4 whitespace-pre-line text-gray-700">{item.description}</p>
+          <p className="mt-4 whitespace-pre-line wrap-break-word text-gray-700">
+            {item.description}
+          </p>
 
           <dl className="mt-6 space-y-2 text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" /> <dt className="sr-only">Place</dt>
-              <dd>{whereOf(item)}</dd>
+              <dd className="min-w-0 wrap-break-word">{whereOf(item)}</dd>
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" /> <dt className="sr-only">Date</dt>
