@@ -221,3 +221,22 @@ test('the logo on the landing page takes you back to the top @mobile', async ({ 
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   await expect(page).toHaveURL(/\/$/);
 });
+
+test('long words and addresses never make a phone page scroll sideways @mobile', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, 'A phone screen');
+  await page.setViewportSize({ width: 320, height: 640 });
+  const email = uniqueEmail('a.student.with.a.rather.long.name');
+  await signUp(page, { email, first: 'Wide', last: 'Words' });
+  const fits = () => page.evaluate(() => document.scrollingElement!.scrollWidth <= 320);
+
+  // A pasted link or code has no spaces to wrap at.
+  await reportFoundItem(page, 'W'.repeat(80));
+  expect(await fits()).toBe(true);
+
+  await page.goto('/profile');
+  await expect(page.getByText(email)).toBeVisible();
+  expect(await fits()).toBe(true);
+});

@@ -85,6 +85,8 @@ describe('deleting my account', () => {
       .post('/api/v1/auth/login')
       .send({ email: asha.email, password: TEST_PASSWORD });
     expect(login.status).toBe(401);
+    // A device still holding her access token is signed out, not shown an error.
+    expect((await get(asha, 'users/me')).status).toBe(401);
     // Her open post is removed and Kabir's claim on it closed.
     expect((await get(kabir, `items/${open}`)).status).toBe(404);
     expect((await get(kabir, `claims/${kabirsClaim}`)).body.status).toBe('CANCELLED');

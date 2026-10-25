@@ -326,7 +326,7 @@ function WeeklyChart({ weeks }: { weeks: UniversityStatsDto['weekly'] }) {
       </div>
       <div className="mt-5 flex h-40 items-end gap-2 sm:gap-4" aria-hidden>
         {weeks.map((week) => (
-          <div key={week.weekStart} className="flex h-full flex-1 flex-col justify-end">
+          <div key={week.weekStart} className="flex h-full min-w-0 flex-1 flex-col justify-end">
             <div className="flex flex-1 items-end justify-center gap-1">
               <Bar value={week.reported} max={max} className="bg-primary" />
               <Bar value={week.returned} max={max} className="bg-secondary" />

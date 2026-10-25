@@ -97,7 +97,7 @@ function ClaimView({ claim }: { claim: ClaimDto }) {
 
       <ClaimProgress claim={claim} />
 
-      <div className="mt-6 grid gap-6 md:grid-cols-5">
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-5">
         <div className="space-y-6 md:col-span-3">
           <HandoverPanel claim={claim} />
           <DecisionPanel claim={claim} />
@@ -110,14 +110,16 @@ function ClaimView({ claim }: { claim: ClaimDto }) {
               <dl className="mt-3 space-y-3 text-sm">
                 {claim.answers.map((answer) => (
                   <div key={answer.questionId}>
-                    <dt className="text-gray-500">{answer.question}</dt>
-                    <dd className="font-medium text-gray-900">{answer.answer}</dd>
+                    <dt className="wrap-break-word text-gray-500">{answer.question}</dt>
+                    <dd className="wrap-break-word font-medium text-gray-900">{answer.answer}</dd>
                   </div>
                 ))}
                 {claim.message && (
                   <div>
                     <dt className="text-gray-500">Message</dt>
-                    <dd className="whitespace-pre-line text-gray-900">{claim.message}</dd>
+                    <dd className="whitespace-pre-line wrap-break-word text-gray-900">
+                      {claim.message}
+                    </dd>
                   </div>
                 )}
               </dl>
@@ -125,7 +127,7 @@ function ClaimView({ claim }: { claim: ClaimDto }) {
           )}
 
           {claim.rejectionReason && (
-            <p className="rounded-2xl bg-red-50 p-4 text-sm text-red-800">
+            <p className="wrap-break-word rounded-2xl bg-red-50 p-4 text-sm text-red-800">
               <span className="font-medium">Reason: </span>
               {claim.rejectionReason}
             </p>

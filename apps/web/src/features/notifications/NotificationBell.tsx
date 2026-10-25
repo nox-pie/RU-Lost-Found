@@ -91,7 +91,7 @@ export function NotificationBell() {
                     onClick={() => openNotification(notification)}
                     className={`block w-full px-4 py-3 text-left hover:bg-gray-50 ${notification.read ? '' : 'bg-primary/5'}`}
                   >
-                    <p className="flex items-start gap-2 text-sm font-medium">
+                    <p className="flex items-start gap-2 wrap-anywhere text-sm font-medium">
                       {!notification.read && (
                         <span
                           className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary"
@@ -100,7 +100,9 @@ export function NotificationBell() {
                       )}
                       {notification.title}
                     </p>
-                    <p className="mt-0.5 line-clamp-2 text-sm text-gray-600">{notification.body}</p>
+                    <p className="mt-0.5 line-clamp-2 wrap-break-word text-sm text-gray-600">
+                      {notification.body}
+                    </p>
                     <p className="mt-1 text-xs text-gray-400">{timeAgo(notification.createdAt)}</p>
                   </button>
                 </li>
