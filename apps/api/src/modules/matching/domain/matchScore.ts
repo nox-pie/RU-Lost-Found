@@ -33,7 +33,7 @@ const FILLER = new Set(
 );
 
 /** The distinctive words of a text: lower case, no filler, no plural "s" ("keys" = "key"). */
-export function keywords(text: string): Set<string> {
+function keywords(text: string): Set<string> {
   const words = text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
   return new Set(
     words
