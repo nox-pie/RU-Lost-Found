@@ -211,3 +211,13 @@ test('the landing story fades in and moves on to its next step by itself', async
   await expect(current).toContainText('Ravi searches for his wallet');
   await expect(current).toContainText('Asha found it, and posts it');
 });
+
+test('the logo on the landing page takes you back to the top @mobile', async ({ page }) => {
+  await page.goto('/#safeguards');
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(500);
+
+  await page.getByRole('banner').getByRole('link', { name: 'RU Lost & Found' }).click();
+
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(page).toHaveURL(/\/$/);
+});
