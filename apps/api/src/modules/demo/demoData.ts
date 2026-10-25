@@ -1,4 +1,10 @@
-import type { ItemCategory, ItemType } from '@ru-lost-found/shared';
+import type {
+  ItemCategory,
+  ItemType,
+  ModerationDecision,
+  ReportReason,
+  Role,
+} from '@ru-lost-found/shared';
 
 /**
  * The sample data visitors see before the portal has real users: fictional students and their
@@ -15,6 +21,8 @@ export interface DemoPerson {
   year: number;
   /** A profile picture served by the web app (public/demo/people), for the one-click personas. */
   avatar?: string;
+  /** Students unless set. */
+  role?: Role;
 }
 
 export const DEMO_PEOPLE: readonly DemoPerson[] = [
@@ -38,6 +46,9 @@ export const DEMO_PEOPLE: readonly DemoPerson[] = [
   { key: 'arjun.nair', firstName: 'Arjun', lastName: 'Nair', year: 3 },
   { key: 'isha.kapoor', firstName: 'Isha', lastName: 'Kapoor', year: 1 },
   { key: 'dev.malhotra', firstName: 'Dev', lastName: 'Malhotra', year: 4 },
+  // Decides the sample reports. Nobody can sign in as her: demo sign-in offers only the
+  // personas (DEMO_PERSONAS), and demo accounts can't get a password.
+  { key: 'neha.sharma', firstName: 'Neha', lastName: 'Sharma', year: 1, role: 'UNIVERSITY_ADMIN' },
 ];
 
 /** What happens to a post after it is created. */
@@ -332,5 +343,77 @@ export const DEMO_POSTS: readonly DemoPost[] = [
     reporter: 'arjun.nair',
     daysAgo: 47,
     outcome: { kind: 'returned', claimant: 'kabir.rao', daysToReturn: 3 },
+  },
+];
+
+/**
+ * A post that breaks the rules: an advert dressed up as a found item. The sample admin removes
+ * it, so the admins' decided reports include a removed post; it never reaches the feed.
+ */
+export const DEMO_ADVERT: DemoPost = {
+  photo: 'headphones',
+  type: 'FOUND',
+  category: 'ELECTRONICS',
+  title: 'Selling wireless headphones, barely used',
+  description: 'Not lost, just selling. ₹1,500 or best offer, message me.',
+  place: 'Atrium',
+  location: 'Near the entrance',
+  reporter: 'kabir.rao',
+  daysAgo: 3,
+  outcome: { kind: 'open' },
+};
+
+/** A report on a sample post, for the admins' review queue (Admin → Reports). */
+export interface DemoReport {
+  /** The title of the post it is about (in DEMO_POSTS, or DEMO_ADVERT). */
+  post: string;
+  by: string;
+  reason: ReportReason;
+  details: string;
+  /** Filed this many hours before the seed runs. */
+  hoursAgo: number;
+  /** Already decided by the sample admin; without one, it waits for review. */
+  decision?: { kind: ModerationDecision; note: string; hoursLater: number };
+}
+
+/** Two reports to review and two already decided (one post kept, one removed). */
+export const DEMO_REPORTS: readonly DemoReport[] = [
+  {
+    post: 'Brown card holder with a student ID',
+    by: 'meera.iyer',
+    reason: 'INAPPROPRIATE',
+    details: 'The photo shows the student ID clearly, with the name and enrollment number.',
+    hoursAgo: 5,
+  },
+  {
+    post: 'Blue scientific calculator',
+    by: 'arjun.nair',
+    reason: 'DUPLICATE',
+    details: 'Looks like the same calculator as the black Casio post.',
+    hoursAgo: 20,
+  },
+  {
+    post: DEMO_ADVERT.title,
+    by: 'ananya.gupta',
+    reason: 'SPAM',
+    details: 'This is an advert, not a found item.',
+    hoursAgo: 48,
+    decision: {
+      kind: 'REMOVE_ITEM',
+      note: 'Lost & Found isn’t for selling things.',
+      hoursLater: 2,
+    },
+  },
+  {
+    post: 'Clear water bottle',
+    by: 'isha.kapoor',
+    reason: 'SPAM',
+    details: 'It’s only a water bottle, not worth a post.',
+    hoursAgo: 72,
+    decision: {
+      kind: 'DISMISS',
+      note: 'Small things matter to their owners too. The post stays.',
+      hoursLater: 3,
+    },
   },
 ];

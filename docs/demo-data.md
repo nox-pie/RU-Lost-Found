@@ -1,8 +1,10 @@
 # Demo data
 
-Before the portal has real users, it shows **sample data** so visitors (recruiters, examiners, students) see how it looks and works: 8 fictional students and 20 posts across the categories, in every status (open, handover arranged, returned), dated over the last eight weeks. Each post names one of Rishihood University's campus places with the exact spot ("Library · Reading room"), so places, matching and the admin breakdown by place show real-looking data. On a deployment whose university lacks one of these places, that post keeps the place in its spot text instead.
+Before the portal has real users, it shows **sample data** so visitors (recruiters, examiners, students) see how it looks and works: 8 fictional students and 20 posts across the categories, in every status (open, handover arranged, returned), dated over the last eight weeks, plus a few reports for the admins (below). Each post names one of Rishihood University's campus places with the exact spot ("Library · Reading room"), so places, matching and the admin breakdown by place show real-looking data. On a deployment whose university lacks one of these places, that post keeps the place in its spot text instead.
 
 Everything is created through the real domain and services: returned posts went through a real claim, approval and handover, so their history, notifications, activity-log entries and the admin statistics are exactly what real use produces. Sample posts can be claimed like real ones.
+
+**For admins:** Admin → Reports shows two sample reports to review (a student ID visible in a photo, a suspected duplicate) and two already decided by a fictional campus admin, Neha Sharma: one dismissed (the post stays) and one that removed an advert posted as a found item (it never reaches the feed). The demo personas are students, so visitors don't see this: it is there for admins and screenshots. Nobody can sign in as Neha: demo sign-in offers only the personas, and demo accounts can't get a password.
 
 ## Trying it without an account
 
@@ -51,7 +53,7 @@ Part of the [launch checklist](launch-checklist.md), which has the full order of
 
 ## Where it lives
 
-- `apps/api/src/modules/demo/demoData.ts`: the people and posts (edit here to change the samples)
+- `apps/api/src/modules/demo/demoData.ts`: the people, posts and reports (edit here to change the samples)
 - `apps/api/src/modules/demo/DemoSeeder.ts`: seed, remove, reset
 - `apps/api/src/modules/demo/infrastructure/MongoDemoDataStore.ts`: finds and deletes everything tied to demo accounts
 - `apps/web/public/demo/`: the photos

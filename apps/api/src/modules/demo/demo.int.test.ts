@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ForbiddenError } from '../../core/errors/AppError';
 import { T0 } from '../../testing/builders';
 import { MongoUserRepository } from '../users/infrastructure/MongoUserRepository';
-import { reportItem, signUp, type SignedInUser } from '../../testing/signedIn';
+import { reportItem, signUp, withRole, type SignedInUser } from '../../testing/signedIn';
 import { seedUniversity, useTestApp } from '../../testing/testApp';
 import seedFile from '../../../seed/universities.json';
 import { DEMO_RESET_INTERVAL_SECONDS } from './DemoSeeder';
-import { DEMO_POSTS } from './demoData';
+import { DEMO_PEOPLE, DEMO_POSTS, DEMO_REPORTS } from './demoData';
 
 const t = useTestApp();
 const api = () => request(t.app);
@@ -36,13 +36,13 @@ async function feed(status = 'OPEN,RESERVED,RESOLVED') {
   }[];
 }
 
-// Each test seeds 8 people and 20 posts through real claim flows: allow for a busy test run.
+// Each test seeds the sample people and posts through real claim flows: allow for a busy test run.
 describe('sample data', { timeout: 30_000 }, () => {
   it('creates people and posts in every status through the real claim flow', async () => {
     const result = await demo().seed(T0);
     await t.container.worker.drain();
 
-    expect(result).toEqual({ people: 8, posts: DEMO_POSTS.length });
+    expect(result).toEqual({ people: DEMO_PEOPLE.length, posts: DEMO_POSTS.length });
     const posts = await feed();
     expect(posts).toHaveLength(DEMO_POSTS.length);
     expect(posts.every((p) => p.isSample)).toBe(true);
@@ -151,7 +151,7 @@ describe('sample data', { timeout: 30_000 }, () => {
 
     const removed = await demo().remove();
 
-    expect(removed.users).toBe(8);
+    expect(removed.users).toBe(DEMO_PEOPLE.length);
     expect((await feed()).map((p) => p.id)).toEqual([real]);
     const claims = await api()
       .get('/api/v1/claims/mine')
@@ -178,6 +178,45 @@ describe('sample data', { timeout: 30_000 }, () => {
         { message: 'Mine', answers: [], sharePhone: false },
       ),
     ).rejects.toThrow(ForbiddenError);
+  });
+
+  it('gives the admins two reports to review and two already decided', async () => {
+    await demo().seed(T0);
+    const admin = await withRole(t, visitor, 'UNIVERSITY_ADMIN');
+    const reports = async (status: 'OPEN' | 'RESOLVED') =>
+      (
+        await api()
+          .get(`/api/v1/admin/reports?status=${status}`)
+          .set('Authorization', admin.bearer)
+          .expect(200)
+      ).body.data as {
+        status: string;
+        item: { title: string; status: string };
+        resolution: { by: { name: string } } | null;
+      }[];
+
+    const open = await reports('OPEN');
+    const decided = await reports('RESOLVED');
+
+    expect(open).toHaveLength(2);
+    expect(open.every((r) => r.status === 'OPEN' && r.item.status === 'OPEN')).toBe(true);
+    expect(decided.map((r) => r.status).sort()).toEqual(['ACTIONED', 'DISMISSED']);
+    expect(decided.find((r) => r.status === 'ACTIONED')?.item.status).toBe('REMOVED');
+    expect(decided.find((r) => r.status === 'DISMISSED')?.item.status).toBe('OPEN');
+    expect(decided.every((r) => r.resolution?.by.name === 'Neha Sharma')).toBe(true);
+    expect(DEMO_REPORTS).toHaveLength(4);
+    // The removed post (an advert) never reaches the feed.
+    expect(await feed()).toHaveLength(DEMO_POSTS.length);
+  });
+
+  it('has a sample admin nobody can sign in as', async () => {
+    await demo().seed(T0);
+    const neha = await new MongoUserRepository(t.connection).findByEmail(
+      'neha.sharma@demo.invalid',
+    );
+
+    expect(neha?.role).toBe('UNIVERSITY_ADMIN');
+    expect(() => neha?.changePassword('anything', T0)).toThrow(ForbiddenError);
   });
 
   it('resets to the original posts', async () => {

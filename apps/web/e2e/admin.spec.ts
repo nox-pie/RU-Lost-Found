@@ -42,8 +42,9 @@ test('an admin removes a reported post and suspends its poster', async ({ browse
 
   await test.step('the admin reviews it and removes the post with a reason', async () => {
     await admin.getByRole('link', { name: 'Admin' }).click();
+    // The sample data has reports of its own, so the count isn't checked here.
     await expect(
-      admin.getByRole('heading', { name: '1 reported post needs a decision' }),
+      admin.getByRole('heading', { name: /reported posts? needs? a decision/ }),
     ).toBeVisible();
     await admin.getByRole('link', { name: 'Review now' }).click();
 
@@ -54,7 +55,7 @@ test('an admin removes a reported post and suspends its poster', async ({ browse
     await dialog.getByLabel('Reason shown to the poster (optional)').fill('Selling is not allowed');
     await dialog.getByRole('button', { name: 'Remove post' }).click();
     await expect(admin.getByText('Post removed.')).toBeVisible();
-    await expect(admin.getByText('Nothing here')).toBeVisible();
+    await expect(card).toHaveCount(0);
   });
 
   await test.step('the poster is told why, and the post is gone', async () => {
