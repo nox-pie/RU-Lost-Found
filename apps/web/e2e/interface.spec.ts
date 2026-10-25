@@ -240,3 +240,24 @@ test('long words and addresses never make a phone page scroll sideways @mobile',
   await expect(page.getByText(email)).toBeVisible();
   expect(await fits()).toBe(true);
 });
+
+test('the landing page fits a small phone, nothing cut off at the side @mobile', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, 'A phone screen');
+  await page.setViewportSize({ width: 360, height: 780 });
+  await page.goto('/');
+  const heading = page.getByRole('heading', { name: 'Lost something on campus? Found something?' });
+  await expect(heading).toBeVisible();
+
+  // The hero clips what sticks out, so the page itself never scrolls: measure the elements.
+  for (const element of [
+    heading,
+    page.getByRole('link', { name: /Try the demo/ }).first(),
+    page.getByRole('link', { name: 'See how it works' }),
+  ]) {
+    const box = await element.boundingBox();
+    expect(box && box.x + box.width).toBeLessThanOrEqual(360);
+  }
+});
