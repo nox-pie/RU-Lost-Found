@@ -1,6 +1,6 @@
 # Demo data
 
-Before the portal has real users, it shows **sample data** so visitors (recruiters, examiners, students) see how it looks and works: 8 fictional students and 20 posts across the categories, in every status (open, handover arranged, returned), dated over the last eight weeks, plus a few reports for the admins (below). Each post names one of Rishihood University's campus places with the exact spot ("Library · Reading room"), so places, matching and the admin breakdown by place show real-looking data. On a deployment whose university lacks one of these places, that post keeps the place in its spot text instead.
+Before the portal has real users, it shows **sample data** so visitors (recruiters, examiners, students) see how it looks and works: 8 fictional students and 21 posts across the categories, in every status (open, handover arranged, returned), dated over the last eight weeks, plus a few reports for the admins (below). Each post names one of Rishihood University's campus places with the exact spot ("Library · Reading room"), so places, matching and the admin breakdown by place show real-looking data. On a deployment whose university lacks one of these places, that post keeps the place in its spot text instead.
 
 Everything is created through the real domain and services: returned posts went through a real claim, approval and handover, so their history, notifications, activity-log entries and the admin statistics are exactly what real use produces. Sample posts can be claimed like real ones.
 
@@ -12,10 +12,10 @@ Signed-out visitors see a **landing page** at `/`: what the portal does, a carou
 
 | Person         | Role       | Suggested path                                                    |
 | -------------- | ---------- | ----------------------------------------------------------------- |
-| **Ravi Singh** | The owner  | Find the black bifold wallet in the feed and claim it             |
+| **Ravi Singh** | The owner  | Open his lost wallet post, follow the suggested match, claim it   |
 | **Asha Verma** | The finder | Open her wallet post, compare the answer and approve Ravi's claim |
 
-Signing in as Ravi, claiming, signing out and approving as Asha shows the whole flow in about a minute. The sign-in page offers the same two buttons under the form.
+Ravi's lost wallet post is created just before Asha's find, so matching runs as it would for real: Ravi is notified that someone may have found his wallet, and his post lists hers as a strong match. Signing in as Ravi, claiming, signing out and approving as Asha shows the whole flow in about a minute. The sign-in page offers the same two buttons under the form.
 
 `POST /api/v1/auth/demo` with `{ "persona": "asha.verma" }` does the sign-in (a normal session with a refresh cookie). It accepts only the people listed in `DEMO_PERSONAS` (`packages/shared/src/demo.ts`), answers 404 unless `DEMO_MODE=true`, is rate limited per IP and refuses requests from other sites. `GET /api/v1/auth/demo` tells the web app whether to show the buttons.
 

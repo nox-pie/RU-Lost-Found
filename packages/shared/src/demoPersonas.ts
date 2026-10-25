@@ -20,7 +20,8 @@ export const DEMO_PERSONAS = [
     role: 'The owner',
     avatarUrl: '/demo/people/ravi.webp',
     story: 'Lost his black wallet on campus last night, maybe in the library.',
-    tryThis: 'Find the wallet in the feed and claim it by answering Asha’s question.',
+    tryThis:
+      'Open his lost post: the portal has already found Asha’s wallet. Claim it by answering her question.',
   },
 ] as const;
 

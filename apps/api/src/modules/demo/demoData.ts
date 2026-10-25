@@ -79,6 +79,21 @@ export interface DemoPost {
 
 /** Newest first in the feed: smaller `daysAgo` appears higher. */
 export const DEMO_POSTS: readonly DemoPost[] = [
+  // Ravi's side of the story. Created just before Asha's find, so matching tells him about it
+  // and his post shows it as a strong match (visitors signed in as Ravi see smart matching).
+  {
+    photo: 'black-bifold-wallet',
+    type: 'LOST',
+    category: 'WALLET',
+    title: 'Black wallet with my library card',
+    description:
+      'Lost my black leather wallet last night, I think in the library reading room. It has my library card and some cash.',
+    place: 'Library',
+    location: 'Reading room',
+    reporter: 'ravi.singh',
+    daysAgo: 0,
+    outcome: { kind: 'open' },
+  },
   {
     photo: 'black-bifold-wallet',
     type: 'FOUND',

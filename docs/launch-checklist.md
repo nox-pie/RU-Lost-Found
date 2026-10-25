@@ -2,7 +2,7 @@
 
 Everything to do before opening the portal to Rishihood University students, in order. Each step says where to do it and how to check it worked. Production setup and commands are in [deployment.md](deployment.md); the services and their dashboards in [services.md](services.md).
 
-**Today (24 October 2026):** the portal runs as a public demo while the university's permission is pending: `DEMO_MODE=true` with 20 sample posts at the 24 campus places, sign-up open to any email address, emails sent from a Gmail address. Every service is on its free plan, and the database (Atlas M0, MongoDB 8.0) has **no backups**. On 19 October two real accounts existed: one Rishihood student account and one Gmail account that is platform admin.
+**Today (24 October 2026):** the portal runs as a public demo while the university's permission is pending: `DEMO_MODE=true` with 21 sample posts at the 24 campus places, sign-up open to any email address, emails sent from a Gmail address. Every service is on its free plan, and the database (Atlas M0, MongoDB 8.0) has **no backups**. On 19 October two real accounts existed: one Rishihood student account and one Gmail account that is platform admin.
 
 ## 1. A week before: decisions and people
 

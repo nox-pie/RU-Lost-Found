@@ -16,9 +16,14 @@ test('a visitor plays both sides of a claim with the sample students', async ({ 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: LANDING })).toBeVisible();
 
-  await test.step('as Ravi, the owner, they claim the wallet', async () => {
+  await test.step('as Ravi, the owner, they follow the suggested match and claim it', async () => {
     await tryAs(page, 'Ravi');
-    await page.getByRole('link', { name: /Black bifold wallet/ }).click();
+    await page.getByRole('link', { name: 'My items' }).first().click();
+    await page.getByRole('link', { name: /Black wallet with my library card/ }).click();
+    await page
+      .getByRole('region', { name: 'Possible matches' })
+      .getByRole('link', { name: /Black bifold wallet/ })
+      .click();
     await page.getByRole('button', { name: 'This is mine' }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('What is the name on the library card inside?').fill('Ravi Singh');
