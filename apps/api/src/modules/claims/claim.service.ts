@@ -66,6 +66,10 @@ export class ClaimService {
     // Demo accounts (sample data for visitors) only ever touch sample posts, so the hourly
     // demo reset can't affect anyone's real posts.
     const people = await this.deps.users.findByIds([actor.userId, item.reporterId]);
+    // The account as it is now: a suspension applies at once, whatever the token says.
+    if (!people.find((u) => u.id === actor.userId)?.isActive) {
+      throw new UnauthorizedError('Your session has ended. Please sign in again.');
+    }
     const isDemo = (id: string) => people.find((u) => u.id === id)?.isDemo ?? false;
     if (isDemo(actor.userId) && !isDemo(item.reporterId)) {
       throw new ForbiddenError('Demo accounts can only claim sample posts.');

@@ -18,7 +18,12 @@ import type { Actor } from '../../core/domain/Actor';
 import type { Clock } from '../../core/domain/Clock';
 import type { IdGenerator } from '../../core/domain/IdGenerator';
 import type { ImageRef } from '../../core/domain/ImageRef';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../core/errors/AppError';
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from '../../core/errors/AppError';
 import type { Logger } from '../../core/logger/logger';
 import type { PageResult } from '../../core/persistence/Pagination';
 import type { TenantScope } from '../../core/persistence/Repository';
@@ -27,10 +32,10 @@ import type { UniversityRepository } from '../universities/domain/UniversityRepo
 import type { User } from '../users/domain/User';
 import type { UserRepository } from '../users/domain/UserRepository';
 import { Item, REMINDER_DAYS } from './domain/Item';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 import type { ItemRepository } from './domain/ItemRepository';
 import type { ItemView } from './item.mapper';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** "2026-10-01" → 2026-10-01T00:00:00.000Z */
 function parseDateOnly(value: string): Date {
@@ -95,7 +100,7 @@ export class ItemService {
         now: this.clock.now(),
       });
       await this.items.create(item);
-      return { item, reporter: reporter ?? undefined };
+      return { item, reporter };
     } catch (error) {
       await this.deleteQuietly(uploaded);
       throw error;
@@ -265,7 +270,7 @@ export class ItemService {
     const item = await this.requireVisible(scope, id);
     // Moderator rights come from the role stored now, not from the (up to 15-minute-old) token,
     // so a demoted admin can no longer remove other people's posts.
-    item.remove({ userId: actor.userId, role: user?.role ?? 'STUDENT' }, this.clock.now());
+    item.remove({ userId: actor.userId, role: user.role }, this.clock.now());
     await this.items.update(item);
   }
 
@@ -320,12 +325,16 @@ export class ItemService {
   }
 
   /**
-   * Anyone can sign in as a demo account, so it can't post (no uploads), and can't edit or
-   * remove the sample posts every other visitor relies on. Returns the acting user.
+   * The account as it is now: a suspension applies at once, although the access token lives up
+   * to 15 minutes. Anyone can sign in as a demo account, so it can't post (no uploads), and
+   * can't edit or remove the sample posts every other visitor relies on. Returns the acting user.
    */
-  private async assertMayChangePosts(actor: Actor): Promise<User | null> {
+  private async assertMayChangePosts(actor: Actor): Promise<User> {
     const user = await this.users.findById(actor.userId);
-    if (user?.isDemo) {
+    if (!user || !user.isActive) {
+      throw new UnauthorizedError('Your session has ended. Please sign in again.');
+    }
+    if (user.isDemo) {
       throw new ForbiddenError(
         'Demo accounts can’t post, edit or remove items. Create your own account to do that.',
       );
