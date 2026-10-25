@@ -86,11 +86,6 @@ export class ModerationService {
   }
 
   /**
-   * Decides every open report on a post at once. Removing the post and closing its reports
-   * happen in one transaction; the post's open claims are then closed by the claims module
-   * (it reacts to ItemRemoved) and the reporter is told why.
-   */
-  /**
    * An admin removes a post without waiting for reports (e.g. found in the Posts tab), with a
    * reason for the poster. Any open reports on it are closed as actioned in the same
    * transaction, so the review queue never shows a post that is already gone.
@@ -118,6 +113,11 @@ export class ModerationService {
     });
   }
 
+  /**
+   * Decides every open report on a post at once. Removing the post and closing its reports
+   * happen in one transaction; the post's open claims are then closed by the claims module
+   * (it reacts to ItemRemoved) and the reporter is told why.
+   */
   async moderateItem(
     actor: Actor,
     scope: TenantScope,

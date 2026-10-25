@@ -8,13 +8,14 @@ import type { StorageProvider } from '../../core/storage/StorageProvider';
 import type { ClaimService } from '../claims/claim.service';
 import { Item } from '../items/domain/Item';
 import type { ItemRepository } from '../items/domain/ItemRepository';
+import type { ModerationService } from '../moderation/moderation.service';
 import type { University } from '../universities/domain/University';
 import type { UniversityRepository } from '../universities/domain/UniversityRepository';
 import { DEMO_EMAIL_DOMAIN, User } from '../users/domain/User';
 import type { UserRepository } from '../users/domain/UserRepository';
 import type { DemoClock } from './DemoClock';
 import type { DemoDataStore } from './DemoDataStore';
-import { DEMO_PEOPLE, DEMO_POSTS, type DemoPost } from './demoData';
+import { DEMO_ADVERT, DEMO_PEOPLE, DEMO_POSTS, DEMO_REPORTS, type DemoPost } from './demoData';
 import { SAMPLE_PHOTO_PREFIX } from './infrastructure/MongoDemoDataStore';
 
 /**
@@ -40,6 +41,8 @@ export interface DemoSeederDeps {
   items: ItemRepository;
   /** A ClaimService on the demo clock, so claims, approvals and handovers are dated in the past. */
   claims: ClaimService;
+  /** A ModerationService on the demo clock, for the sample reports. */
+  moderation: ModerationService;
   clock: DemoClock;
   store: DemoDataStore;
   storage: StorageProvider;
@@ -155,6 +158,7 @@ export class DemoSeeder {
         now: new Date(now.getTime() - (oldest - index) * DAY_MS),
       });
       if (person.avatar) user.useSamplePicture(samplePicture(person.avatar), now);
+      if (person.role) user.appointBySystem(person.role, now);
       await users.create(user);
       people.set(person.key, user);
     }
@@ -185,8 +189,9 @@ export class DemoSeeder {
       return { userId: user.id, role: user.role };
     };
     const scope = { universityId: university.id };
+    const itemIds = new Map<string, string>();
 
-    for (const post of DEMO_POSTS) {
+    for (const post of [...DEMO_POSTS, DEMO_ADVERT]) {
       const postedAt = new Date(now.getTime() - post.daysAgo * DAY_MS - 3 * HOUR_MS);
       // The samples name Rishihood's campus places. A university without one of them still
       // sees where it was: the place moves into the free-text spot.
@@ -210,9 +215,37 @@ export class DemoSeeder {
         now: postedAt,
       });
       await items.create(item);
+      itemIds.set(post.title, item.id);
       await this.play(post, item.id, scope, actor, postedAt, now);
     }
+    await this.fileReports(itemIds, scope, actor, now);
     clock.set(now);
+  }
+
+  /** Files the sample reports and decides some of them, as students and an admin would. */
+  private async fileReports(
+    itemIds: ReadonlyMap<string, string>,
+    scope: { universityId: string },
+    actor: (key: string) => Actor,
+    now: Date,
+  ): Promise<void> {
+    const { moderation, clock } = this.deps;
+    for (const report of DEMO_REPORTS) {
+      const itemId = itemIds.get(report.post);
+      if (!itemId) throw new Error(`Unknown sample post "${report.post}"`);
+      const filedAt = now.getTime() - report.hoursAgo * HOUR_MS;
+      clock.set(new Date(filedAt));
+      await moderation.flag(actor(report.by), scope, itemId, {
+        reason: report.reason,
+        details: report.details,
+      });
+      if (!report.decision) continue;
+      clock.set(new Date(filedAt + report.decision.hoursLater * HOUR_MS));
+      await moderation.moderateItem(actor('neha.sharma'), scope, itemId, {
+        decision: report.decision.kind,
+        note: report.decision.note,
+      });
+    }
   }
 
   private async removeData(

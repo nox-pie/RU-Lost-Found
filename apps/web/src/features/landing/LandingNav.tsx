@@ -1,6 +1,6 @@
 import { Menu, X } from 'lucide-react';
-import { useEffect, useState, type RefObject } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useState, type MouseEvent, type RefObject } from 'react';
+import { Link, useNavigate } from 'react-router';
 import { brand } from '../../brand/brand.config';
 import { useShowDemo } from '../demo/demoStatus';
 
@@ -19,6 +19,7 @@ export function LandingNav({ heroRef }: { heroRef: RefObject<HTMLElement | null>
   const [current, setCurrent] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const showDemo = useShowDemo();
+  const navigate = useNavigate();
   const sections = showDemo ? SECTIONS : SECTIONS.filter((section) => section.id !== 'demo');
 
   // Over the photo until its bottom comes close to the bar (64 px tall, plus a margin, so a
@@ -52,12 +53,21 @@ export function LandingNav({ heroRef }: { heroRef: RefObject<HTMLElement | null>
 
   const light = !overHero || menuOpen;
 
+  // This bar is only on the landing page, so the logo goes back to its top (gliding, as the
+  // section links do) instead of to the page the browser is already on.
+  const toTop = (event: MouseEvent) => {
+    event.preventDefault();
+    setMenuOpen(false);
+    window.scrollTo({ top: 0 });
+    void navigate('/', { replace: true });
+  };
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${light ? 'border-b border-black/5 bg-surface/90 shadow-xs backdrop-blur-md' : 'bg-linear-to-b from-black/40 to-transparent'}`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-        <Link to="/" className="flex min-w-0 items-center gap-2.5">
+        <Link to="/" onClick={toTop} className="flex min-w-0 items-center gap-2.5">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-secondary-light bg-white p-1.5 shadow-xs">
             <img src={brand.images.symbol} alt="" className="h-full w-full object-contain" />
           </span>

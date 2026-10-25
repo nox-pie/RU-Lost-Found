@@ -69,6 +69,7 @@ describe('one-click demo sign-in', { timeout: 30_000 }, () => {
       expect((await signInAs(persona.key)).status).toBe(200);
     }
     expect((await signInAs('kabir.rao')).status).toBe(400);
+    expect((await signInAs('neha.sharma')).status).toBe(400); // the sample admin
     expect((await signInAs('owner@rishihood.edu.in')).status).toBe(400);
   });
 
@@ -145,7 +146,7 @@ describe('the hourly reset', { timeout: 30_000 }, () => {
       .updateOne({ email: 'ravi.singh@demo.invalid' }, { $set: { status: 'SUSPENDED' } });
 
     expect(await t.container.services.demo.reset(T0)).toEqual({
-      people: 8,
+      people: DEMO_PEOPLE.length,
       posts: DEMO_POSTS.length,
     });
     expect((await signInAs('ravi.singh')).status).toBe(200);
