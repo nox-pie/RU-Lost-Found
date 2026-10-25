@@ -115,12 +115,9 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 ---
 
-## Routine checks (about 10 minutes a week)
+## Routine checks
 
-- [ ] Sentry: new issues in either project.
-- [ ] UptimeRobot: any downtime.
-- [ ] Usage against free limits: Render hours, Upstash commands, Brevo emails, Cloudinary credits, Atlas storage.
-- [ ] GitHub: merge or close Dependabot pull requests.
+Weekly, monthly and yearly upkeep (Dependabot, usage against these limits, alerts, version upgrades) is in [maintenance.md](maintenance.md).
 
 ## If a secret leaks
 
