@@ -1,9 +1,10 @@
 import request, { type Response } from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { T0, daysAfter, minutesAfter } from '../../testing/builders';
 import { seedUniversity, useTestApp } from '../../testing/testApp';
 import { MongoUniversityRepository } from '../universities/infrastructure/MongoUniversityRepository';
 import { MongoUserRepository } from '../users/infrastructure/MongoUserRepository';
+import { MongoSessionRepository } from './infrastructure/MongoSessionRepository';
 import { OTP_MAX_ATTEMPTS } from './OtpService';
 import { REFRESH_COOKIE } from './auth.controller';
 import { LOGIN_FAILURE_LIMITS } from './LoginThrottle';
@@ -428,6 +429,21 @@ describe('refresh tokens', () => {
     expect(results.map((res) => res.status)).toEqual([200, 200, 200]);
   });
 
+  it('keep the device signed in when a refresh fails for another reason (a server error)', async () => {
+    const { cookie } = await signUp();
+    const lookup = vi
+      .spyOn(MongoSessionRepository.prototype, 'findByTokenHash')
+      .mockRejectedValueOnce(new Error('connection reset'));
+
+    const failed = await api().post('/api/v1/auth/refresh').set('Cookie', cookie);
+    lookup.mockRestore();
+
+    expect(failed.status).toBe(500);
+    // The cookie is only cleared when the session has really ended (401).
+    expect(failed.headers['set-cookie']).toBeUndefined();
+    await api().post('/api/v1/auth/refresh').set('Cookie', cookie).expect(200);
+  });
+
   it('never bring back a signed-out device, even within the grace window', async () => {
     const { cookie } = await signUp();
     const rotated = refreshCookie(
@@ -435,7 +451,11 @@ describe('refresh tokens', () => {
     );
     await api().post('/api/v1/auth/logout').set('Cookie', rotated).expect(204);
 
-    expect((await api().post('/api/v1/auth/refresh').set('Cookie', cookie)).status).toBe(401);
+    const refused = await api().post('/api/v1/auth/refresh').set('Cookie', cookie);
+    expect(refused.status).toBe(401);
+    expect(String(refused.headers['set-cookie'])).toMatch(
+      new RegExp(`^${REFRESH_COOKIE}=;.*Expires=Thu, 01 Jan 1970`),
+    );
   });
 
   it('expire after 7 days', async () => {

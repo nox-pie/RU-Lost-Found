@@ -78,7 +78,9 @@ export class AuthController {
     try {
       this.sendSession(res, await this.auth.refresh(token, clientOf(req)));
     } catch (error) {
-      res.clearCookie(REFRESH_COOKIE, this.cookieOptions);
+      // Only a session that really ended loses its cookie: after a server error (a database
+      // hiccup), the same token must still work on the next try.
+      if (error instanceof UnauthorizedError) res.clearCookie(REFRESH_COOKIE, this.cookieOptions);
       throw error;
     }
   };

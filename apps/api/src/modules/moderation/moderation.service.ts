@@ -2,7 +2,7 @@ import type { FlagItemInput, ListReportsQuery, ModerateItemInput } from '@ru-los
 import { isModerator, type Actor } from '../../core/domain/Actor';
 import type { Clock } from '../../core/domain/Clock';
 import type { IdGenerator } from '../../core/domain/IdGenerator';
-import { ForbiddenError, NotFoundError } from '../../core/errors/AppError';
+import { ForbiddenError, NotFoundError, UnauthorizedError } from '../../core/errors/AppError';
 import type { PageResult } from '../../core/persistence/Pagination';
 import type { TenantScope } from '../../core/persistence/Repository';
 import type { UnitOfWork } from '../../core/persistence/UnitOfWork';
@@ -39,6 +39,10 @@ export class ModerationService {
     if (!item || item.status === 'REMOVED') throw new NotFoundError('Item');
     // Demo accounts are open to anyone: they must not fill the admins' queue with real posts.
     const people = await users.findByIds([actor.userId, item.reporterId]);
+    // The account as it is now: a suspension applies at once, whatever the token says.
+    if (!people.find((u) => u.id === actor.userId)?.isActive) {
+      throw new UnauthorizedError('Your session has ended. Please sign in again.');
+    }
     const isDemo = (id: string) => people.find((u) => u.id === id)?.isDemo ?? false;
     if (isDemo(actor.userId) && !isDemo(item.reporterId)) {
       throw new ForbiddenError('Demo accounts can only flag sample posts.');

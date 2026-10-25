@@ -157,6 +157,19 @@ describe('managing users', () => {
     });
   });
 
+  it('stops a suspended user at once, although their access token still works for minutes', async () => {
+    const own = await reportItem(t, ravi, { title: 'Ravi’s umbrella' });
+    const other = await reportItem(t, asha, { title: 'Asha’s keys', type: 'FOUND' });
+    await post(priya, `users/${ravi.id}/suspend`, { reason: 'Posting fake items' }).expect(200);
+    const asRavi = (method: 'post' | 'patch', path: string, body: object) =>
+      api()[method](`/api/v1${path}`).set('Authorization', ravi.bearer).send(body);
+
+    expect((await asRavi('patch', `/items/${own}`, { title: 'Changed' })).status).toBe(401);
+    expect((await asRavi('post', `/items/${own}/close`, { reason: 'WITHDRAWN' })).status).toBe(401);
+    expect((await asRavi('post', `/items/${other}/claims`, { message: 'Mine' })).status).toBe(401);
+    expect((await asRavi('post', `/items/${other}/reports`, { reason: 'SPAM' })).status).toBe(401);
+  });
+
   it('reactivates a suspended user', async () => {
     await post(priya, `users/${ravi.id}/suspend`, { reason: 'Posting fake items' }).expect(200);
 

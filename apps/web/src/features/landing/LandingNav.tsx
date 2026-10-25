@@ -59,7 +59,7 @@ export function LandingNav({ heroRef }: { heroRef: RefObject<HTMLElement | null>
     event.preventDefault();
     setMenuOpen(false);
     window.scrollTo({ top: 0 });
-    void navigate('/', { replace: true });
+    navigate('/', { replace: true });
   };
 
   return (
