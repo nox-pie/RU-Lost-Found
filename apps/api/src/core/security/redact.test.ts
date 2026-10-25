@@ -10,7 +10,8 @@ describe('redactUrlCredentials', () => {
       'connect ENOENT //default:s3cr3t@host.upstash.io:6379%22',
       'connect ENOENT //***@host.upstash.io:6379%22',
     ],
-    ['mongodb+srv://user:p4ss@cluster.mongodb.net/db', 'mongodb+srv://***@cluster.mongodb.net/db'],
+    // A made-up host on a reserved domain, so secret scanners don't mistake it for a real one.
+    ['mongodb+srv://user:p4ss@cluster.example.net/db', 'mongodb+srv://***@cluster.example.net/db'],
     ['https://example.com/path?x=1', 'https://example.com/path?x=1'],
   ])('%s', (text, expected) => {
     expect(redactUrlCredentials(text)).toBe(expected);
