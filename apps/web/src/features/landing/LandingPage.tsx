@@ -77,7 +77,7 @@ function Hero({ heroRef }: { heroRef: RefObject<HTMLElement | null> }) {
         className="absolute inset-0 -z-10 bg-linear-to-b from-black/70 via-black/55 to-black/80 lg:bg-linear-to-r lg:from-black/80 lg:via-black/55 lg:to-black/30"
         aria-hidden
       />
-      <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 pb-16 pt-28 sm:px-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:pb-20 lg:pt-32">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-4 pb-16 pt-28 sm:px-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:pb-20 lg:pt-32">
         <div className="text-center text-white lg:text-left">
           <p className="text-sm font-semibold uppercase tracking-widest text-white/90">
             {brand.organisation.name}

@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml/badge.svg)](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
-![Tests](https://img.shields.io/badge/tests-458%20API%20%2B%2027%20end--to--end-success)
+![Tests](https://img.shields.io/badge/tests-463%20API%20%2B%2032%20end--to--end-success)
 ![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)
 
 The lost & found portal of **Rishihood University**: students report what they lost or found, prove an item is theirs, and get it back through a verified handover, without sharing phone numbers with strangers.
@@ -10,12 +10,8 @@ The lost & found portal of **Rishihood University**: students report what they l
 **Live:** [ru-lost-found.vercel.app](https://ru-lost-found.vercel.app) (no account needed: **Try as Ravi** or **Try as Asha** on the home page) · **API docs:** `/api/v1/docs` on the same domain
 
 <p>
-  <img src="docs/screenshots/sign-in.jpg" alt="Sign-in page" width="49%" />
-  <img src="docs/screenshots/handover-code.png" alt="Claim page with the handover code" width="49%" />
-</p>
-<p>
-  <img src="docs/screenshots/admin-overview.png" alt="Admin overview" width="74%" />
-  <img src="docs/screenshots/admin-mobile.png" alt="Admin overview on a phone" width="24%" />
+  <img src="docs/screenshots/landing.jpg" alt="Landing page on a desktop" width="76%" />
+  <img src="docs/screenshots/landing-phone.jpg" alt="Landing page on a phone" width="22%" />
 </p>
 
 ## How it works
@@ -26,6 +22,29 @@ The lost & found portal of **Rishihood University**: students report what they l
 4. **Hand over.** They meet. The owner shows a 6-digit handover code; the finder enters it and the item is marked returned. Five wrong codes lock it, and the security desk can confirm in person instead.
 
 Claims that never get handed over expire, other claims on the item close automatically, and everything is recorded in an audit log.
+
+## Screenshots
+
+<p>
+  <img src="docs/screenshots/feed.jpg" alt="The feed of lost and found posts" width="49%" />
+  <img src="docs/screenshots/matches.jpg" alt="A lost wallet with a strongly matching found post" width="49%" />
+</p>
+
+_The feed, and a lost wallet with the found post that may be it ("Strong match")._
+
+<p>
+  <img src="docs/screenshots/report-form.jpg" alt="Reporting an item, choosing a campus place" width="76%" />
+  <img src="docs/screenshots/handover-code.jpg" alt="The owner's handover code on a phone" width="22%" />
+</p>
+
+_Reporting an item at a campus place, and the owner's handover code once the claim is approved._
+
+<p>
+  <img src="docs/screenshots/desk.jpg" alt="The security desk console" width="59%" />
+  <img src="docs/screenshots/admin-overview.jpg" alt="The admin overview" width="39%" />
+</p>
+
+_The security desk console, and the admin overview with reports waiting for a decision._
 
 ## Features
 
@@ -66,7 +85,7 @@ Design patterns and why each is there, security decisions, the data model and th
 
 |              |                                                                                                                                                                                                                                                                                                                                                                |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tests**    | 463 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 31 Playwright tests in a real browser on desktop and a phone, including the full handover, matching, the moderation flow, the security desk, account deletion and a sleeping server |
+| **Tests**    | 463 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 32 Playwright tests in a real browser on desktop and a phone, including the full handover, matching, the moderation flow, the security desk, account deletion and a sleeping server |
 | **Load**     | 200 simultaneous users on one instance: 95% of reads under 8 ms, writes under 35 ms, zero errors. Up to 1,000 simultaneous users (about 360 requests/s) without a single failed request, the point to add a second instance. [Details](docs/load-test.md)                                                                                                      |
 | **Security** | Independent review with every finding fixed; strict content security policy; no personal data in logs or error reports. [Details](docs/architecture/backend.md#9-authentication-and-security)                                                                                                                                                                  |
 | **CI**       | Security advisories, typecheck, lint, formatting, tests with coverage, builds, end-to-end tests, and the Docker images built and started on every push                                                                                                                                                                                                         |
