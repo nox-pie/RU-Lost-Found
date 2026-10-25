@@ -13,7 +13,7 @@ Everything to do before opening the portal to Rishihood University students, in 
 - [ ] **Paid plans.** Decide which to take (each is a settings change, see [deployment.md §7](deployment.md#7-scaling-up)):
   - **Atlas:** Flex or above, for backups (section 3). This is the one to take.
   - **Vercel:** Pro. Hobby is meant for personal, non-commercial projects, and this becomes a university service.
-  - **Brevo:** a paid month if the first day may need more than 300 emails (section 2).
+  - **Brevo:** a paid month from launch day (decided in October 2026, section 2).
   - **Render:** Starter is optional. UptimeRobot keeps the free instance awake, but it has only a fraction of a CPU; take Starter if sign-ins feel slow after launch.
 - [ ] **Code is current.** `main` is green in CI and no major library upgrade is waiting (they are done as their own milestone, never in launch week).
 
@@ -21,7 +21,7 @@ Everything to do before opening the portal to Rishihood University students, in 
 
 - [ ] **Sender domain.** `EMAIL_FROM_ADDRESS` is a `@gmail.com` address. Brevo can't authenticate (SPF, DKIM) mail for a domain you don't own, so codes are more likely to land in spam. Use a domain you control: Brevo → Senders, Domains → add the domain and its DNS records (SPF, DKIM, DMARC), then set `EMAIL_FROM_ADDRESS` and `EMAIL_FROM_NAME` on Render and in `apps/api/.env.production`.
       _Check:_ request a sign-up code for a `@rishihood.edu.in` address; it arrives in the inbox, not in spam.
-- [ ] **Daily limit.** Brevo's free plan sends 300 emails a day, and every sign-up needs at least one code. If more than about 200 people may sign up on the first day, take a paid month for the launch or spread the announcement over a few days.
+- [ ] **Daily limit: switch Brevo to a paid plan on launch day.** The free plan sends 300 emails a day, and every sign-up needs at least one code. Beyond launch-day sign-ups, anyone can ask for codes (60 an hour from one address), so a single person could use up a free day's emails and block every sign-up and password reset; a paid plan's larger allowance absorbs that. (A CAPTCHA on the code form would stop it at the source; it was left out for now.)
 
 ## 3. A week before: data safety
 
@@ -76,6 +76,7 @@ Do these in order: the API recreates the sample data at start-up while `DEMO_MOD
 - [ ] Matching: one account posts a lost item, the other a found item of the same category at the same campus place. The owner of the lost post sees it under possible matches and is notified.
 - [ ] `https://ru-lost-found-api.onrender.com/api/v1/health/ready` answers `"status":"ok"`; both UptimeRobot monitors are green; Sentry shows no new issues.
 - [ ] `https://ru-lost-found.vercel.app/api/v1/health/client` shows your own public IP as `ip` (rate limits per person work).
+- [ ] On campus Wi-Fi, open the same address on two phones. If both show the same `ip`, the campus shares one address: rate limits then count the whole campus together. Session refreshes are exempt and the other limits are generous, but if students report "Too many requests", raise `WRITE_LIMIT_PER_MINUTE` on Render (for example to 600).
 
 ## 6. Announce
 

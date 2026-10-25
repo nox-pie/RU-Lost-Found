@@ -62,6 +62,21 @@ describe('HTTP hardening', () => {
     expect(read.status).toBe(200);
   });
 
+  it('never counts session refreshes towards the write cap (a campus shares one address)', async () => {
+    const login = await api()
+      .post('/api/v1/auth/login')
+      .send({ email: asha.email, password: TEST_PASSWORD });
+    let cookie = ([] as string[]).concat(login.headers['set-cookie'] ?? [])[0]!.split(';')[0]!;
+    for (let i = 0; i < DEFAULT_WRITES_PER_MINUTE; i++) {
+      const refreshed = await api().post('/api/v1/auth/refresh').set('Cookie', cookie);
+      expect(refreshed.status).toBe(200);
+      cookie = ([] as string[]).concat(refreshed.headers['set-cookie'] ?? [])[0]!.split(';')[0]!;
+    }
+
+    // Every student's browser refreshes regularly; other changes still have the whole cap.
+    expect((await api().post('/api/v1/auth/logout')).status).toBe(204);
+  });
+
   it('rejects NoSQL operators smuggled into request fields', async () => {
     const login = await api()
       .post('/api/v1/auth/login')

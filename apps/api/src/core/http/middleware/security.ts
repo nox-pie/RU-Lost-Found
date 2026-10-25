@@ -46,15 +46,18 @@ export const DEFAULT_WRITES_PER_MINUTE = 120;
  * A general per-IP cap on requests that change data. Reads are not counted: each check costs a
  * Redis command, and on the free tier those are metered, while reads are already bounded by
  * pagination limits. Endpoint-specific limits (login, codes, reports) still apply on top.
+ * `exceptPaths` are left to their own limits (relative to where the middleware is mounted).
  */
 export function limitWrites(
   limiter: RateLimiter,
   perMinute: number = DEFAULT_WRITES_PER_MINUTE,
+  exceptPaths: readonly string[] = [],
 ): RequestHandler {
   const rule: RateLimitRule = { name: 'writes-ip', limit: perMinute, windowSeconds: 60 };
   const limited = rateLimit(limiter, rule);
   return (req, res, next) => {
-    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    const read = req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS';
+    if (read || exceptPaths.includes(req.path)) {
       next();
       return;
     }

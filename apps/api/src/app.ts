@@ -39,8 +39,10 @@ export function createApp(container: Container): Express {
       ),
     );
   }
-  // Reads pass straight through: only requests that change data count towards this cap.
-  api.use(limitWrites(rateLimiter, env.WRITE_LIMIT_PER_MINUTE));
+  // Reads pass straight through: only requests that change data count towards this cap. Session
+  // refreshes don't either: every signed-in browser sends them, and a whole campus (or a mobile
+  // network) can share one address; they have their own limit.
+  api.use(limitWrites(rateLimiter, env.WRITE_LIMIT_PER_MINUTE, ['/auth/refresh']));
   for (const module of modules) {
     for (const route of module.routes ?? []) api.use(route.path || '/', route.router);
   }

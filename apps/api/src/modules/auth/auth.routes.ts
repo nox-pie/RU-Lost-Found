@@ -26,7 +26,8 @@ const AUTH_RATE_LIMITS = {
   verifyPerIp: { name: 'verify-ip', limit: 120, windowSeconds: 10 * MINUTE },
   registerPerIp: { name: 'register-ip', limit: 60, windowSeconds: HOUR },
   loginPerIp: { name: 'login-ip', limit: 120, windowSeconds: 15 * MINUTE },
-  refreshPerIp: { name: 'refresh-ip', limit: 300, windowSeconds: MINUTE },
+  // Every signed-in browser refreshes at least every 15 minutes and on each visit.
+  refreshPerIp: { name: 'refresh-ip', limit: 600, windowSeconds: MINUTE },
   resetPerIp: { name: 'reset-ip', limit: 30, windowSeconds: HOUR },
   changePerUser: { name: 'password-change-user', limit: 30, windowSeconds: HOUR },
   demoPerIp: { name: 'demo-ip', limit: 30, windowSeconds: HOUR },
