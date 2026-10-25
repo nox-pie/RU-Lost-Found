@@ -161,6 +161,32 @@ describe('demo accounts', { timeout: 30_000 }, () => {
     asha = await asDemo('asha.verma');
   });
 
+  it('show Ravi a strong match for his lost wallet, and tell him about it', async () => {
+    await t.container.worker.drain(); // matching reacts to Asha's post in the background
+    const ravi = await asDemo('ravi.singh');
+    const lost = await samplePost(ravi, 'Black wallet with my library card');
+
+    const matches = await api()
+      .get(`/api/v1/items/${lost}/matches`)
+      .set('Authorization', ravi.bearer)
+      .expect(200);
+    const notifications = await api()
+      .get('/api/v1/notifications')
+      .set('Authorization', ravi.bearer)
+      .expect(200);
+
+    expect(matches.body.data[0]).toMatchObject({
+      item: { title: 'Black bifold wallet' },
+      strong: true,
+    });
+    expect(notifications.body.data).toContainEqual(
+      expect.objectContaining({
+        type: 'POSSIBLE_MATCH',
+        title: 'Someone may have found your “Black wallet with my library card”',
+      }),
+    );
+  });
+
   it('keep their sample profile and picture', async () => {
     await api()
       .patch('/api/v1/users/me')
