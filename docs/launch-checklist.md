@@ -91,6 +91,8 @@ Do these in order: the API recreates the sample data at start-up while `DEMO_MOD
 | Monthly     | A restore test (section 3); merge or close Dependabot pull requests                                                    |
 | When needed | Scale up as [deployment.md §7](deployment.md#7-scaling-up) describes: Render Starter first if sign-ins slow down       |
 
+After the first weeks, [maintenance.md](maintenance.md) takes over: the same checks, plus updates, security alerts and yearly upkeep.
+
 ## If something goes wrong
 
 - **A bad deploy:** Render and Vercel keep every deploy; "Rollback" to the previous one in each dashboard, then fix forward with a pull request.
