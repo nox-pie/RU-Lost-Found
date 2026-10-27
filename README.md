@@ -79,7 +79,7 @@ packages/shared   Zod schemas, enums and DTO types used by both, so client and s
 load              k6 load test                                    → docs/load-test.md
 ```
 
-Design patterns and why each is there, security decisions, the data model and the API table are in the [backend design document](docs/architecture/backend.md); why each major choice was made, and what it cost, is in the [architecture decision records](docs/adr/README.md).
+Requirements, use cases, class, sequence, activity and state diagrams and the database schema are in the [system design](docs/design/README.md); design patterns and why each is there, security decisions and the API table are in the [backend design document](docs/architecture/backend.md); why each major choice was made, and what it cost, is in the [architecture decision records](docs/adr/README.md).
 
 ## Quality
 
@@ -131,6 +131,7 @@ npm run set-role -w @ru-lost-found/api -- you@rishihood.edu.in UNIVERSITY_ADMIN 
 
 ## Documentation
 
+- [System design](docs/design/README.md): requirements and use cases, class diagrams, sequence, activity and state diagrams, database schema
 - [Backend design](docs/architecture/backend.md): architecture, domain model, claim state machine, outbox, security, API, patterns, testing
 - [Frontend design](docs/architecture/frontend.md): structure, sessions, data layer, screens, accessibility
 - [Architecture decisions](docs/adr/README.md): 12 records of the main choices, the alternatives and the trade-offs
