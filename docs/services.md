@@ -16,7 +16,7 @@ Every service the product runs on: what it does, how it is connected, what to wa
 | [UptimeRobot](#uptimerobot)     | Uptime alerts; keeps the free API awake                 | Free             | [dashboard.uptimerobot.com](https://dashboard.uptimerobot.com) → monitor **RU Lost & Found API**                         | HTTP(s) monitor on https://ru-lost-found-api.onrender.com/api/v1/health/live every 5 minutes                     |
 | [GitHub](#github)               | Code, CI, dependency updates                            | Free             | https://github.com/nox-pie/RU-Lost-Found → Actions (CI), Pull requests (Dependabot)                                      | Render and Vercel deploy every push to `main`                                                                    |
 
-Each provider sits behind an interface in the code (`StorageProvider`, `EmailSender`, `KeyValueStore`, `ErrorReporter`, …), so replacing one means a new adapter and a line in `apps/api/src/container.ts`. Business code doesn't change.
+Each provider sits behind an interface in the code, so replacing one is a new adapter and no change to business code ([deployment.md §7](deployment.md#7-scaling-up)).
 
 ---
 
@@ -27,7 +27,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 - **Where:** project with the cluster **`Lost-and-Found`** (M0, AWS Mumbai `ap-south-1`, MongoDB 8.0; tests, CI and Docker use the same version, so check them after Atlas moves to a new major version). The app's database is **`ru-lost-found-v2`**; it creates its collections and indexes itself on start-up.
 - **Setting:** `MONGODB_URI` (connection string ending in `/ru-lost-found-v2`), in Render and in `apps/api/.env.production`.
 - **Access:** Database Access has the app's user (read and write). Network Access allows `0.0.0.0/0` because Render's free tier has no fixed outgoing IP; the password is the protection.
-- **Limits:** 512 MB storage and shared CPU. Photos are not stored here (Cloudinary), so this lasts a long time. Old data is pruned automatically: delivered events after 7 days, notifications after 180 days, ended sessions when they expire, audit entries after a year.
+- **Limits:** 512 MB storage and shared CPU. Photos are not stored here (Cloudinary), so this lasts a long time. Old data is pruned automatically ([retention](design/database.md#5-retention)).
 - **Watch:** Clusters → Metrics (storage, connections).
 - **Backups:** M0 has no automatic backups. Flex and above take daily snapshots; until then, `mongodump`. The steps for both, and a restore test, are in [launch-checklist.md §3](launch-checklist.md#3-a-week-before-data-safety).
 - **Rotate the password:** Database Access → Edit user → new password → update `MONGODB_URI` in Render (redeploys) and in `apps/api/.env.production`.
@@ -81,8 +81,8 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 ## Brevo
 
 - **Dashboard:** [app.brevo.com](https://app.brevo.com) → Transactional → Logs; keys under SMTP & API; sender under Senders, Domains & Dedicated IPs.
-- **What:** sends every email: sign-up and password-reset codes, claim notifications (new claim, approval with the handover code, decline, cancellation, expiry), removed-post notices and account notices (password changed, suspended, reactivated).
-- **Settings:** `BREVO_API_KEY` (SMTP & API → API Keys) and `EMAIL_FROM_ADDRESS` (a sender verified under Senders). The sender name defaults to "RU Lost & Found" (`EMAIL_FROM_NAME`).
+- **What:** sends every email: sign-up and password-reset codes (or "you already have an account"), claim notifications (new claim, approval with the handover code, decline, cancellation, expiry), likely matches for a lost post, the reminder a week before a post closes, removed-post notices and account notices (password changed, suspended, reactivated, account deleted).
+- **Settings:** `BREVO_API_KEY` (SMTP & API → API Keys) and `EMAIL_FROM_ADDRESS` (a sender verified under Senders). The sender name is the brand name (`BRAND_NAME`, "RU Lost & Found") unless `EMAIL_FROM_NAME` is set.
 - **Limits:** 300 emails a day on the free plan.
 - **Deliverability:** with a personal address as the sender, some emails can land in spam. A domain of your own, authenticated in Brevo (SPF and DKIM), fixes this.
 - **Watch:** Transactional → Logs (sent, delivered, bounced).
@@ -110,7 +110,7 @@ Each provider sits behind an interface in the code (`StorageProvider`, `EmailSen
 
 - **Repository:** https://github.com/nox-pie/RU-Lost-Found (Actions for CI runs, Pull requests for Dependabot).
 - **What:** the repository `nox-pie/RU-Lost-Found`; pushes to `main` deploy both Render and Vercel.
-- **CI** (`.github/workflows/ci.yml`): on every push and pull request: API (security advisories, typecheck, lint, formatting, tests with coverage, build), web (typecheck, lint, build), end-to-end tests in a real browser, and the Docker images built and started together.
+- **CI** (`.github/workflows/ci.yml`): runs on every push and pull request; its jobs are described in [backend.md §14](architecture/backend.md#continuous-integration-githubworkflowsciyml).
 - **Dependabot** (`.github/dependabot.yml`): weekly grouped updates for npm (minor and patch only; major versions are upgraded by hand) and monthly for GitHub Actions. CI checks each pull request.
 
 ---

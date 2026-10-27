@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml/badge.svg)](https://github.com/nox-pie/RU-Lost-Found/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
-![Tests](https://img.shields.io/badge/tests-464%20API%20%2B%2032%20end--to--end-success)
+![Tests](https://img.shields.io/badge/tests-474%20API%20%2B%2032%20end--to--end-success)
 ![License](https://img.shields.io/badge/License-All%20rights%20reserved-lightgrey)
 
 The lost & found portal of **Rishihood University**: students report what they lost or found, prove an item is theirs, and get it back through a verified handover, without sharing phone numbers with strangers.
@@ -61,14 +61,22 @@ _The security desk console, and the admin overview with reports waiting for a de
 ```mermaid
 flowchart LR
     B[Browser<br/>React SPA] -->|/api rewrite| A[API<br/>Express · TypeScript]
-    A --> M[(MongoDB<br/>transactions)]
+    A --> M[(MongoDB<br/>data · outbox)]
     A --> R[(Redis<br/>codes · rate limits · leases)]
     A --> C[Cloudinary<br/>images]
-    A -. outbox .-> W[Background worker<br/>notifications · emails · jobs]
+    B -. photos .-> C
+    A -->|sign-up codes| E[Brevo<br/>email]
+    A -. events via the outbox .-> W[Background worker<br/>notifications · emails · jobs]
     W --> M
-    W --> E[Brevo<br/>email]
-    A --> S[Sentry]
+    W --> R
+    W --> E
+    W -->|old photos| C
+    A --> S[Sentry<br/>errors]
+    W --> S
+    B --> S
 ```
+
+Where each part runs in production is in [backend.md §2](docs/architecture/backend.md#2-system-context); every service, its plan and limits in [services.md](docs/services.md).
 
 A **modular monolith** in layers (route → controller → service → domain → repository), with a rich domain model: the claim lifecycle is a state machine (State pattern), aggregates guard their own rules and use optimistic concurrency, and side effects run through a **transactional outbox** (a change and its events are saved in one transaction; a worker delivers them at least once, with retries). Every external service sits behind an interface chosen in one composition root, so tests use in-memory fakes and each free-tier provider can be swapped for a paid one.
 
@@ -85,9 +93,9 @@ Requirements, use cases, class, sequence, activity and state diagrams and the da
 
 |              |                                                                                                                                                                                                                                                                                                                                                                |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tests**    | 464 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 32 Playwright tests in a real browser on desktop and a phone, including the full handover, matching, the moderation flow, the security desk, account deletion and a sleeping server |
+| **Tests**    | 474 API tests (domain unit tests, integration tests on a real in-memory MongoDB replica set, HTTP tests through the real app) with enforced coverage (≈95% of statements); 32 Playwright tests in a real browser on desktop and a phone, including the full handover, matching, the moderation flow, the security desk, account deletion and a sleeping server |
 | **Load**     | 200 simultaneous users on one instance: 95% of reads under 8 ms, writes under 35 ms, zero errors. Up to 1,000 simultaneous users (about 360 requests/s) without a single failed request, the point to add a second instance. [Details](docs/load-test.md)                                                                                                      |
-| **Security** | Independent review with every finding fixed; strict content security policy; no personal data in logs or error reports. [Details](docs/architecture/backend.md#9-authentication-and-security)                                                                                                                                                                  |
+| **Security** | Independent review: 8 findings fixed, 1 accepted as a documented trade-off; strict content security policy; no personal data in logs or error reports. [Review](docs/architecture/backend.md#15-security-review), [design](docs/architecture/backend.md#9-authentication-and-security)                                                                         |
 | **CI**       | Security advisories, typecheck, lint, formatting, tests with coverage, builds, end-to-end tests, and the Docker images built and started on every push                                                                                                                                                                                                         |
 
 ## Tech stack

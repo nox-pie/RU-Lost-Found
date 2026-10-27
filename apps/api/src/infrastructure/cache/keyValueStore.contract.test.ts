@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { KeyValueStore } from '../../core/cache/KeyValueStore';
+import { SystemClock } from '../../core/domain/Clock';
 import { createLogger } from '../../core/logger/logger';
+import { FallbackKeyValueStore } from './FallbackKeyValueStore';
 import { InMemoryKeyValueStore } from './InMemoryKeyValueStore';
 import { RedisKeyValueStore } from './RedisKeyValueStore';
 
@@ -10,7 +12,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
  * Contract tests: every KeyValueStore implementation must behave the same way, so the rest of
  * the code can use any of them (Liskov substitution). The Redis suite runs when REDIS_URL is set
- * (CI starts a Redis service); the in-memory suite always runs.
+ * (CI starts a Redis service); the in-memory and fallback suites always run.
  */
 function keyValueStoreContract(
   name: string,
@@ -81,6 +83,48 @@ function keyValueStoreContract(
 
 keyValueStoreContract('InMemoryKeyValueStore', async () => ({
   store: new InMemoryKeyValueStore(),
+  teardown: async () => {},
+}));
+
+const silentLogger = createLogger({ NODE_ENV: 'test', LOG_LEVEL: 'silent' });
+
+/** A primary that never answers successfully, like an unreachable Redis. */
+class UnreachableStore implements KeyValueStore {
+  private fail(): Promise<never> {
+    return Promise.reject(new Error('connect ECONNREFUSED'));
+  }
+  get() {
+    return this.fail();
+  }
+  set() {
+    return this.fail();
+  }
+  delete() {
+    return this.fail();
+  }
+  increment() {
+    return this.fail();
+  }
+}
+
+// The decorator must keep the contract both while its primary works and while it is down.
+keyValueStoreContract('FallbackKeyValueStore (primary up)', async () => ({
+  store: new FallbackKeyValueStore(
+    new InMemoryKeyValueStore(),
+    new InMemoryKeyValueStore(),
+    new SystemClock(),
+    silentLogger,
+  ),
+  teardown: async () => {},
+}));
+
+keyValueStoreContract('FallbackKeyValueStore (primary down)', async () => ({
+  store: new FallbackKeyValueStore(
+    new UnreachableStore(),
+    new InMemoryKeyValueStore(),
+    new SystemClock(),
+    silentLogger,
+  ),
   teardown: async () => {},
 }));
 
