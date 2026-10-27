@@ -1,6 +1,6 @@
 # ADR 0001: Modular monolith, not microservices
 
-- **Status:** Accepted
+- **Status:** Accepted (amended 28 October 2026, see "Later changes")
 - **Date:** 1 October 2026 (the rebuild)
 
 ## Context
@@ -35,12 +35,17 @@ Build **one deployable application split into modules with strict boundaries**: 
 
 - One process, one deploy, one database transaction per use case: simple to run on the free tier and simple to reason about.
 - Boundaries are explicit, so a module can be extracted into its own service later: its events already cross the boundary through the outbox, and its repository interfaces already hide the database.
-- Tests run the real application in-process (`testing/testApp.ts`): 378 API tests in about 25 seconds.
+- Tests run the real application in-process (`testing/testApp.ts`): 378 API tests in about 25 seconds at the time of this decision.
 
 **Bad / accepted**
 
 - The boundaries are enforced by convention and review, not by the runtime: nothing technically stops one module importing another's internals. (A lint rule for import boundaries would be the next step.)
 - Everything scales together: the background worker shares the API's CPU on the free tier. It can already run as a separate process (`npm run start:worker`, `WORKER_ENABLED=false` on the API).
+
+## Later changes (amended)
+
+- **Boundaries are now checked by lint.** The "enforced by convention" consequence above no longer holds: lint rules in `apps/api/eslint.config.js` stop `core` importing modules or infrastructure, domain code importing frameworks or infrastructure, and one module using another's MongoDB implementation ([ADR 0012](0012-self-wiring-modules-and-event-contracts.md)).
+- **More modules.** `account`, `desk`, `matching` and `demo` were added the same way; the current list is in [backend.md §3](../architecture/backend.md#3-repository-and-folder-structure).
 
 ## In the code
 

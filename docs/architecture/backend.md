@@ -1,24 +1,20 @@
 # Backend Architecture
 
-Status: Built and live · Last updated: 27 October 2026
+Status: Built and live · Last updated: 28 October 2026
 
 The backend is a **modular monolith** written in TypeScript on Node.js and Express 5. Each business capability lives in its own module. Business modules (auth, users, items, claims, matching, moderation, notifications) are split into the same layers: routes, controller, service, repository and domain; smaller modules (account, admin, desk, demo, health, audit, universities) have only the layers they need. Infrastructure (MongoDB, Redis, Cloudinary, email) sits behind interfaces, so any provider can be swapped without touching business logic.
+
+This document explains how the backend is built and why. The diagrams of its classes, interactions and storage are in the [system design](../design/README.md); the decisions behind it, with the alternatives, are in the [architecture decision records](../adr/README.md).
 
 ---
 
 ## 1. Architectural style
 
-**Decision: modular monolith, not microservices.**
-
-| Option                                      | Why not / why                                                                                                                                                                      |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Microservices                               | One developer, low traffic, free hosting with one server. Network calls, distributed transactions and multiple deployments would add cost with no benefit.                         |
-| Plain MVC (the first version, now replaced) | Controllers mixed HTTP, business rules, database access and email. Hard to test and hard to change.                                                                                |
-| **Modular monolith (chosen)**               | One deployable app, but modules have strict boundaries and talk only through services and domain events. Any module can be extracted into its own service later without a rewrite. |
+**One deployable app whose modules have strict boundaries** and talk only through services and domain events, so any module can be extracted into its own service later without a rewrite. Microservices would add network calls, distributed transactions and several deployments for one developer on one free server; plain MVC mixes HTTP, business rules, database access and email in the controllers. The full comparison is in [ADR 0001](../adr/0001-modular-monolith.md).
 
 **Layer rules** (dependencies point inwards only):
 
-```
+```text
 Route → Controller → Service → Repository (interface) → Mongoose model
                         ↓
                   Domain entity (pure business rules, no framework imports)
@@ -37,25 +33,29 @@ Route → Controller → Service → Repository (interface) → Mongoose model
 
 ## 2. System context
 
+Where each part runs in production and what it talks to. Every service, its plan, limits and settings are in [services.md](../services.md).
+
 ```mermaid
 flowchart LR
     U[Student / Security desk / Admin<br/>browser] --> V[Vercel<br/>React app]
     V -- "/api/* rewrite (same origin)" --> A[Render<br/>Express API + outbox worker]
-    A --> M[(MongoDB Atlas)]
+    A --> M[(MongoDB Atlas<br/>database ru-lost-found-v2)]
     A --> R[(Upstash Redis<br/>codes · rate limits · login throttle · job leases)]
-    A --> C[Cloudinary<br/>images]
+    A -- "upload, delete" --> C[Cloudinary<br/>images]
+    U -- "photos (CDN)" --> C
     A --> B[Brevo<br/>transactional email]
     A --> S[Sentry<br/>error tracking]
-    UR[UptimeRobot] -- "GET /api/v1/health/live" --> A
+    U -- "crashes" --> S
+    UR[UptimeRobot] -- "GET /api/v1/health/live every 5 min" --> A
 ```
 
-Because Vercel rewrites `/api/*` to Render, the browser sees one origin. This lets the refresh token live in a secure `httpOnly` cookie without cross-site cookie problems.
+Because Vercel rewrites `/api/*` to Render, the browser sees one origin. This lets the refresh token live in a secure `httpOnly` cookie without cross-site cookie problems, and no CORS preflight is needed. Photos are the exception: the browser loads them straight from Cloudinary's CDN.
 
 ---
 
 ## 3. Repository and folder structure
 
-```
+```text
 ru-lost-found/
 ├── apps/
 │   ├── api/                      # TypeScript backend (this document)
@@ -73,7 +73,7 @@ ru-lost-found/
 └── package.json                  # npm workspaces root
 ```
 
-```
+```text
 apps/api/src/
 ├── main.ts                       # Bootstrap: load config, build container, start HTTP server + worker
 ├── worker.ts                     # The background worker alone (when run as a separate process)
@@ -95,11 +95,12 @@ apps/api/src/
 │   ├── cache/                    # RedisKeyValueStore, InMemoryKeyValueStore, FallbackKeyValueStore (decorator)
 │   ├── storage/                  # CloudinaryStorageProvider, LocalDiskStorageProvider,
 │   │                             #   SanitizingStorageProvider (decorator), SharpImageProcessor
-│   ├── email/                    # BrevoEmailSender, ConsoleEmailSender, FileEmailSender
+│   ├── email/                    # BrevoEmailSender, ConsoleEmailSender, FileEmailSender,
+│   │                             #   SkipUndeliverableEmailSender (decorator)
 │   ├── security/                 # BcryptPasswordHasher, JwtTokenService, keys (HKDF)
 │   ├── outbox/                   # MongoOutbox, OutboxProcessor
 │   ├── worker/                   # BackgroundWorker, JobScheduler
-│   └── observability/            # SentryErrorReporter
+│   └── observability/            # SentryErrorReporter, createErrorReporter
 ├── modules/
 │   ├── kernel.ts                 # What every module may use: settings, providers, repositories, middleware
 │   ├── events.ts                 # The domain events and their payload schemas (contracts between modules)
@@ -124,7 +125,7 @@ apps/api/src/
 
 Business modules follow the same internal layout:
 
-```
+```text
 modules/claims/
 ├── domain/                       # Pure business rules: no Express, Mongoose or SDK imports
 │   ├── Claim.ts                  # Entity: submit(), approve(), reject(), cancel(), completeHandover(), expire()
@@ -157,11 +158,11 @@ Services depend on these interfaces, never on concrete SDKs. Interfaces have pla
 | `UserRepository`, `ItemRepository`, `ClaimRepository`, … | `Mongo*Repository`                                             | `Mongo*` on mongodb-memory-server                                             | Persistence                                             |
 | `UnitOfWork`                                             | `MongoUnitOfWork` (session + transaction)                      | same                                                                          | Atomic multi-document writes                            |
 | `OutboxWriter`                                           | `MongoOutbox`                                                  | same                                                                          | Storing domain events in the aggregate's transaction    |
-| `EventHandler` (+ `EventHandlerRegistry`)                | notification, audit and claims handlers                        | same                                                                          | Reacting to events (delivered by `OutboxProcessor`)     |
+| `EventHandler` (+ `EventHandlerRegistry`)                | notification, audit, claims and matching handlers (§7)         | same                                                                          | Reacting to events (delivered by `OutboxProcessor`)     |
 | `KeyValueStore`                                          | `FallbackKeyValueStore` around `RedisKeyValueStore` (Upstash)  | `InMemoryKeyValueStore`                                                       | One-time codes, rate limits, login throttle, job leases |
 | `StorageProvider`                                        | `SanitizingStorageProvider` around `CloudinaryStorageProvider` | `LocalDiskStorageProvider` (dev), `InMemoryStorageProvider` (tests)           | Image upload and delete                                 |
 | `ImageSanitizer`                                         | `SharpImageProcessor`                                          | same                                                                          | Strip metadata, resize, re-encode                       |
-| `EmailSender`                                            | `BrevoEmailSender`                                             | `ConsoleEmailSender`, `FileEmailSender` (e2e), `CapturingEmailSender` (tests) | Sending email                                           |
+| `EmailSender`                                            | `SkipUndeliverableEmailSender` around `BrevoEmailSender`       | `ConsoleEmailSender`, `FileEmailSender` (e2e), `CapturingEmailSender` (tests) | Sending email                                           |
 | `PasswordHasher`                                         | `BcryptPasswordHasher` (native bcrypt)                         | same                                                                          | Hashing passwords                                       |
 | `IdGenerator`                                            | `ObjectIdGenerator`                                            | same                                                                          | Ids for new aggregates before they are saved            |
 | `TokenService`                                           | `JwtTokenService`                                              | same                                                                          | Access and verification tokens                          |
@@ -171,19 +172,22 @@ Services depend on these interfaces, never on concrete SDKs. Interfaces have pla
 | `ErrorReporter`                                          | `SentryErrorReporter`                                          | `noErrorReporting`, `RecordingErrorReporter` (tests)                          | Error tracking                                          |
 | `Clock`                                                  | `SystemClock`                                                  | `FixedClock`                                                                  | Testable time (code expiry, claim deadlines)            |
 
-**Dependency injection:** constructor injection, wired by hand in `container.ts`. No DI library: the wiring stays visible and easy to explain, and switching a provider is a one-line change there.
+**Dependency injection:** constructor injection, wired by hand. `container.ts` chooses the providers and builds the repositories and the kernel; each module's `*.module.ts` builds its own classes from the kernel ([ADR 0004](../adr/0004-manual-dependency-injection.md), [ADR 0012](../adr/0012-self-wiring-modules-and-event-contracts.md)). No DI library: the wiring stays visible and easy to explain, and switching a provider is a one-line change in `container.ts`.
 
 ```ts
-// container.ts (excerpt)
-keyValueStore: infra.redis ?? new InMemoryKeyValueStore(clock),   // Redis (connected in main.ts) is then wrapped in FallbackKeyValueStore
+// container.ts (excerpt): providers are chosen once, from configuration
+keyValueStore: infra.redis ?? new InMemoryKeyValueStore(clock),   // Redis is then wrapped in FallbackKeyValueStore
 emailSender: env.BREVO_API_KEY
   ? new BrevoEmailSender(env.BREVO_API_KEY, { address: env.EMAIL_FROM_ADDRESS, name })
   : env.DEV_EMAIL_DIR
     ? new FileEmailSender(env.DEV_EMAIL_DIR)
     : new ConsoleEmailSender(logger),
 
-const claimService = new ClaimService({
-  claims, items, users, unitOfWork, ids, clock,
+// modules/claims/claims.module.ts (excerpt): a module builds its service from the kernel
+const { repositories, unitOfWork, ids, logger, audit } = kernel;
+return new ClaimService({
+  claims: repositories.claims, items: repositories.items, users: repositories.users,
+  unitOfWork, ids, clock,
   generateHandoverCode: () => generateNumericCode(6),
   logger, audit,
 });
@@ -193,133 +197,7 @@ const claimService = new ClaimService({
 
 ## 5. Domain model
 
-An overview of the main classes. The complete diagrams (every aggregate with its inheritance from `AggregateRoot`, the embedded value objects as compositions, all multiplicities, one module's layers, the interfaces and their implementations) are in [../design/class-diagrams.md](../design/class-diagrams.md); how they are stored is in [../design/database.md](../design/database.md).
-
-```mermaid
-classDiagram
-    direction LR
-    class University {
-        +id
-        +name
-        +slug
-        +emailDomains: string[]
-        +schools: string[]
-        +places: string[]
-        +allowsEmail(email) bool
-        +hasSchool(school) bool
-        +hasPlace(place) bool
-        +updateSettings(settings, now) bool
-    }
-    class User {
-        +id
-        +universityId
-        +email
-        +role: Role
-        +status: UserStatus
-        +profile: UserProfile
-        +updateProfile(changes, now)
-        +changeAvatar(image, now)
-        +changePassword(hash, now)
-        +changeRole(role, by, now)
-        +suspend(reason, by, now)
-        +reactivate(by, now)
-    }
-    class Item {
-        +id
-        +universityId
-        +type: LOST | FOUND
-        +category: Category
-        +title
-        +description
-        +location
-        +place
-        +occurredOn: Date
-        +images: ImageRef[]
-        +reporterId
-        +status: ItemStatus
-        +closeReason
-        +expiresAt: Date
-        +verificationQuestions: VerificationQuestion[]
-        +heldAtSecurityDesk: bool
-        +edit(by, changes, now)
-        +reserve(now)
-        +reopen(now)
-        +resolve(now)
-        +close(by, reason, now)
-        +keepOpen(by, now)
-        +remindOfExpiry(now) bool
-        +expire(now) bool
-        +remove(by, now, reason)
-        +releasePhotos() ImageRef[]
-    }
-    class Claim {
-        +id
-        +itemId
-        +claimantId
-        +reporterId
-        +kind: OWNERSHIP | FINDER
-        +message
-        +answers: ClaimAnswer[]
-        +status: ClaimStatus
-        +approve(by, handover, now, atDesk)
-        +reject(by, reason, now, atDesk)
-        +cancel(by, now)
-        +completeHandover(by, code, now) HandoverResult
-        +completeHandoverAsStaff(by, now)
-        +expire(now)
-    }
-    class ClaimState {
-        <<abstract>>
-        +approve() ClaimStatus
-        +reject() ClaimStatus
-        +cancel() ClaimStatus
-        +completeHandover() ClaimStatus
-        +expire() ClaimStatus
-    }
-    class RequestedState
-    class ApprovedState
-    class TerminalState
-    class ModerationReport {
-        +itemId
-        +flaggedBy
-        +reason
-        +status: OPEN | DISMISSED | ACTIONED
-        +resolve(decision, by, note, now)
-    }
-    class Notification {
-        +userId
-        +type
-        +title
-        +body
-        +claimId
-        +itemId
-        +readAt
-        +emailedAt
-    }
-
-    University "1" --> "*" User
-    University "1" --> "*" Item
-    User "1" --> "*" Item : reports
-    Item "1" --> "*" Claim
-    User "1" --> "*" Claim : submits
-    Item "1" --> "*" ModerationReport
-    Claim --> ClaimState : current state
-    ClaimState <|-- RequestedState
-    ClaimState <|-- ApprovedState
-    ClaimState <|-- TerminalState
-    User "1" --> "*" Notification
-```
-
-Each claim status maps to one shared, stateless state object (`RequestedState`, `ApprovedState`, `TerminalState`; Flyweight). A state answers "what status does this action lead to?" and throws for actions that aren't allowed, so the legal transitions live in one place.
-
-**Enumerations**
-
-| Enum          | Values                                                                                                                                                          |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Role`        | `STUDENT`, `SECURITY_DESK`, `UNIVERSITY_ADMIN`, `PLATFORM_ADMIN`                                                                                                |
-| `ItemStatus`  | `OPEN`, `RESERVED` (a claim is approved, awaiting handover), `RESOLVED`, `CLOSED` (by its reporter or after nobody kept it open; see Post lifecycle), `REMOVED` |
-| `ClaimStatus` | `REQUESTED`, `APPROVED`, `REJECTED`, `CANCELLED`, `EXPIRED`, `COMPLETED`                                                                                        |
-| `Category`    | `ELECTRONICS`, `ID_CARD`, `KEYS`, `WALLET`, `BAG`, `CLOTHING`, `BOOKS`, `BOTTLE`, `ACCESSORIES`, `OTHER`                                                        |
+Seven aggregates hold the business rules: `University`, `User`, `Session`, `Item`, `Claim`, `ModerationReport` and `Notification`. Each extends `AggregateRoot` (a version for optimistic concurrency, and the domain events it recorded), keeps its state private and is created only through a named factory. The full class diagram (every aggregate, value object, enumeration, relationship and multiplicity) is in [class-diagrams.md §1](../design/class-diagrams.md#1-domain-model), the life cycles of claims, items, reports and sessions in [interactions.md](../design/interactions.md#state-diagrams), and how each class is stored in [database.md](../design/database.md). This section gives the rules that the diagrams can't show.
 
 **University vs school:** a _University_ is a customer of the platform (a tenant), for example Rishihood University. _Schools_ such as Newton School of Technology or School of Entrepreneurship are departments inside one university. They are stored as a list on the university and shown in the sign-up form; a user's school is just a profile field and does not separate any data.
 
@@ -331,8 +209,6 @@ Each claim status maps to one shared, stateless state object (`RequestedState`, 
 
 **Moderation:** anyone can flag a post (`ModerationReport`: reason, details; one per person per post). An admin decides on all open reports for a post at once: removing it is one transaction (item `REMOVED` + reports `ACTIONED`); its open claims are then closed by `CloseClaimsWhenItemEnds` and the poster is told why by `ItemModerationHandler`.
 
-**Other collections:** `sessions` (refresh tokens), `outbox_events`, `audit_logs`, `moderation_reports`.
-
 ---
 
 ## 6. Claim workflow (State pattern)
@@ -342,20 +218,7 @@ A **claim** connects the item's reporter with another user:
 - On a **FOUND** item, the claimant says "this is mine" (`OWNERSHIP`) and answers the reporter's verification questions.
 - On a **LOST** item, the claimant says "I found this" (`FINDER`) and describes where it is.
 
-```mermaid
-stateDiagram-v2
-    [*] --> REQUESTED : claimant submits
-    REQUESTED --> APPROVED : reporter approves
-    REQUESTED --> REJECTED : reporter rejects
-    REQUESTED --> CANCELLED : claimant withdraws
-    APPROVED --> COMPLETED : handover code confirmed
-    APPROVED --> CANCELLED : either side cancels
-    APPROVED --> EXPIRED : no handover within 7 days
-    REJECTED --> [*]
-    CANCELLED --> [*]
-    EXPIRED --> [*]
-    COMPLETED --> [*]
-```
+Its states and transitions are drawn in [interactions.md S1](../design/interactions.md#s1-claim), the item's in [S2](../design/interactions.md#s2-item), and approval and handover step by step in [Q5](../design/interactions.md#q5-approve-a-claim) and [Q6](../design/interactions.md#q6-hand-over-with-the-code).
 
 **Rules**
 
@@ -374,42 +237,17 @@ stateDiagram-v2
 8. **The desk as a team:** claims on a found item held at the desk may be approved or declined by its reporter or by any desk staff member (role checked against the database; never on their own claim), so items handed in keep moving when the person who posted them is off shift. The console lists them under "Claims to decide" (`GET /desk/claims`).
 9. Removing an item cancels its active claims; an expiry job ends approved claims whose deadline passed and reopens their items.
 
-**Why the State pattern:** each state class decides which transitions are legal. An illegal action, such as approving a completed claim, throws `InvalidStateTransitionError` from one place instead of scattered `if` checks. A new state (e.g. `DISPUTED`) is a new class, not an edit to every method (Open/Closed principle).
+**Why the State pattern:** each state class decides which transitions are legal, so an illegal action, such as approving a completed claim, throws `InvalidStateTransitionError` from one place instead of scattered `if` checks, and a new state is a new class ([ADR 0009](../adr/0009-claim-state-machine.md)).
 
-**Concurrency** is protected at three levels:
-
-1. **Transactions:** claim, item and outbox writes for one action run in one MongoDB transaction via `UnitOfWork` (the driver's `withTransaction`, which retries transient write conflicts).
-2. **Optimistic concurrency:** every document has a `version`. An update only matches the version that was loaded, otherwise it fails with `ConcurrencyError` (HTTP 409) instead of silently overwriting someone else's change.
-3. **Unique partial indexes** as a last line of defence: at most one active claim per person per item (`uniq_active_claim_per_claimant`) and at most one approved claim per item (`uniq_approved_claim_per_item`).
+**Concurrency** is protected at three levels: claim, item and outbox writes for one action run in **one transaction** (`UnitOfWork`, using the driver's `withTransaction`, which retries transient write conflicts); every save checks the **version** that was loaded and otherwise fails with `ConcurrencyError` (409) instead of overwriting someone else's change; and **partial unique indexes** are the last line of defence: at most one active claim per person per item (`uniq_active_claim_per_claimant`) and one approved claim per item (`uniq_approved_claim_per_item`). Every consistency mechanism is listed in [database.md §4](../design/database.md#4-keeping-the-data-consistent).
 
 ---
 
 ## 7. Events, notifications and the outbox
 
-Use cases never send notification emails themselves. (The one exception: sign-up and password-reset codes, which `AuthService` sends straight away in the background, because they must arrive at once and the code must never be stored.) Aggregates record **domain events** while their business methods run (`ClaimApproved`, `ItemRemoved`, …). When a repository saves an aggregate, the `MongoRepository` base class writes its pending events to the `outbox_events` collection **in the same transaction** (the caller's, or one it starts itself). No service can forget to publish an event, and an event never exists without its change. A background worker then delivers the events.
+Use cases never send notification emails themselves. There are two exceptions, both sent directly so that nothing secret or personal is stored: sign-up and password-reset codes, which `AuthService` sends straight away in the background (they must arrive at once, and the code must never be stored), and the goodbye email after an account is deleted (so the address is never written to the outbox). Aggregates record **domain events** while their business methods run (`ClaimApproved`, `ItemRemoved`, …). When a repository saves an aggregate, the `MongoRepository` base class writes its pending events to the `outbox_events` collection **in the same transaction** (the caller's, or one it starts itself). No service can forget to publish an event, and an event never exists without its change. A background worker then delivers the events.
 
-```mermaid
-sequenceDiagram
-    participant R as Reporter (browser)
-    participant API as ClaimController → ClaimService
-    participant DB as MongoDB (transaction)
-    participant W as OutboxProcessor
-    participant H as Event handlers
-    participant E as Brevo
-
-    R->>API: POST /claims/:id/approve
-    API->>DB: update claim + item + insert ClaimApproved event (one transaction)
-    API-->>R: 200 OK (claim DTO)
-    loop every few seconds
-        W->>DB: claim next PENDING events
-        W->>H: dispatch ClaimApproved
-        H->>DB: create in-app notifications
-        H->>E: email the claimant (with the handover code when they are the owner)
-        W->>DB: mark DONE (or retry with backoff)
-    end
-```
-
-**Why:** in the first version the email was sent _before_ the database update, so a failure left the two out of sync. With the outbox, the event is saved exactly when the change is.
+Saving a change with its event is drawn in [interactions.md Q5](../design/interactions.md#q5-approve-a-claim), the delivery loop in [Q8](../design/interactions.md#q8-delivering-events-outbox) and an event's states in [S5](../design/interactions.md#s5-outbox-event); why an outbox and not a message broker is in [ADR 0006](../adr/0006-transactional-outbox.md).
 
 **Delivery guarantees (at least once):**
 
@@ -417,7 +255,7 @@ sequenceDiagram
 - **Per-handler progress:** each handler's success is recorded on the event (`completedHandlers`), so a retry only re-runs the handlers that failed. A healthy email is not re-sent because another handler failed.
 - **Retries:** exponential back-off (30 s, 1 min, 2 min, 4 min); after 5 attempts the event is marked `FAILED` and kept for inspection.
 - **Idempotent handlers:** in-app notifications have a unique index on (event id, recipient), and each notification records when its email went out (`emailedAt`), so even a redelivered event can't notify or email anyone twice. An email that failed is still sent on the retry.
-- **Housekeeping:** delivered events are deleted after 7 days; notifications after 180 days (TTL index).
+- **Housekeeping:** delivered events are deleted after 7 days by the `prune-outbox` job; how long every kind of data is kept is in [database.md §5](../design/database.md#5-retention).
 
 **Observer pattern:** handlers subscribe to event types through the `EventHandlerRegistry`. Adding a new reaction means adding a handler to a module; the module that raised the event doesn't change.
 
@@ -474,7 +312,7 @@ From 0.45 a pair is shown, from 0.65 it is a strong match. The threshold is abov
 | Sign-up                    | Email must match a university's `emailDomains` (subdomains included). `"*"` in the list opens sign-up to any address, used now so visitors can try the portal; an exact domain match always wins over `"*"`. The emailed code still proves every address is real. Two steps: a one-time code proves the email (→ 30-minute verification token), then the account is created with that token.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | One-time codes             | 6 digits from a cryptographic RNG. Only an HMAC is stored (Redis, 10-minute TTL), 5 guesses per code, deleted after use, one new code per minute per email, and at most 10 wrong codes per email per day across all codes (asking for fresh codes can't speed up guessing).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Secrets                    | One `APP_SECRET`; independent keys for access tokens, verification tokens and code hashing are derived from it with HKDF.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Account enumeration        | Code requests answer the same for known and unknown emails (an existing account gets a "you already have an account" email instead of a code), and code emails are sent in the background so response times match too. Login returns one message for a wrong email or password and hashes a dummy password for unknown emails so timing matches.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Account enumeration        | Code requests answer the same for known and unknown emails (an existing account gets a "you already have an account" email instead of a code), and code emails are sent in the background so response times match too. "Forgot password" answers the same whether or not the email exists. Login returns one message for a wrong email or password and hashes a dummy password for unknown emails so timing matches.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Password reset and change  | The reset's verification token carries a fingerprint of the current password hash, so it stops working once the password changes (single use). Resetting ends every session. Changing the password while signed in (`POST /auth/password/change`) needs the current one; wrong ones count as failed sign-ins (same `LoginThrottle`), so a stolen access token can't be used to guess it. Every session ends and the device that made the change gets a new one.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Deleting an account        | `DELETE /account` asks for the password again (throttled the same way). It reuses the normal use cases, so the other people involved are told: active claims are cancelled (an approved one reopens its item), open posts removed (their claims closed by `CloseClaimsWhenItemEnds`). Then the user document is deleted for good, with their sessions, notifications and picture. Finished handovers stay; the missing user shows as "Former member" (`toPersonSummary`). The goodbye email is sent directly, so the address is never written to the outbox. Each step only touches what is left, so a failed deletion can be retried. Demo accounts are refused.                                                                                                                                                                                                                                                                                                                                                        |
 | Data export                | `GET /account/export` returns the profile, every post (removed ones included), claims made and received, and notifications as a JSON file; never the password hash.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -486,16 +324,14 @@ From 0.45 a pair is shown, from 0.65 it is a strong match. The threshold is abov
 | Rate limiting              | Redis-backed. Per-IP limits are generous because a whole campus may share one IP (NAT); tight limits are per email or account: code requests, failed logins (10 per account and IP per 15 min, 50 per account per hour, only failures count so nobody can lock someone else out), 20 item reports and 20 avatar uploads per user per day. A general cap of 120 writes per IP per minute (setting `WRITE_LIMIT_PER_MINUTE`; the end-to-end tests raise it because every simulated person shares one IP); session refreshes don't count towards it, because every signed-in browser sends them and a whole campus or mobile network can share one address (they have their own limit, 600 per IP per minute); reads aren't counted because each check costs a Redis command on the metered free tier.                                                                                                                                                                                                                      |
 | Client IP                  | `TRUST_PROXY_HOPS` tells Express how many proxies sit in front of the app. Measured in production with `GET /health/client`: visitor → Vercel → Cloudflare → Render's load balancer → app, so **4**. It must be set explicitly in production: too low and all users share one rate-limit bucket, too high and clients can fake their IP. Trade-off: someone calling Render directly (bypassing Vercel) passes one hop fewer and could fake their address, dodging the per-IP limits only; the tight limits are per email and per account, which a fake IP doesn't affect.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Uploads                    | Type checked from file bytes, then **every image is re-encoded** (`SanitizingStorageProvider` decorator + sharp): metadata such as GPS location is removed, orientation applied, resized to ≤ 2000 px, stored as WebP. Decompression bombs (> 40 MP) are refused before decoding. At most 4 uploads are processed at once per instance (503 + `Retry-After` beyond that) so parallel uploads can't exhaust memory.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| HTTP headers               | JSON-only API: `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`, `Cross-Origin-Resource-Policy: same-site`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store` on every response (personal data), HSTS and the other helmet defaults.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| HTTP headers and CORS      | JSON-only API: `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`, `Cross-Origin-Resource-Policy: same-site`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store` on every response (personal data), HSTS and the other `helmet` defaults; CORS allows only the origins in `CORS_ORIGINS`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | CSRF                       | The refresh and logout endpoints are the only ones authenticated by a cookie. Protected by SameSite=Lax **and** an `Origin` check against the allowed origins.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Timeouts                   | Keep-alive 65 s (longer than the load balancer's), headers 66 s, whole request 120 s (slow mobile uploads, but no slow-loris).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Audit log                  | Append-only `audit_logs` (1-year retention): logins and failures with reason and IP, detected token theft, password changes, account deletions, item removals, every claim decision, staff-confirmed handovers, handover-code lock-outs, role changes, suspensions, and moderation reports and decisions. Most entries come from domain events through the outbox (so an action is logged if and only if it happened); secrets such as codes are never stored.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Input                      | Every request body, query and param is validated with Zod; unknown fields are rejected.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | Output                     | Responses are built by mappers (DTOs). Emails, phone numbers and internal fields are never exposed in lists.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Email content              | Templates escape all user input (`html` tagged template); brand colours are validated hex values.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Headers / CORS             | `helmet`; CORS allow-list from config.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Errors                     | Clients get a stable error code and message; stack traces and internal messages only go to logs and Sentry.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| Enumeration                | "Forgot password" always returns the same response, whether or not the email exists.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ---
 
@@ -586,13 +422,13 @@ Base path: `/api/v1`. Request and response bodies are JSON (except image uploads
 | GET                      | `/admin/items`                | admin                                    | Every post, removed ones included (`q`, `type`, `category`, `status` comma list), cursor                                                                                                       |
 | POST                     | `/admin/items/:id/remove`     | admin                                    | Remove any post (also the admin's own, also after handover) with a `reason` for the poster; its open reports are closed in the same transaction                                                |
 | **Health**               |                               |                                          |                                                                                                                                                                                                |
-| GET                      | `/health/live`                | –                                        | Process is up (UptimeRobot ping; replaces `/api/ping`)                                                                                                                                         |
+| GET                      | `/health/live`                | –                                        | Process is up (UptimeRobot ping)                                                                                                                                                               |
 | GET                      | `/health/ready`               | –                                        | MongoDB and Redis reachable                                                                                                                                                                    |
 | GET                      | `/health/client`              | –                                        | How the API sees the caller: client IP and proxy chain (to check `TRUST_PROXY_HOPS`)                                                                                                           |
 | **Documentation**        |                               |                                          |                                                                                                                                                                                                |
 | GET                      | `/openapi.json`, `/docs`      | –                                        | OpenAPI 3.1 document and Swagger UI (`API_DOCS_ENABLED`)                                                                                                                                       |
 
-Interactive documentation is served at `/api/v1/docs` (OpenAPI 3.1 at `/api/v1/openapi.json`); requests are generated from the same Zod schemas that validate them, and a test checks every documented operation is routed.
+Interactive documentation is served at `/api/v1/docs` (Swagger UI from the installed package, under its own content security policy; OpenAPI 3.1 at `/api/v1/openapi.json`). Request schemas are generated from the same Zod schemas that validate them, and a test checks the document against the routes both ways (§14).
 
 ---
 
@@ -615,22 +451,7 @@ _Upgrade path:_ prefix and typo-tolerant search ("wal" → "wallet") would use A
 
 ## 11. Error handling
 
-```
-AppError (httpStatus, code)
-├── ValidationError                400
-│   └── HandoverCodeIncorrectError     (claims module: attempts left)
-├── UnauthorizedError              401
-├── ForbiddenError                 403
-├── NotFoundError                  404
-├── ConflictError                  409
-│   ├── InvalidStateTransitionError
-│   ├── ConcurrencyError               (optimistic concurrency: saved by someone else)
-│   └── HandoverLockedError            (claims module)
-├── PayloadTooLargeError           413
-├── RateLimitError                 429  (+ Retry-After)
-├── ExternalServiceError           502
-└── ServiceBusyError               503  (+ Retry-After; upload slots full)
-```
+Every error the API reports on purpose is an `AppError` subclass that fixes its HTTP status and error code: `ValidationError` 400 (with `HandoverCodeIncorrectError`), `UnauthorizedError` 401, `ForbiddenError` 403, `NotFoundError` 404, `ConflictError` 409 (with `InvalidStateTransitionError`, `ConcurrencyError` and `HandoverLockedError`), `PayloadTooLargeError` 413, `RateLimitError` 429 and `ServiceBusyError` 503 (both with `Retry-After`), and `ExternalServiceError` 502. The hierarchy is drawn in [class-diagrams.md §2](../design/class-diagrams.md#2-inheritance-hierarchies), and the path of a request through validation and error handling in [interactions.md A3](../design/interactions.md#a3-one-request-through-the-api).
 
 One `errorHandler` middleware converts `AppError` into the error format above. Anything else becomes a generic 500; unexpected errors, and `AppError`s of 500 or more except "server busy", are reported through `ErrorReporter` (Sentry when `SENTRY_DSN` is set). Multer and JSON parsing errors are converted too, so clients always get JSON.
 
@@ -655,7 +476,7 @@ The classes and their relationships are drawn in [../design/class-diagrams.md](.
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | **S**ingle Responsibility | Route, controller, service, domain entity, repository and mapper are separate classes per module (e.g. `ClaimController` only reads the request and maps the answer; `toClaimDto` only decides what each viewer may see; `matchScore` only scores)                                                                                | Each changes for one reason: a new field in the response touches only the mapper                 |
 | **O**pen/Closed           | A new claim state is a new `ClaimState` subclass; a new reaction to an event is a new `EventHandler` registered by its module (the module raising the event is unchanged); a new storage behaviour is a decorator; a new module is a folder plus one line in `container.ts`                                                       | New behaviour is added as new classes, not by editing tested ones                                |
-| **L**iskov Substitution   | Every `KeyValueStore` (Redis, in-memory, the fallback decorator) must pass the same behavioural test suite (`keyValueStore.contract.test.ts`); `DemoClock`, `FixedClock` and `SystemClock` stand in for one another; decorated providers stand in for plain ones                                                                  | Substitution is proven by a shared test, not assumed: tests run on fakes with no special cases   |
+| **L**iskov Substitution   | Every `KeyValueStore` must pass the same behavioural test suite (`keyValueStore.contract.test.ts`): in-memory, Redis, and the fallback decorator both while Redis answers and while it is down; `DemoClock`, `FixedClock` and `SystemClock` stand in for one another; decorated providers stand in for plain ones                 | Substitution is proven by a shared test, not assumed: tests run on fakes with no special cases   |
 | **I**nterface Segregation | `MongoAuditTrail` implements two interfaces: `AuditTrail` (write) for services and handlers, `AuditLog` (read) for the admin screen; `StorageProvider` has only `upload` and `delete`; services that use Redis as a store never see its `HealthIndicator` side; `SessionManager` asks only for `Pick<UserRepository, 'findById'>` | Each client depends only on the methods it calls                                                 |
 | **D**ependency Inversion  | Services depend on interfaces defined in `core/` or in the module's own `domain/` (`ClaimRepository` lives next to `Claim`, its Mongo implementation in `infrastructure/`); `container.ts` picks the implementations; lint rules stop domain code importing infrastructure                                                        | High-level rules don't depend on MongoDB, Redis or any vendor; free to paid is a one-line change |
 
@@ -688,7 +509,6 @@ The classes and their relationships are drawn in [../design/class-diagrams.md](.
 
 - **Logging:** pino JSON logs with a `requestId` on every line (also returned in the `X-Request-Id` header).
 - **Errors:** an `ErrorReporter` interface (Sentry adapter when `SENTRY_DSN` is set, otherwise nothing). Reported: unexpected 5xx errors in requests (tagged with request ID, route and user ID), event handlers once retrying stops, failed scheduled jobs, and startup or unhandled-promise failures. Expected errors (validation, 404, 409, rate limits, "server busy") are never reported. No personal data is sent: no cookies, headers, bodies, query strings or IPs. The web app reports render crashes from its error boundary; its Sentry SDK is loaded only when a DSN is configured.
-- **API documentation:** OpenAPI 3.1 at `/api/v1/openapi.json`, Swagger UI at `/api/v1/docs` (served from the installed package under its own content security policy). Requests are generated from the same Zod schemas that validate them; a test checks that every documented operation is routed.
 - **Health:** `/health/live` for UptimeRobot (keeps the free Render instance awake and alerts on downtime); `/health/ready` checks dependencies.
 - **Graceful shutdown:** on `SIGTERM`, stop accepting requests, finish in-flight ones, stop the worker, close DB and Redis connections.
 - **Config:** all settings from environment variables, validated at startup; the app refuses to start with missing or invalid config.
@@ -701,7 +521,7 @@ The classes and their relationships are drawn in [../design/class-diagrams.md](.
 | Level       | Tools                                     | What                                                                                                                                                                                                                                   |
 | ----------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Unit        | Vitest                                    | Domain entities (every claim state × action combination), services with hand-written fakes (possible because services depend on interfaces), middleware, image processing, password hashing, log redaction                             |
-| Contract    | Vitest                                    | One behavioural suite that every `KeyValueStore` implementation must pass: in-memory always, Redis when `REDIS_URL` is set (CI runs a Redis service)                                                                                   |
+| Contract    | Vitest                                    | One behavioural suite that every `KeyValueStore` implementation must pass: in-memory and the fallback decorator (with its primary up and down) always, Redis when `REDIS_URL` is set (CI runs a Redis service)                         |
 | Integration | Vitest + Supertest + `MongoMemoryReplSet` | The real app (real composition root, repositories, transactions) over HTTP, with fakes only at the edges: fixed clock, captured emails, in-memory storage. Covers every user journey, permission rule, race condition and failure path |
 | End-to-end  | Playwright                                | Real browser, desktop and Pixel 7: the full handover journey, moderation and suspension, session restore, and a sleeping server (`apps/web/e2e`)                                                                                       |
 | Load        | k6                                        | Browsing, posting, claiming and sign-in with 200 and 1,000 simultaneous users (`load/`, results in [../load-test.md](../load-test.md))                                                                                                 |
@@ -712,7 +532,7 @@ The classes and their relationships are drawn in [../design/class-diagrams.md](.
 - A fixed, controllable clock: expiry, deadlines, back-off and rate-limit windows are tested by moving time, not by waiting.
 - Every test server binds explicitly to `127.0.0.1`: with many test files running in parallel, supertest's default (all addresses) occasionally let requests reach another file's server.
 
-**Current numbers:** 464 API tests and 32 end-to-end tests (42 runs: the ten marked `@mobile` also run on a phone, four of them only there). Coverage is 95% statements, 88% branches, 97% functions, 97% lines. The build fails below 93 / 84 / 95 / 95. A test checks the OpenAPI document both ways: every documented operation is routed, and every route is documented.
+**Current numbers:** 474 API tests and 32 end-to-end tests (42 runs: the ten marked `@mobile` also run on a phone, four of them only there). Coverage is 95% statements, 88% branches, 97% functions, 97% lines. The build fails below 93 / 84 / 95 / 95. A test checks the OpenAPI document both ways: every documented operation is routed, and every route is documented.
 
 ### Continuous integration (`.github/workflows/ci.yml`)
 
@@ -727,44 +547,11 @@ A newer push cancels the older run on the same branch; the MongoDB test binary a
 
 `npm run check` runs the same checks locally.
 
-## 15. Free tier now, paid later
-
-The step-by-step version, and why no code changes are needed, is in [deployment.md §7](../deployment.md#7-scaling-up).
-
-| Concern         | Free now                                                             | Paid switch                                                  | Code change                                                            |
-| --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| API hosting     | Render free (kept awake by UptimeRobot), API + worker in one process | Render paid or any Docker host, worker as a separate process | Env flag `WORKER_ENABLED`                                              |
-| Database        | MongoDB Atlas M0 (512 MB)                                            | Atlas M10+                                                   | None                                                                   |
-| Redis           | Upstash free                                                         | Upstash paid or Redis Cloud                                  | None (connection string)                                               |
-| Images          | Cloudinary free                                                      | Cloudinary paid or S3                                        | New `S3StorageProvider` if switching vendor                            |
-| Email           | Brevo free (300/day)                                                 | Brevo paid or Amazon SES                                     | New adapter if switching vendor                                        |
-| Background jobs | Outbox polling in MongoDB                                            | BullMQ, RabbitMQ or SQS                                      | The outbox processor forwards events to the broker; handlers unchanged |
-| Error tracking  | Sentry free                                                          | Sentry paid                                                  | None                                                                   |
-
 ---
 
-## 16. Architecture Decision Records
+## 15. Security review
 
-The reasoning behind the main decisions, with the alternatives that were considered, is in [`docs/adr/`](../adr/README.md):
-
-1. [Modular monolith over microservices](../adr/0001-modular-monolith.md)
-2. [TypeScript for the backend](../adr/0002-typescript.md)
-3. [Layered architecture with a rich domain model](../adr/0003-rich-domain-model.md)
-4. [Manual dependency injection via a composition root](../adr/0004-manual-dependency-injection.md)
-5. [MongoDB with transactions (not a relational database)](../adr/0005-mongodb-with-transactions.md)
-6. [Transactional outbox instead of a message broker](../adr/0006-transactional-outbox.md)
-7. [Refresh-token rotation with httpOnly cookies](../adr/0007-refresh-token-rotation.md)
-8. [Cursor-based pagination](../adr/0008-cursor-pagination.md)
-9. [Claim lifecycle as a state machine](../adr/0009-claim-state-machine.md)
-10. [Monorepo with a shared schema package](../adr/0010-monorepo-shared-schemas.md)
-11. [One branded deployment per organisation on a multi-tenant codebase](../adr/0011-branded-deployment-per-organisation.md)
-12. [Modules wire themselves; typed domain-event contracts](../adr/0012-self-wiring-modules-and-event-contracts.md)
-
----
-
-## 17. Security review (Day 7)
-
-An independent review of the API code found no critical or high issues; access control, tenant isolation, JWT handling and injection defences were confirmed correct. Its findings and their resolution:
+An independent review of the API code, before launch, found no critical or high issues; access control, tenant isolation, JWT handling and injection defences were confirmed correct. Its findings and their resolution:
 
 | #   | Severity | Finding                                                                                               | Resolution                                                                                                                                                             |
 | --- | -------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -781,3 +568,11 @@ An independent review of the API code found no critical or high issues; access c
 **Dependencies:** `npm audit --omit=dev` finds no vulnerabilities in production dependencies, and CI fails if one with high or critical severity appears. Install scripts of dependencies run only where `allowScripts` in the root `package.json` allows them (npm 11 blocks the rest): bcrypt, esbuild and the test database download; the install statistics of `@scarf/scarf` and a needless rebuild of `fsevents` are denied. The only advisory left is a low-severity one in esbuild's development server on Windows, which never runs in production.
 
 **Secrets:** no real secret has ever been committed; the repository history contains only placeholder values.
+
+---
+
+## 16. Related documents
+
+- **Free plans now, paid later:** what each service costs to scale and why no code changes are needed, in [deployment.md §7](../deployment.md#7-scaling-up); each service's limits in [services.md](../services.md).
+- **Decisions:** the twelve architecture decision records, with the alternatives and trade-offs, in [docs/adr](../adr/README.md).
+- **System design:** requirements, class, sequence, activity and state diagrams and the database schema in [docs/design](../design/README.md).

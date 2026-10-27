@@ -1,6 +1,6 @@
 # Frontend Architecture
 
-Status: Built and live · Last updated: 22 October 2026
+Status: Built and live · Last updated: 28 October 2026
 
 The web app is a React 19 single-page application (TypeScript, Vite, Tailwind CSS 4) organised **by feature**. It talks to the API only through one typed client, keeps server data in TanStack Query's cache, and validates forms with the **same Zod schemas the API uses** (from `packages/shared`), so the client and server can't disagree about what's valid.
 
@@ -8,7 +8,7 @@ The web app is a React 19 single-page application (TypeScript, Vite, Tailwind CS
 
 ## 1. Structure
 
-```
+```text
 apps/web/src/
 ├── main.tsx                 # ErrorBoundary → TanStack Query → Router → Auth → App (+ toasts, wake-up notice)
 ├── App.tsx                  # Routes; every page is lazy-loaded (code splitting)
@@ -18,6 +18,7 @@ apps/web/src/
 │   ├── api/endpoints.ts     # one typed function per API endpoint
 │   ├── queryClient.ts       # cache defaults + all query keys in one place
 │   ├── forms.ts             # maps API field errors onto form inputs
+│   ├── categories.ts        # an icon for each item category, and the category dropdown options
 │   ├── format.ts            # labels, status colours, dates (en-IN)
 │   ├── hooks.ts             # useDebouncedValue (search as you type)
 │   ├── images.ts            # shrinks photos on the device before upload (posts: 2000 px, profile pictures: 512 px)
@@ -99,7 +100,7 @@ The site can be installed on a phone or computer like an app. `/manifest.webmani
 
 ## 7. Accessibility and UX
 
-Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `aria-describedby`), dialogs with `aria-modal`, Esc to close and focus restored afterwards, a skip-to-content link, keyboard-visible focus rings, `prefers-reduced-motion` respected, and a layout that works from 360 px phones to desktop. Toasts replace the old `alert()` pop-ups.
+Labels tied to every input, errors announced (`role="alert"`, `aria-invalid`, `aria-describedby`), dialogs with `aria-modal`, Esc to close and focus restored afterwards, a skip-to-content link, keyboard-visible focus rings, `prefers-reduced-motion` respected, and a layout that works from 360 px phones to desktop. Messages appear as toasts, never as browser pop-ups.
 
 **Checked automatically:** the e2e suite runs [axe-core](https://github.com/dequelabs/axe-core) (WCAG 2.1 A and AA rules) on the landing, sign-in, browse, item (also scrolled, when the header turns translucent), claims, claim and profile pages on a desktop and a phone, and on the five admin sections; CI fails on any violation. The first run found only colour contrast problems, fixed at the source: the brand red was darkened slightly (`#C62835`) so white text on it and red text on light backgrounds reach 4.5:1, the Found tags use orange `#FFA500` with dark brown text (7.8:1; white on it would be 2.0:1) (each brand colour names its text colour, `contrast`), the two lightest text greys were darkened one step in the Tailwind theme, the footer and translucent header got stronger text, and avatar initials got an opaque base.
 

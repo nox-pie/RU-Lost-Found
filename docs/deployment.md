@@ -4,17 +4,7 @@ How the product runs in production, how to deploy it from scratch and how to che
 
 ## 1. Production setup
 
-```
-Browser ──► Vercel (web app, apps/web)  ──/api/* rewrite──►  Render (API container, apps/api)
-                                                                 ├─► MongoDB Atlas  (database ru-lost-found-v2)
-                                                                 ├─► Upstash Redis  (codes, rate limits, job leases)
-                                                                 ├─► Brevo          (email)
-                                                                 ├─► Cloudinary     (images)
-                                                                 └─► Sentry         (errors; the web app reports too)
-UptimeRobot ──► /api/v1/health/live every 5 minutes (alerts, and keeps the free instance awake)
-```
-
-The browser only ever talks to the Vercel domain: `/api` is rewritten to Render, so the refresh-token cookie is first-party and no CORS preflight is needed.
+The web app (`apps/web`) is served by **Vercel**, which rewrites `/api/*` to the API container (`apps/api`) on **Render**, so the browser talks to one domain. The API uses **MongoDB Atlas** (database `ru-lost-found-v2`), **Upstash Redis**, **Brevo**, **Cloudinary** and **Sentry**, and **UptimeRobot** calls `/api/v1/health/live` every 5 minutes. The diagram is in [backend.md §2](architecture/backend.md#2-system-context); each service's dashboard, plan, limits and settings are in [services.md](services.md).
 
 ## Where configuration lives
 
