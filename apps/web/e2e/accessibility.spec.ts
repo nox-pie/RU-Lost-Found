@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { appoint, signUp, uniqueEmail } from './support';
+import { appoint, expectItemPage, signUp, uniqueEmail } from './support';
 
 /**
  * Automated accessibility checks (axe-core, WCAG 2.1 A and AA rules) on the main pages, signed
@@ -38,7 +38,7 @@ test('the main pages pass automated accessibility checks @mobile', async ({ page
   await expectNoViolations(page, 'Browse page');
 
   await page.getByRole('link', { name: /Black bifold wallet/ }).click();
-  await expect(page.getByRole('heading', { name: 'Black bifold wallet' })).toBeVisible();
+  await expectItemPage(page, 'Black bifold wallet');
   await expectNoViolations(page, 'Item page');
   // Scrolled, the header turns translucent over the content: its text must stay readable.
   await page.mouse.wheel(0, 600);

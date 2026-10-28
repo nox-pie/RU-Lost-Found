@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { FIXTURE_PHOTO, choose, signUp, uniqueEmail } from './support';
+import { choose, expectItemPage, FIXTURE_PHOTO, signUp, uniqueEmail } from './support';
 
 /**
  * Smart matching: a found post that looks like a lost one is suggested to the owner, on their
@@ -32,7 +32,7 @@ test('the owner of a lost post is told about a found post that looks like it', a
     await choose(page, where, 'CCD', dialog);
     await dialog.getByLabel('Exact spot').fill('Near the counter');
     await dialog.getByRole('button', { name: 'Publish report' }).click();
-    await expect(page.getByRole('heading', { name: title })).toBeVisible();
+    await expectItemPage(page, title);
   };
 
   await post(owner, 'I lost something', `Hostel keys ${tag}`, `Three keys on a red ring ${tag}.`);
