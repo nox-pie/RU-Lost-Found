@@ -100,11 +100,30 @@ export const itemIdParamsSchema = z.object({
   id: z.string().regex(/^[0-9a-f]{24}$/i, 'Invalid id'),
 });
 
+/**
+ * The browse filters the list and the tab counts share, so a tab's number always matches what it
+ * lists. The day range is about when the item was lost or found (`occurredOn`), both ends included.
+ */
+const feedFilterFields = {
+  q: z.string().trim().min(1).max(100).optional(),
+  category: z.enum(ITEM_CATEGORIES).optional(),
+  /** One of the university's campus places. */
+  place: placeField.min(1).optional(),
+  occurredFrom: dateOnlySchema.optional(),
+  occurredTo: dateOnlySchema.optional(),
+};
+
+const daysInOrder = (value: { occurredFrom?: string; occurredTo?: string }) =>
+  !value.occurredFrom || !value.occurredTo || value.occurredFrom <= value.occurredTo;
+const DAYS_OUT_OF_ORDER = {
+  message: 'The end date must be on or after the start date',
+  path: ['occurredTo'],
+};
+
 export const listItemsQuerySchema = z
   .object({
-    q: z.string().trim().min(1).max(100).optional(),
+    ...feedFilterFields,
     type: z.enum(ITEM_TYPES).optional(),
-    category: z.enum(ITEM_CATEGORIES).optional(),
     /** Comma-separated, e.g. `OPEN,RESERVED` (the default: everything still in play). */
     status: z
       .string()
@@ -115,7 +134,8 @@ export const listItemsQuerySchema = z
     cursor: z.string().max(200).optional(),
     limit: z.coerce.number().int().min(1).max(50).default(20),
   })
-  .strict();
+  .strict()
+  .refine(daysInOrder, DAYS_OUT_OF_ORDER);
 
 /**
  * The tabs of the browse page: which posts each shows. Shared, so the lists (filters sent by the
@@ -133,15 +153,13 @@ export const FEED_TABS = {
 
 export type FeedTab = keyof typeof FEED_TABS;
 
-/** How many posts each browse tab has for a search and category. */
+/** How many posts each browse tab has for the same filters. */
 export type ItemCountsDto = Record<FeedTab, number>;
 
 export const itemCountsQuerySchema = z
-  .object({
-    q: z.string().trim().min(1).max(100).optional(),
-    category: z.enum(ITEM_CATEGORIES).optional(),
-  })
-  .strict();
+  .object(feedFilterFields)
+  .strict()
+  .refine(daysInOrder, DAYS_OUT_OF_ORDER);
 
 export type ItemCountsQuery = z.infer<typeof itemCountsQuerySchema>;
 

@@ -32,7 +32,7 @@ import type { UniversityRepository } from '../universities/domain/UniversityRepo
 import type { User } from '../users/domain/User';
 import type { UserRepository } from '../users/domain/UserRepository';
 import { Item, REMINDER_DAYS } from './domain/Item';
-import type { ItemRepository } from './domain/ItemRepository';
+import type { FeedCriteria, ItemRepository } from './domain/ItemRepository';
 import type { ItemView } from './item.mapper';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -40,6 +40,17 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** "2026-10-01" → 2026-10-01T00:00:00.000Z */
 function parseDateOnly(value: string): Date {
   return new Date(`${value}T00:00:00.000Z`);
+}
+
+/** The browse filters of a list or count request, as repository criteria. */
+function feedCriteria(query: ItemCountsQuery): FeedCriteria {
+  return {
+    text: query.q,
+    category: query.category,
+    place: query.place,
+    occurredFrom: query.occurredFrom ? parseDateOnly(query.occurredFrom) : undefined,
+    occurredTo: query.occurredTo ? parseDateOnly(query.occurredTo) : undefined,
+  };
 }
 
 export class ItemService {
@@ -117,15 +128,15 @@ export class ItemService {
   async search(scope: TenantScope, query: ListItemsQuery): Promise<PageResult<ItemView>> {
     const page = await this.items.search(
       scope,
-      { text: query.q, type: query.type, category: query.category, statuses: query.status },
+      { ...feedCriteria(query), type: query.type, statuses: query.status },
       { cursor: query.cursor, limit: query.limit },
     );
     return { items: await this.withReporters(page.items), nextCursor: page.nextCursor };
   }
 
-  /** How many posts each browse tab shows for this search (see FEED_TABS). */
+  /** How many posts each browse tab shows for the same filters (see FEED_TABS). */
   async countByTab(scope: TenantScope, query: ItemCountsQuery): Promise<ItemCountsDto> {
-    const tallies = await this.items.tally(scope, { text: query.q, category: query.category });
+    const tallies = await this.items.tally(scope, feedCriteria(query));
     const count = (tab: { type?: ItemType; statuses: readonly ItemStatus[] }) =>
       tallies
         .filter((t) => (!tab.type || t.type === tab.type) && tab.statuses.includes(t.status))

@@ -1,6 +1,6 @@
 # Backend Architecture
 
-Status: Built and live · Last updated: 28 October 2026
+Status: Built and live · Last updated: 29 October 2026
 
 The backend is a **modular monolith** written in TypeScript on Node.js and Express 5. Each business capability lives in its own module. Business modules (auth, users, items, claims, matching, moderation, notifications) are split into the same layers: routes, controller, service, repository and domain; smaller modules (account, admin, desk, demo, health, audit, universities) have only the layers they need. Infrastructure (MongoDB, Redis, Cloudinary, email) sits behind interfaces, so any provider can be swapped without touching business logic.
 
@@ -380,8 +380,8 @@ Base path: `/api/v1`. Request and response bodies are JSON (except image uploads
 | GET                      | `/account/export`             | user                                     | Download my data: profile, posts, claims made and received, notifications (JSON file); 10 per hour                                                                                             |
 | DELETE                   | `/account`                    | user                                     | Delete my account (`password`); see "Deleting an account" in §9                                                                                                                                |
 | **Items**                |                               |                                          |                                                                                                                                                                                                |
-| GET                      | `/items`                      | user                                     | Search and filter (`q` words, `type`, `category`, `status` = comma list, default `OPEN,RESERVED`; `cursor`, `limit` ≤ 50)                                                                      |
-| GET                      | `/items/counts`               | user                                     | How many posts each browse tab has (All, Lost, Found, Returned), for the same words and category                                                                                               |
+| GET                      | `/items`                      | user                                     | Search and filter (`q` words, `type`, `category`, `place`, `occurredFrom`/`occurredTo` = days lost or found, included; `status` = comma list, default `OPEN,RESERVED`; `cursor`, `limit` ≤ 50) |
+| GET                      | `/items/counts`               | user                                     | How many posts each browse tab has (All, Lost, Found, Returned), for the same words, category, place and days                                                                                  |
 | POST                     | `/items`                      | user                                     | Report an item: multipart form, 1–3 photos in `photos` (≤ 5 MB each), optional `questions` (found items only); 20 per user per day                                                             |
 | GET                      | `/items/:id`                  | user                                     | Item details                                                                                                                                                                                   |
 | GET                      | `/items/:id/matches`          | owner                                    | Likely matches on the other side (lost ↔ found), up to 5, best first; see §8                                                                                                                   |
@@ -445,7 +445,7 @@ _Scaling note:_ photos pass through the API. At larger scale the next step is **
 
 ### Search
 
-`GET /items` uses MongoDB's text index on title (weight 5), location (3) and description (1). It matches whole words with English stemming ("keys" finds "key"), combined with the type/category/status filters and cursor pagination, newest first. Reporter names for a page are loaded with **one** batch query (`findByIds`), not one query per item (avoids the N+1 problem).
+`GET /items` uses MongoDB's text index on title (weight 5), location (3) and description (1). It matches whole words with English stemming ("keys" finds "key"), combined with the type, category, status, campus place and day-range filters and cursor pagination, newest first. The list and the tab counts build the place and day part of their query with one helper, so a tab always counts what it lists. Reporter names for a page are loaded with **one** batch query (`findByIds`), not one query per item (avoids the N+1 problem).
 
 _Upgrade path:_ prefix and typo-tolerant search ("wal" → "wallet") would use Atlas Search (a Lucene index, available on the free tier) behind the same repository method.
 
@@ -532,7 +532,7 @@ The classes and their relationships are drawn in [../design/class-diagrams.md](.
 - A fixed, controllable clock: expiry, deadlines, back-off and rate-limit windows are tested by moving time, not by waiting.
 - Every test server binds explicitly to `127.0.0.1`: with many test files running in parallel, supertest's default (all addresses) occasionally let requests reach another file's server.
 
-**Current numbers:** 474 API tests and 32 end-to-end tests (42 runs: the ten marked `@mobile` also run on a phone, four of them only there). Coverage is 95% statements, 88% branches, 97% functions, 97% lines. The build fails below 93 / 84 / 95 / 95. A test checks the OpenAPI document both ways: every documented operation is routed, and every route is documented.
+**Current numbers:** 476 API tests and 33 end-to-end tests (43 runs: the ten marked `@mobile` also run on a phone, four of them only there). Coverage is 95% statements, 88% branches, 97% functions, 97% lines. The build fails below 93 / 84 / 95 / 95. A test checks the OpenAPI document both ways: every documented operation is routed, and every route is documented.
 
 ### Continuous integration (`.github/workflows/ci.yml`)
 

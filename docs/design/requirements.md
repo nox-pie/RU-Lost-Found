@@ -1,6 +1,6 @@
 # Requirements
 
-Status: Built and live · Last updated: 28 October 2026
+Status: Built and live · Last updated: 29 October 2026
 
 What the portal must do (functional requirements), how well it must do it (non-functional requirements), who uses it (actors) and the core use cases step by step. Each requirement points to the module that implements it and the tests that prove it, so nothing here is a promise the code doesn't keep.
 
@@ -120,7 +120,7 @@ Numbered for reference. "Where" is the API module (under `apps/api/src/modules/`
 | #     | Requirement                                                                                                                                                                                                                                                | Where | Proved by                                                |
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------- |
 | FR-9  | A student reports a lost or found item with 1 to 3 photos, a category, a title, a description, a campus place and the exact spot, and the date. A found item may carry up to 3 verification questions and may be marked as handed in at the security desk. | items | `Item.test.ts`, `items.int.test.ts`, `journey.spec.ts`   |
-| FR-10 | Students search posts by words and filter by lost or found, category and status (All, Lost, Found, Returned), with a count for each tab, newest first, page by page.                                                                                       | items | `items.int.test.ts`                                      |
+| FR-10 | Students search posts by words and filter by lost or found, category, campus place, the days it was lost or found, and status (All, Lost, Found, Returned), with a count for each tab, newest first, page by page.                                         | items | `items.int.test.ts`, `interface.spec.ts`                 |
 | FR-11 | A student opens a post to see its photos and details.                                                                                                                                                                                                      | items | `items.int.test.ts`                                      |
 | FR-12 | The reporter edits their post while it is open.                                                                                                                                                                                                            | items | `Item.test.ts`, `items.int.test.ts`                      |
 | FR-13 | The reporter closes their open post ("I got it back" or "no longer needed"), keeps it open for another 60 days, or opens a closed post again.                                                                                                              | items | `Item.test.ts`, `items.int.test.ts`, `interface.spec.ts` |

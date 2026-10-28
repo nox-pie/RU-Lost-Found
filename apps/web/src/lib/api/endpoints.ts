@@ -74,18 +74,25 @@ export const accountApi = {
   remove: (password: string) => api<void>('/account', { method: 'DELETE', json: { password } }),
 };
 
-export interface ItemFilters {
+/** The browse filters; the tab counts take the same ones, except the tab's own type and status. */
+export interface FeedFilters {
   q?: string;
-  type?: 'LOST' | 'FOUND';
   category?: string;
+  place?: string;
+  /** When the item was lost or found, as YYYY-MM-DD days, both included. */
+  occurredFrom?: string;
+  occurredTo?: string;
+}
+
+export interface ItemFilters extends FeedFilters {
+  type?: 'LOST' | 'FOUND';
   status?: string;
 }
 
 export const itemsApi = {
   list: (filters: ItemFilters, cursor?: string) =>
     api<Page<ItemDto>>('/items', { query: { ...filters, cursor, limit: 12 } }),
-  counts: (filters: Pick<ItemFilters, 'q' | 'category'>) =>
-    api<ItemCountsDto>('/items/counts', { query: { ...filters } }),
+  counts: (filters: FeedFilters) => api<ItemCountsDto>('/items/counts', { query: { ...filters } }),
   mine: (cursor?: string) => api<Page<ItemDto>>('/items/mine', { query: { cursor, limit: 12 } }),
   get: (id: string) => api<ItemDto>(`/items/${id}`),
   /** Likely matches for my own post (lost ↔ found). */

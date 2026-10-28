@@ -1,6 +1,6 @@
 # Database Schema
 
-Status: Built and live · Last updated: 27 October 2026
+Status: Built and live · Last updated: 29 October 2026
 
 How the classes of [class-diagrams.md](class-diagrams.md) are stored: the MongoDB collections with their fields, keys, relationships and indexes, why each part is embedded or referenced, how consistency is kept without foreign keys, and what lives in Redis. Why MongoDB and not a relational database is in [ADR 0005](../adr/0005-mongodb-with-transactions.md).
 
@@ -224,12 +224,12 @@ Every index is named, and each one serves a query in the code; they are created 
 
 ### `items`
 
-| Index         | Fields                                           | Options         | Serves                                                                   |
-| ------------- | ------------------------------------------------ | --------------- | ------------------------------------------------------------------------ |
-| `feed`        | `universityId, status, type, createdAt ↓, _id ↓` |                 | The browse feed and its tabs, with cursor paging on (`createdAt`, `_id`) |
-| `by_reporter` | `universityId, reporterId, createdAt ↓`          |                 | "My items"                                                               |
-| `by_expiry`   | `status, expiresAt`                              |                 | The hourly job that reminds reporters and closes stale posts             |
-| `text_search` | `title`, `location`, `description` (text)        | weights 5, 3, 1 | Word search with English stemming ("keys" finds "key")                   |
+| Index         | Fields                                           | Options         | Serves                                                                                                                                  |
+| ------------- | ------------------------------------------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `feed`        | `universityId, status, type, createdAt ↓, _id ↓` |                 | The browse feed and its tabs, with cursor paging on (`createdAt`, `_id`); the place and day filters are checked on the posts it selects |
+| `by_reporter` | `universityId, reporterId, createdAt ↓`          |                 | "My items"                                                                                                                              |
+| `by_expiry`   | `status, expiresAt`                              |                 | The hourly job that reminds reporters and closes stale posts                                                                            |
+| `text_search` | `title`, `location`, `description` (text)        | weights 5, 3, 1 | Word search with English stemming ("keys" finds "key")                                                                                  |
 
 ### `claims`
 
