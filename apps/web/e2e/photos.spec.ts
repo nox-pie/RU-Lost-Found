@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { bigPhoto, choose, signUp, uniqueEmail } from './support';
+import { bigPhoto, choose, expectItemPage, signUp, uniqueEmail } from './support';
 
 test('a large phone photo is made smaller on the device and accepted', async ({ page }) => {
   const photo = await bigPhoto();
@@ -26,7 +26,7 @@ test('a large phone photo is made smaller on the device and accepted', async ({ 
 
   const sent = (await upload).postDataBuffer()?.length ?? 0;
   expect(sent).toBeLessThan(photo.length / 3);
-  await expect(page.getByRole('heading', { name: 'Grey umbrella' })).toBeVisible();
+  await expectItemPage(page, 'Grey umbrella');
 });
 
 test('phones can take the photo with the camera @mobile', async ({ page }, info) => {

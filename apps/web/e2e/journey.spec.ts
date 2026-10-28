@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { FIXTURE_PHOTO, PASSWORD, choose, signUp, uniqueEmail } from './support';
+import { choose, expectItemPage, FIXTURE_PHOTO, PASSWORD, signUp, uniqueEmail } from './support';
 
 /**
  * The core product journey, end to end in a real browser:
@@ -33,7 +33,7 @@ test('a found item gets back to its owner through a verified handover', async ({
     await dialog.getByLabel('Question 1', { exact: true }).fill('What is attached to the ring?');
     await dialog.getByRole('button', { name: 'Publish report' }).click();
 
-    await expect(finder.getByRole('heading', { name: 'Bunch of keys' })).toBeVisible();
+    await expectItemPage(finder, 'Bunch of keys');
     itemUrl = finder.url();
     await expect(finder.getByText('No claims yet.')).toBeVisible();
   });

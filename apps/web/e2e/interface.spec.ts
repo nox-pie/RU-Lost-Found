@@ -1,9 +1,10 @@
 import { expect, test, type Browser } from '@playwright/test';
 import {
-  FIXTURE_PHOTO,
   appoint,
   bigPhoto,
   choose,
+  expectItemPage,
+  FIXTURE_PHOTO,
   reportFoundItem,
   signUp,
   uniqueEmail,
@@ -75,7 +76,7 @@ test('a post names a campus place, or "Other" and types the place', async ({ pag
   await dialog.getByLabel('Exact spot').fill('Classroom 408');
   await dialog.getByRole('button', { name: 'Publish report' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Green notebook' })).toBeVisible();
+  await expectItemPage(page, 'Green notebook');
   await expect(page.getByText('A-Block · Classroom 408')).toBeVisible();
 });
 
@@ -130,7 +131,7 @@ test('a post switched from "found" to "lost" is not held back by a hidden questi
   await dialog.getByLabel('Exact spot').fill('Near the lockers');
   await dialog.getByRole('button', { name: 'Publish report' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Blue water bottle' })).toBeVisible();
+  await expectItemPage(page, 'Blue water bottle');
 });
 
 test('an admin can act on a person straight after searching for them', async ({ browser }) => {

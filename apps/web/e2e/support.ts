@@ -146,7 +146,17 @@ export async function reportFoundItem(page: Page, title: string) {
   await choose(page, 'Where did you find it?', 'Library', dialog);
   await dialog.getByLabel('Exact spot').fill('Second floor');
   await dialog.getByRole('button', { name: 'Publish report' }).click();
-  await expect(page.getByRole('heading', { name: title })).toBeVisible();
+  await expectItemPage(page, title);
+}
+
+/**
+ * Waits for a post's own page. After publishing, the browse page refreshes (showing the new
+ * post's card, whose title is a heading too) before the app moves to the post, so a title alone
+ * could match the card and leave the test on the wrong page.
+ */
+export async function expectItemPage(page: Page, title: string) {
+  await expect(page).toHaveURL(/\/items\/[0-9a-f]{24}$/);
+  await expect(page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
 }
 
 /** A 12-megapixel camera-style photo of random noise: well over the 5 MB upload limit. */
