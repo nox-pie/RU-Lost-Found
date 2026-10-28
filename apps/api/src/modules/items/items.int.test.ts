@@ -252,6 +252,59 @@ describe('searching items', () => {
     }
   });
 
+  it('filters by campus place and by the day it was lost or found, in the list and the counts', async () => {
+    const wallet = await reportAt(1, {
+      type: 'LOST',
+      category: 'WALLET',
+      title: 'Brown leather wallet',
+      place: 'Library',
+      occurredOn: '2026-09-20',
+    });
+    const keys = await reportAt(2, {
+      title: 'Bunch of keys',
+      place: 'Canteen',
+      occurredOn: '2026-09-25',
+    });
+    const bottle = await reportAt(3, { title: 'Steel water bottle', occurredOn: '2026-09-30' });
+    const get = async (path: string) =>
+      (await api().get(`/api/v1/items${path}`).set('Authorization', ravi.bearer).expect(200)).body;
+    const ids = async (query: string) =>
+      (await get(query)).data.map((item: { id: string }) => item.id);
+
+    expect(await ids('?place=Library')).toEqual([wallet]);
+    // Both ends are whole days and included.
+    expect(await ids('?occurredFrom=2026-09-25')).toEqual([bottle, keys]);
+    expect(await ids('?occurredTo=2026-09-25')).toEqual([keys, wallet]);
+    expect(await ids('?occurredFrom=2026-09-21&occurredTo=2026-09-29')).toEqual([keys]);
+    expect(await ids('?occurredFrom=2026-09-25&occurredTo=2026-09-25')).toEqual([keys]);
+    expect(await ids('?place=Canteen&occurredFrom=2026-09-26')).toEqual([]);
+
+    expect(await get('/counts?place=Library')).toEqual({ all: 1, lost: 1, found: 0, returned: 0 });
+    expect(await get('/counts?occurredFrom=2026-09-25')).toEqual({
+      all: 2,
+      lost: 0,
+      found: 2,
+      returned: 0,
+    });
+  });
+
+  it('rejects a date range that ends before it starts, and dates that are not dates', async () => {
+    for (const path of ['', '/counts']) {
+      const backwards = await api()
+        .get(`/api/v1/items${path}?occurredFrom=2026-10-05&occurredTo=2026-10-01`)
+        .set('Authorization', ravi.bearer);
+      expect(backwards.status).toBe(400);
+      expect(backwards.body.error.details).toEqual([
+        { path: 'query.occurredTo', message: 'The end date must be on or after the start date' },
+      ]);
+
+      const notADate = await api()
+        .get(`/api/v1/items${path}?occurredFrom=yesterday`)
+        .set('Authorization', ravi.bearer);
+      expect(notADate.status).toBe(400);
+    }
+  });
+
   it('pages through results with a cursor, without repeats or gaps', async () => {
     const created: string[] = [];
     for (let i = 0; i < 5; i++) created.push(await reportAt(i, { title: `Item number ${i}` }));

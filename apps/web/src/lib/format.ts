@@ -139,9 +139,15 @@ export function timeAgo(iso: string, now = Date.now()): string {
 
 /** Today as YYYY-MM-DD in the user's own time zone (what a date input expects). */
 export function todayIso(): string {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60_000;
-  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+  return daysAgoIso(0);
+}
+
+/** The day `days` before today, as YYYY-MM-DD in the user's own time zone. */
+export function daysAgoIso(days: number): string {
+  const day = new Date();
+  day.setDate(day.getDate() - days);
+  const offset = day.getTimezoneOffset() * 60_000;
+  return new Date(day.getTime() - offset).toISOString().slice(0, 10);
 }
 
 /** Years of study offered on the sign-up and profile forms. */

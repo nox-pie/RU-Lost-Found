@@ -38,9 +38,30 @@ import {
   subdocumentOptions,
 } from '../../../infrastructure/database/schemas';
 import { Item, OPEN_FOR_DAYS, type VerificationQuestion } from '../domain/Item';
-import type { ItemRepository, ItemSearchCriteria, ItemTally } from '../domain/ItemRepository';
+import type {
+  FeedCriteria,
+  ItemRepository,
+  ItemSearchCriteria,
+  ItemTally,
+} from '../domain/ItemRepository';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The place and day-range part of a browse filter, the same for the list and the counts. Both
+ * `occurredOn` and the bounds are midnight UTC, so the range includes both whole days.
+ */
+function placeAndDays(criteria: Pick<FeedCriteria, 'place' | 'occurredFrom' | 'occurredTo'>) {
+  const filter: DocumentFilter = {};
+  if (criteria.place) filter.place = criteria.place;
+  if (criteria.occurredFrom || criteria.occurredTo) {
+    filter.occurredOn = {
+      ...(criteria.occurredFrom && { $gte: criteria.occurredFrom }),
+      ...(criteria.occurredTo && { $lte: criteria.occurredTo }),
+    };
+  }
+  return filter;
+}
 
 interface ItemDocument extends VersionedDocument {
   universityId: Types.ObjectId;
@@ -188,13 +209,11 @@ export class MongoItemRepository
     );
   }
 
-  async tally(
-    scope: TenantScope,
-    criteria: Pick<ItemSearchCriteria, 'text' | 'category'>,
-  ): Promise<ItemTally[]> {
+  async tally(scope: TenantScope, criteria: FeedCriteria): Promise<ItemTally[]> {
     const match: DocumentFilter = {
       universityId: toObjectId(scope.universityId),
       status: { $in: [...LISTABLE_ITEM_STATUSES] },
+      ...placeAndDays(criteria),
     };
     if (criteria.category) match.category = criteria.category;
     // A $text match must be the first stage of the pipeline.
@@ -217,6 +236,7 @@ export class MongoItemRepository
     const filter: DocumentFilter = {
       universityId: toObjectId(scope.universityId),
       status: { $in: criteria.statuses },
+      ...placeAndDays(criteria),
     };
     if (criteria.type) filter.type = criteria.type;
     if (criteria.category) filter.category = criteria.category;

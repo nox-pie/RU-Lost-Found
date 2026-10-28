@@ -13,7 +13,19 @@ export interface ItemSearchCriteria {
   reporterId?: string;
   /** Only found items handed in at the security desk. */
   heldAtSecurityDesk?: boolean;
+  /** One of the university's campus places. */
+  place?: string;
+  /** Lost or found on or after this day (midnight UTC, like `occurredOn`). */
+  occurredFrom?: Date;
+  /** Lost or found on or before this day. */
+  occurredTo?: Date;
 }
+
+/** What the browse page filters by; the tab counts take the same filters as the list. */
+export type FeedCriteria = Pick<
+  ItemSearchCriteria,
+  'text' | 'category' | 'place' | 'occurredFrom' | 'occurredTo'
+>;
 
 /** How many listable items there are of one type in one status. */
 export interface ItemTally {
@@ -23,11 +35,8 @@ export interface ItemTally {
 }
 
 export interface ItemRepository extends Repository<Item> {
-  /** Listable items (open, reserved, returned) matching the text and category, by type and status. */
-  tally(
-    scope: TenantScope,
-    criteria: Pick<ItemSearchCriteria, 'text' | 'category'>,
-  ): Promise<ItemTally[]>;
+  /** Listable items (open, reserved, returned) matching the browse filters, by type and status. */
+  tally(scope: TenantScope, criteria: FeedCriteria): Promise<ItemTally[]>;
   findById(scope: TenantScope, id: string, tx?: TransactionContext): Promise<Item | null>;
   /** Items with these ids in the university (unknown ids are skipped). */
   findByIds(scope: TenantScope, ids: readonly string[]): Promise<Item[]>;

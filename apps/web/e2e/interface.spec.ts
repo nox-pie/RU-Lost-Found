@@ -79,6 +79,38 @@ test('a post names a campus place, or "Other" and types the place', async ({ pag
   await expect(page.getByText('A-Block · Classroom 408')).toBeVisible();
 });
 
+test('the browse page narrows posts by campus place and by when they were lost or found', async ({
+  page,
+}) => {
+  await signUp(page, { email: uniqueEmail('browser'), first: 'Bina', last: 'Roy' });
+  // A word only this run's post has, so posts from other tests never get in the way.
+  const word = `umbrella${Date.now().toString(36)}`;
+  await reportFoundItem(page, `Blue ${word}`);
+  await page.goto('/');
+  await page.getByLabel('Search items').fill(word);
+  const post = page.getByRole('link', { name: new RegExp(word) });
+  const nothing = page.getByText('No items found');
+  await expect(post).toBeVisible();
+
+  await choose(page, 'Place', 'Gym');
+  await expect(nothing).toBeVisible();
+  await choose(page, 'Place', 'Library');
+  await expect(post).toBeVisible();
+  await expect(page).toHaveURL(/place=Library/);
+
+  // The post was found today (the report form's default).
+  await choose(page, 'When', 'Today');
+  await expect(post).toBeVisible();
+  await choose(page, 'When', 'Choose dates…');
+  await page.getByLabel('From', { exact: true }).fill('2026-01-01');
+  await page.getByLabel('To', { exact: true }).fill('2026-01-31');
+  await expect(nothing).toBeVisible();
+
+  // A range that ends before it starts is pointed out, not silently empty.
+  await page.getByLabel('From', { exact: true }).fill('2026-02-01');
+  await expect(page.getByText('"To" must be on or after "From"')).toBeVisible();
+});
+
 test('a post switched from "found" to "lost" is not held back by a hidden question', async ({
   page,
 }) => {
