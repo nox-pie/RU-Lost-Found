@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { Tone } from '../../lib/format';
+import { initialsOf, type Tone } from '../../lib/format';
 import { Spinner } from './Spinner';
 
 const TONES: Record<Tone, string> = {
@@ -40,12 +40,7 @@ export function Avatar({
   }
   // No picture: the person's initials on a brand-tinted circle. The tint sits on white, so the
   // initials stay readable on any background (a coloured header included).
-  const initials = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('');
+  const initials = initialsOf(name);
   return (
     <span aria-hidden className={`${dimensions} inline-flex shrink-0 rounded-full bg-white`}>
       <span className="flex h-full w-full items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">

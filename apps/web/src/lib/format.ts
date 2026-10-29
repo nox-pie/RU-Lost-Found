@@ -155,3 +155,13 @@ export const YEAR_OPTIONS = Array.from({ length: MAX_YEAR_OF_STUDY }, (_, index)
   value: String(index + 1),
   label: `Year ${index + 1}`,
 }));
+
+/** "Omar Qureshi" → "OQ": what an avatar shows when there is no picture. */
+export function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+}

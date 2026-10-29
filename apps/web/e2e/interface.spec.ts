@@ -1,4 +1,4 @@
-import { expect, test, type Browser } from '@playwright/test';
+import { expect, test, type Browser, type Locator } from '@playwright/test';
 import {
   appoint,
   bigPhoto,
@@ -112,6 +112,63 @@ test('the browse page narrows posts by campus place and by when they were lost o
   await expect(page.getByText('"To" must be on or after "From"')).toBeVisible();
 });
 
+test('phones and tablets show every control in full: notifications, filters, tabs and the staff header', async ({
+  page,
+}) => {
+  const email = uniqueEmail('fitter');
+  await signUp(page, { email, first: 'Kiran', last: 'Rao' });
+  appoint(email, 'UNIVERSITY_ADMIN');
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.reload();
+  const onScreen = async (locator: Locator, what: string) => {
+    const box = await locator.boundingBox();
+    expect(box, what).not.toBeNull();
+    expect(box!.x, `${what} starts on screen`).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width, `${what} ends on screen`).toBeLessThanOrEqual(360);
+  };
+
+  // The notifications panel opens whole, not cut off at the left of a small phone.
+  await page.getByRole('button', { name: /^Notifications/ }).click();
+  await onScreen(
+    page.getByRole('region', { name: 'Notifications', exact: true }),
+    'The notifications panel',
+  );
+
+  // The Browse "When" filter shows its whole label.
+  await page.goto('/?when=custom');
+  const when = page.getByRole('button', { name: /When/ });
+  await expect(when).toContainText('Choose dates…');
+  const cut = await when.evaluate((button) =>
+    Array.from(button.querySelectorAll('*')).some((el) => el.scrollWidth > el.clientWidth + 1),
+  );
+  expect(cut, 'the When label is cut off').toBe(false);
+
+  // Every desk tab and admin section is on screen: the bars wrap instead of scrolling out of view.
+  // (The pages load on demand: wait for each bar before reading what is in it.)
+  await page.goto('/desk');
+  const tabs = page.getByRole('tab');
+  await expect(tabs).toHaveCount(3);
+  for (const tab of await tabs.all()) {
+    await onScreen(tab, `The desk tab "${await tab.innerText()}"`);
+  }
+  await page.goto('/admin');
+  const sections = page.getByRole('navigation', { name: 'Admin sections' }).getByRole('link');
+  await expect(sections).toHaveCount(5);
+  for (const section of await sections.all()) {
+    await onScreen(section, `The admin section "${await section.innerText()}"`);
+  }
+
+  // An upright tablet: the staff header (with Desk and Admin) keeps every label on one line.
+  await page.setViewportSize({ width: 768, height: 1024 });
+  const tall = await page.locator('header').evaluate((header) =>
+    Array.from(header.querySelectorAll('a, button'))
+      .filter((el) => el.getBoundingClientRect().height > 44)
+      .map((el) => el.textContent?.trim()),
+  );
+  expect(tall, 'header items wrapped onto two lines').toEqual([]);
+  await expect(page.getByRole('button', { name: 'Report item' })).toBeVisible();
+});
+
 test('a post switched from "found" to "lost" is not held back by a hidden question', async ({
   page,
 }) => {
@@ -179,11 +236,14 @@ test('removing your own post goes straight to "My items", without a "not found" 
     }).observe(document.body, { childList: true, subtree: true, characterData: true });
   });
 
-  await page.getByRole('button', { name: 'Remove report' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Remove' }).click();
+  await page.getByRole('button', { name: 'Remove post' }).click();
+  await page
+    .getByRole('dialog', { name: 'Remove this post?' })
+    .getByRole('button', { name: 'Remove' })
+    .click();
 
   await expect(page).toHaveURL(/\/my-items$/);
-  await expect(page.getByText('Your report was removed.')).toBeVisible();
+  await expect(page.getByText('Your post was removed.')).toBeVisible();
   expect(
     await page.evaluate(() => (window as unknown as { sawNotFound: boolean }).sawNotFound),
   ).toBe(false);

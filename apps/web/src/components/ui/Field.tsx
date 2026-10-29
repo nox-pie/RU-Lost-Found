@@ -26,7 +26,7 @@ function FieldShell({ id, label, error, hint, children }: FieldShellProps) {
       </label>
       {children}
       {error ? (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-sm text-red-600">
+        <p id={`${id}-error`} role="alert" className="mt-1 text-sm text-red-700">
           {error}
         </p>
       ) : hint ? (

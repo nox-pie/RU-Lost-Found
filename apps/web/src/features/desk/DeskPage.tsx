@@ -44,7 +44,7 @@ export default function DeskPage() {
 
       <div
         role="tablist"
-        className="mt-6 inline-flex max-w-full overflow-x-auto rounded-full bg-white p-1 shadow-xs"
+        className="mt-6 inline-flex max-w-full flex-wrap gap-1 rounded-3xl bg-white p-1 shadow-xs"
       >
         {VIEWS.map((v) => (
           <button

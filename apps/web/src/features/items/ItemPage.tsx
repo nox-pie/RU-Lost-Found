@@ -138,7 +138,7 @@ function ItemView({ item }: { item: ItemDto }) {
               </dd>
             </div>
             {item.heldAtSecurityDesk && (
-              <div className="flex items-center gap-2 text-green-700">
+              <div className="flex items-center gap-2 text-green-800">
                 <ShieldCheck className="h-4 w-4" />
                 <dd>Handed in at the security desk</dd>
               </div>
@@ -195,7 +195,7 @@ function ClaimantActions({ item }: { item: ItemDto }) {
     return <p className="text-sm text-gray-600">This post is closed and no longer takes claims.</p>;
   }
   if (item.status === 'RESOLVED') {
-    return <p className="text-sm text-green-700">This item has been returned to its owner. 🎉</p>;
+    return <p className="text-sm text-green-800">This item has been returned to its owner. 🎉</p>;
   }
   return (
     <>
@@ -276,7 +276,7 @@ function ReporterActions({ item }: { item: ItemDto }) {
       // Mark item data stale without refetching now: refetching this page's own item would
       // briefly show "Item not found" before the page is left. Lists refresh when shown.
       void queryClient.invalidateQueries({ queryKey: queryKeys.items.all, refetchType: 'none' });
-      toast.success('Your report was removed.');
+      toast.success('Your post was removed.');
       navigate('/my-items');
     },
     onError: (error) => toast.error(error.message),
@@ -318,7 +318,7 @@ function ReporterActions({ item }: { item: ItemDto }) {
           )}
           {item.status !== 'RESOLVED' && (
             <Button variant="danger" onClick={() => setConfirming(true)}>
-              <Trash2 className="h-4 w-4" /> Remove report
+              <Trash2 className="h-4 w-4" /> Remove post
             </Button>
           )}
         </div>
@@ -327,7 +327,7 @@ function ReporterActions({ item }: { item: ItemDto }) {
       <ClosePostDialog item={item} open={closing} onClose={() => setClosing(false)} />
       <ConfirmDialog
         open={confirming}
-        title="Remove this report?"
+        title="Remove this post?"
         confirmLabel="Remove"
         danger
         loading={remove.isPending}

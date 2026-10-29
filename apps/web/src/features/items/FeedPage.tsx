@@ -193,7 +193,7 @@ export default function FeedPage() {
             label="When"
             hideLabel
             look="pill"
-            className="w-44 sm:w-48"
+            className="w-48"
             value={when}
             // Only "Choose dates…" uses the From and To boxes.
             onChange={(value) =>

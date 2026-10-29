@@ -65,11 +65,8 @@ export default function AdminLayout() {
       <h1 className="mt-1 font-display text-3xl font-bold text-gray-900">{current.title}</h1>
       <p className="mt-1 max-w-2xl text-gray-600">{current.description}</p>
 
-      <nav
-        aria-label="Admin sections"
-        className="-mx-4 mt-6 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0"
-      >
-        <div className="inline-flex gap-1 rounded-2xl bg-white p-1.5 shadow-card ring-1 ring-black/5">
+      <nav aria-label="Admin sections" className="mt-6">
+        <div className="inline-flex flex-wrap gap-1 rounded-2xl bg-white p-1.5 shadow-card ring-1 ring-black/5">
           {SECTIONS.map((section) => (
             <NavLink
               key={section.to}

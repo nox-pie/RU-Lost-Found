@@ -92,3 +92,15 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Toasts (sonner's rich colours): the library's text colours are just under the 4.5:1 contrast
+ * WCAG asks for on their own pale backgrounds (warning well under). Same hues, a little darker.
+ * `:root` outranks the library's own rule, which it adds to the page after this file.
+ */
+:root [data-sonner-toaster][data-sonner-theme='light'] {
+  --success-text: hsl(140, 100%, 25%);
+  --info-text: hsl(210, 92%, 42%);
+  --warning-text: hsl(31, 92%, 35%);
+  --error-text: hsl(360, 100%, 42%);
+}
