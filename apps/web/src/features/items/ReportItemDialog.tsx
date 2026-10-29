@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  type ItemCategory,
   MAX_ITEM_PHOTOS,
   MAX_PHOTO_BYTES,
   MAX_VERIFICATION_QUESTIONS,
@@ -8,12 +7,12 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '../../components/ui/Button';
-import { Checkbox, Input, Textarea } from '../../components/ui/Field';
+import { Checkbox, Input } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
 import { itemsApi } from '../../lib/api/endpoints';
 import { todayIso } from '../../lib/format';
@@ -22,9 +21,8 @@ import { queryKeys } from '../../lib/queryClient';
 import { useCurrentUser } from '../auth/authContext';
 import { DemoLimitNotice } from '../demo/DemoBanner';
 import { PhotoPicker } from './PhotoPicker';
-import { Dropdown } from '../../components/ui/Dropdown';
-import { CATEGORY_OPTIONS } from '../../lib/categories';
-import { ELSEWHERE, placeOptions, spotField, useCampusPlaces } from './campusPlaces';
+import { ELSEWHERE } from './campusPlaces';
+import { ItemDetailsFields } from './ItemDetailsFields';
 import { itemDetailsFields } from './itemForm';
 
 const questionSchema = z.string().trim().min(5, 'At least 5 characters').max(150);
@@ -73,13 +71,7 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoError, setPhotoError] = useState<string>();
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    setError,
-    formState: { errors, isSubmitting },
-  } = useForm<ReportForm>({
+  const form = useForm<ReportForm>({
     resolver: zodResolver(reportSchema),
     defaultValues: {
       type: 'LOST',
@@ -89,33 +81,38 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
       questions: [],
     },
   });
+  const {
+    register,
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = form;
   const questions = useFieldArray({ control, name: 'questions' });
   const type = useWatch({ control, name: 'type' });
-  const places = useCampusPlaces();
   const whereLabel = type === 'LOST' ? 'Where did you lose it?' : 'Where did you find it?';
-  const spot = spotField(places, useWatch({ control, name: 'place' }), whereLabel);
 
   const onSubmit = handleSubmit(async (values) => {
     if (photos.length === 0) {
       setPhotoError('Add at least one photo so the owner can recognise it.');
       return;
     }
-    const form = new FormData();
-    form.append('type', values.type);
-    form.append('category', values.category);
-    form.append('title', values.title);
-    form.append('description', values.description);
-    form.append('location', values.location);
-    if (values.place) form.append('place', values.place);
-    form.append('occurredOn', values.occurredOn);
-    form.append('heldAtSecurityDesk', String(values.heldAtSecurityDesk));
+    const body = new FormData();
+    body.append('type', values.type);
+    body.append('category', values.category);
+    body.append('title', values.title);
+    body.append('description', values.description);
+    body.append('location', values.location);
+    if (values.place) body.append('place', values.place);
+    body.append('occurredOn', values.occurredOn);
+    body.append('heldAtSecurityDesk', String(values.heldAtSecurityDesk));
     if (values.type === 'FOUND') {
-      values.questions.forEach((question) => form.append('questions', question.text.trim()));
+      values.questions.forEach((question) => body.append('questions', question.text.trim()));
     }
-    photos.forEach((photo) => form.append('photos', photo));
+    photos.forEach((photo) => body.append('photos', photo));
 
     try {
-      const item = await itemsApi.create(form);
+      const item = await itemsApi.create(body);
       await queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
       toast.success('Your report is live.');
       onDone();
@@ -126,157 +123,98 @@ function ReportItemForm({ onDone }: { onDone: () => void }) {
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5" noValidate>
-      <fieldset>
-        <legend className="mb-2 text-sm font-medium text-gray-700">What happened?</legend>
-        <div className="grid grid-cols-2 gap-2 rounded-xl bg-gray-100 p-1">
-          {(['LOST', 'FOUND'] as const).map((value) => (
-            <label
-              key={value}
-              className={`cursor-pointer rounded-lg py-2 text-center text-sm font-medium transition ${type === value ? (value === 'LOST' ? 'bg-primary text-white shadow-sm' : 'bg-secondary text-secondary-contrast shadow-sm') : 'text-gray-600'}`}
-            >
-              <input type="radio" value={value} className="sr-only" {...register('type')} />
-              {value === 'LOST' ? 'I lost something' : 'I found something'}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <PhotoPicker
-        files={photos}
-        onChange={(files) => {
-          setPhotos(files);
-          setPhotoError(undefined);
-        }}
-        max={MAX_ITEM_PHOTOS}
-        maxBytes={MAX_PHOTO_BYTES}
-        error={photoError}
-      />
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Input
-          label="Item name"
-          placeholder="e.g. Black iPhone 13"
-          error={errors.title?.message}
-          {...register('title')}
-        />
-        <Controller
-          name="category"
-          control={control}
-          render={({ field }) => (
-            <Dropdown<ItemCategory | ''>
-              label="Category"
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              options={CATEGORY_OPTIONS}
-              error={errors.category?.message}
-            />
-          )}
-        />
-      </div>
-
-      <Textarea
-        label="Description"
-        placeholder="Colour, brand, stickers, what's inside… anything that helps identify it."
-        error={errors.description?.message}
-        {...register('description')}
-      />
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        {places.length > 0 && (
-          <Controller
-            name="place"
-            control={control}
-            render={({ field }) => (
-              <Dropdown
-                label={whereLabel}
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                options={placeOptions(places)}
-                error={errors.place?.message}
-              />
-            )}
-          />
-        )}
-        <Input
-          label={spot.label}
-          placeholder={spot.placeholder}
-          hint={spot.hint}
-          error={errors.location?.message}
-          {...register('location')}
-        />
-        <Input
-          label="When?"
-          type="date"
-          max={todayIso()}
-          error={errors.occurredOn?.message}
-          {...register('occurredOn')}
-        />
-      </div>
-
-      {type === 'FOUND' && (
-        <>
-          <Checkbox
-            label="I've handed it in at the security desk"
-            {...register('heldAtSecurityDesk')}
-          />
-          <div>
-            <p className="text-sm font-medium text-gray-700">
-              Verification questions (recommended)
-            </p>
-            <p className="mb-2 text-xs text-gray-500">
-              Ask something only the owner would know, e.g. "What is the lock-screen wallpaper?".
-              Anyone claiming it must answer.
-            </p>
-            <div className="space-y-2">
-              {questions.fields.map((field, index) => (
-                <div key={field.id} className="flex items-start gap-2">
-                  <div className="grow">
-                    <Input
-                      label={`Question ${index + 1}`}
-                      error={errors.questions?.[index]?.text?.message}
-                      {...register(`questions.${index}.text`)}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => questions.remove(index)}
-                    aria-label={`Remove question ${index + 1}`}
-                    className="mt-7 rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            {questions.fields.length < MAX_VERIFICATION_QUESTIONS && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-2"
-                onClick={() => questions.append({ text: '' })}
+    <FormProvider {...form}>
+      <form onSubmit={onSubmit} className="space-y-5" noValidate>
+        <fieldset>
+          <legend className="mb-2 text-sm font-medium text-gray-700">What happened?</legend>
+          <div className="grid grid-cols-2 gap-2 rounded-xl bg-gray-100 p-1">
+            {(['LOST', 'FOUND'] as const).map((value) => (
+              <label
+                key={value}
+                className={`cursor-pointer rounded-lg py-2 text-center text-sm font-medium transition ${type === value ? (value === 'LOST' ? 'bg-primary text-white shadow-sm' : 'bg-secondary text-secondary-contrast shadow-sm') : 'text-gray-600'}`}
               >
-                <Plus className="h-4 w-4" /> Add a question
-              </Button>
-            )}
+                <input type="radio" value={value} className="sr-only" {...register('type')} />
+                {value === 'LOST' ? 'I lost something' : 'I found something'}
+              </label>
+            ))}
           </div>
-        </>
-      )}
+        </fieldset>
 
-      <div className="flex justify-end gap-2 border-t pt-4">
-        <Button variant="ghost" onClick={onDone}>
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          loading={isSubmitting}
-          variant={type === 'LOST' ? 'primary' : 'secondary'}
-        >
-          Publish report
-        </Button>
-      </div>
-    </form>
+        <PhotoPicker
+          files={photos}
+          onChange={(files) => {
+            setPhotos(files);
+            setPhotoError(undefined);
+          }}
+          max={MAX_ITEM_PHOTOS}
+          maxBytes={MAX_PHOTO_BYTES}
+          error={photoError}
+        />
+
+        <ItemDetailsFields whereLabel={whereLabel} />
+
+        {type === 'FOUND' && (
+          <>
+            <Checkbox
+              label="I've handed it in at the security desk"
+              {...register('heldAtSecurityDesk')}
+            />
+            <div>
+              <p className="text-sm font-medium text-gray-700">
+                Verification questions (recommended)
+              </p>
+              <p className="mb-2 text-xs text-gray-500">
+                Ask something only the owner would know, e.g. "What is the lock-screen wallpaper?".
+                Anyone claiming it must answer.
+              </p>
+              <div className="space-y-2">
+                {questions.fields.map((field, index) => (
+                  <div key={field.id} className="flex items-start gap-2">
+                    <div className="grow">
+                      <Input
+                        label={`Question ${index + 1}`}
+                        error={errors.questions?.[index]?.text?.message}
+                        {...register(`questions.${index}.text`)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => questions.remove(index)}
+                      aria-label={`Remove question ${index + 1}`}
+                      className="mt-7 rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {questions.fields.length < MAX_VERIFICATION_QUESTIONS && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => questions.append({ text: '' })}
+                >
+                  <Plus className="h-4 w-4" /> Add a question
+                </Button>
+              )}
+            </div>
+          </>
+        )}
+
+        <div className="flex justify-end gap-2 border-t pt-4">
+          <Button variant="ghost" onClick={onDone}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            loading={isSubmitting}
+            variant={type === 'LOST' ? 'primary' : 'secondary'}
+          >
+            Publish report
+          </Button>
+        </div>
+      </form>
+    </FormProvider>
   );
 }

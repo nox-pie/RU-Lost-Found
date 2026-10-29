@@ -165,3 +165,8 @@ export function initialsOf(name: string): string {
     .map((part) => part[0]?.toUpperCase())
     .join('');
 }
+
+/** True when "To" is set to a day before "From": the range would match nothing. */
+export function isBackwards(from: string, to: string): boolean {
+  return Boolean(from && to && to < from);
+}

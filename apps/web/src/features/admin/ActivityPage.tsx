@@ -10,7 +10,7 @@ import { History, X } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/Button';
 import { Dropdown } from '../../components/ui/Dropdown';
-import { Input } from '../../components/ui/Field';
+import { DayRangeFields } from '../../components/ui/DayRangeFields';
 import { Avatar, EmptyState, ErrorState, PageLoader } from '../../components/ui/misc';
 import { adminApi, type ActivityFilters } from '../../lib/api/endpoints';
 import {
@@ -18,7 +18,7 @@ import {
   REPORT_REASON_LABELS,
   ROLE_LABELS,
   formatDateTime,
-  todayIso,
+  isBackwards,
   startOfLocalDay,
 } from '../../lib/format';
 import { queryKeys } from '../../lib/queryClient';
@@ -69,7 +69,7 @@ export default function ActivityPage() {
   const actorName = params.get('name') ?? 'this person';
   const fromDay = params.get('from') ?? '';
   const toDay = params.get('to') ?? '';
-  const backwards = Boolean(fromDay && toDay && toDay < fromDay);
+  const backwards = isBackwards(fromDay, toDay);
 
   const update = (changes: Record<string, string | null>) =>
     setParams((current) => {
@@ -111,22 +111,7 @@ export default function ActivityPage() {
             ...AUDIT_ACTIONS.map((a) => ({ value: a, label: AUDIT_ACTION_LABELS[a] })),
           ]}
         />
-        <Input
-          label="From"
-          type="date"
-          value={fromDay}
-          max={toDay || todayIso()}
-          onChange={(event) => update({ from: event.target.value })}
-        />
-        <Input
-          label="To"
-          type="date"
-          value={toDay}
-          min={fromDay || undefined}
-          max={todayIso()}
-          onChange={(event) => update({ to: event.target.value })}
-          error={backwards ? '"To" must be on or after "From"' : undefined}
-        />
+        <DayRangeFields from={fromDay} to={toDay} onChange={update} />
       </div>
       {(actorId || filtered) && (
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">

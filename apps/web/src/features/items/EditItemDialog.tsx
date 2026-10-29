@@ -1,19 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { ItemCategory, ItemDto, UpdateItemInput } from '@ru-lost-found/shared';
+import type { ItemDto, UpdateItemInput } from '@ru-lost-found/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '../../components/ui/Button';
-import { Dropdown } from '../../components/ui/Dropdown';
-import { Checkbox, Input, Textarea } from '../../components/ui/Field';
+import { Checkbox } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
 import { itemsApi } from '../../lib/api/endpoints';
-import { CATEGORY_OPTIONS } from '../../lib/categories';
-import { todayIso } from '../../lib/format';
 import { showFormError } from '../../lib/forms';
 import { queryKeys } from '../../lib/queryClient';
-import { ELSEWHERE, placeOptions, spotField, useCampusPlaces } from './campusPlaces';
+import { ELSEWHERE } from './campusPlaces';
+import { ItemDetailsFields } from './ItemDetailsFields';
 import { itemDetailsFields } from './itemForm';
 
 const editSchema = z.object(itemDetailsFields);
@@ -38,15 +36,8 @@ export function EditItemDialog({
 
 function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
   const queryClient = useQueryClient();
-  const places = useCampusPlaces();
   const whereLabel = item.type === 'LOST' ? 'Where did you lose it?' : 'Where did you find it?';
-  const {
-    register,
-    control,
-    handleSubmit,
-    setError,
-    formState: { errors, isSubmitting, isDirty, dirtyFields },
-  } = useForm<EditForm>({
+  const form = useForm<EditForm>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       category: item.category,
@@ -58,8 +49,12 @@ function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
       heldAtSecurityDesk: item.heldAtSecurityDesk,
     },
   });
-
-  const spot = spotField(places, useWatch({ control, name: 'place' }), whereLabel);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { isSubmitting, isDirty, dirtyFields },
+  } = form;
 
   const onSubmit = handleSubmit(async (values) => {
     // Only what changed is sent, so an edit never overwrites more than the reporter touched.
@@ -81,79 +76,28 @@ function EditItemForm({ item, onDone }: { item: ItemDto; onDone: () => void }) {
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5" noValidate>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Input label="Item name" error={errors.title?.message} {...register('title')} />
-        <Controller
-          name="category"
-          control={control}
-          render={({ field }) => (
-            <Dropdown<ItemCategory | ''>
-              label="Category"
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              options={CATEGORY_OPTIONS}
-              error={errors.category?.message}
-            />
-          )}
-        />
-      </div>
-      <Textarea
-        label="Description"
-        error={errors.description?.message}
-        {...register('description')}
-      />
-      <div className="grid gap-4 sm:grid-cols-2">
-        {places.length > 0 && (
-          <Controller
-            name="place"
-            control={control}
-            render={({ field }) => (
-              <Dropdown
-                label={whereLabel}
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                options={placeOptions(places)}
-                error={errors.place?.message}
-              />
-            )}
+    <FormProvider {...form}>
+      <form onSubmit={onSubmit} className="space-y-5" noValidate>
+        <ItemDetailsFields whereLabel={whereLabel} />
+        {item.type === 'FOUND' && (
+          <Checkbox
+            label="I've handed it in at the security desk"
+            {...register('heldAtSecurityDesk')}
           />
         )}
-        <Input
-          label={spot.label}
-          placeholder={spot.placeholder}
-          hint={spot.hint}
-          error={errors.location?.message}
-          {...register('location')}
-        />
-        <Input
-          label="When?"
-          type="date"
-          max={todayIso()}
-          error={errors.occurredOn?.message}
-          {...register('occurredOn')}
-        />
-      </div>
-      {item.type === 'FOUND' && (
-        <Checkbox
-          label="I've handed it in at the security desk"
-          {...register('heldAtSecurityDesk')}
-        />
-      )}
-      <p className="text-xs text-gray-500">
-        Photos and verification questions can’t be changed. To change them, remove this post and
-        report the item again.
-      </p>
-      <div className="flex justify-end gap-2 border-t pt-4">
-        <Button variant="ghost" onClick={onDone}>
-          Cancel
-        </Button>
-        <Button type="submit" loading={isSubmitting} disabled={!isDirty}>
-          Save changes
-        </Button>
-      </div>
-    </form>
+        <p className="text-xs text-gray-500">
+          Photos and verification questions can’t be changed. To change them, remove this post and
+          report the item again.
+        </p>
+        <div className="flex justify-end gap-2 border-t pt-4">
+          <Button variant="ghost" onClick={onDone}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={isSubmitting} disabled={!isDirty}>
+            Save changes
+          </Button>
+        </div>
+      </form>
+    </FormProvider>
   );
 }

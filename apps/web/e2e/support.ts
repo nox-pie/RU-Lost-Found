@@ -34,7 +34,7 @@ function emailsTo(address: string): StoredEmail[] {
 }
 
 /** Waits for a new email with a 6-digit code to arrive for `address`, and returns the code. */
-export async function codeEmailedTo(address: string, previousCount = 0): Promise<string> {
+async function codeEmailedTo(address: string, previousCount = 0): Promise<string> {
   let code = '';
   await expect
     .poll(
