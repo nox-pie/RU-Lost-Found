@@ -5,11 +5,11 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/Button';
 import { Dropdown, type DropdownOption } from '../../components/ui/Dropdown';
-import { Input } from '../../components/ui/Field';
+import { DayRangeFields } from '../../components/ui/DayRangeFields';
 import { EmptyState, ErrorState } from '../../components/ui/misc';
 import { itemsApi, type FeedFilters, type ItemFilters } from '../../lib/api/endpoints';
 import { CATEGORY_OPTIONS } from '../../lib/categories';
-import { daysAgoIso, todayIso } from '../../lib/format';
+import { daysAgoIso, isBackwards } from '../../lib/format';
 import { useDebouncedValue } from '../../lib/hooks';
 import { queryKeys } from '../../lib/queryClient';
 import { useCampusPlaces } from './campusPlaces';
@@ -60,7 +60,7 @@ export default function FeedPage() {
   const when = WHEN_OPTIONS.find((option) => option.value === params.get('when'))?.value ?? '';
   const fromDay = params.get('from') ?? '';
   const toDay = params.get('to') ?? '';
-  const backwards = when === 'custom' && Boolean(fromDay && toDay && toDay < fromDay);
+  const backwards = when === 'custom' && isBackwards(fromDay, toDay);
   const [search, setSearch] = useState(params.get('q') ?? '');
   const q = useDebouncedValue(search.trim());
   const [reporting, setReporting] = useState(false);
@@ -204,22 +204,7 @@ export default function FeedPage() {
         </div>
         {when === 'custom' && (
           <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
-            <Input
-              label="From"
-              type="date"
-              value={fromDay}
-              max={toDay || todayIso()}
-              onChange={(event) => update({ from: event.target.value })}
-            />
-            <Input
-              label="To"
-              type="date"
-              value={toDay}
-              min={fromDay || undefined}
-              max={todayIso()}
-              onChange={(event) => update({ to: event.target.value })}
-              error={backwards ? '"To" must be on or after "From"' : undefined}
-            />
+            <DayRangeFields from={fromDay} to={toDay} onChange={update} />
           </div>
         )}
       </section>

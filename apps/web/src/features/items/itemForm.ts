@@ -12,3 +12,5 @@ export const itemDetailsFields = {
   occurredOn: dateOnlySchema,
   heldAtSecurityDesk: z.boolean(),
 };
+
+export type ItemDetailsForm = z.infer<z.ZodObject<typeof itemDetailsFields>>;
