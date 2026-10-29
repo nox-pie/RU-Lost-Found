@@ -38,7 +38,7 @@ test('a visitor plays both sides of a claim with the sample students', async ({ 
 
     await tryAs(page, 'Asha');
     await page.getByRole('link', { name: /Black bifold wallet/ }).click();
-    await expect(page.getByRole('button', { name: 'Remove report' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Remove post' })).toHaveCount(0);
     await page.getByRole('link', { name: 'Review' }).click();
     await expect(page.getByText('Ravi Singh').first()).toBeVisible();
     await page.getByRole('button', { name: 'Approve' }).click();

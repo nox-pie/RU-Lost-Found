@@ -532,7 +532,7 @@ The classes and their relationships are drawn in [../design/class-diagrams.md](.
 - A fixed, controllable clock: expiry, deadlines, back-off and rate-limit windows are tested by moving time, not by waiting.
 - Every test server binds explicitly to `127.0.0.1`: with many test files running in parallel, supertest's default (all addresses) occasionally let requests reach another file's server.
 
-**Current numbers:** 476 API tests and 33 end-to-end tests (43 runs: the ten marked `@mobile` also run on a phone, four of them only there). Coverage is 95% statements, 88% branches, 97% functions, 97% lines. The build fails below 93 / 84 / 95 / 95. A test checks the OpenAPI document both ways: every documented operation is routed, and every route is documented.
+**Current numbers:** 476 API tests and 35 end-to-end tests (46 runs: the eleven marked `@mobile` also run on a phone, four of them only there). Coverage is 95% statements, 88% branches, 97% functions, 97% lines. The build fails below 93 / 84 / 95 / 95. A test checks the OpenAPI document both ways: every documented operation is routed, and every route is documented.
 
 ### Continuous integration (`.github/workflows/ci.yml`)
 

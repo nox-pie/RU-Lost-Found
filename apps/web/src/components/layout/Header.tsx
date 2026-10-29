@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation } from 'react-router';
 import { isAdmin, isStaff, useAuth, useCurrentUser } from '../../features/auth/authContext';
 import { ReportItemDialog } from '../../features/items/ReportItemDialog';
 import { NotificationBell } from '../../features/notifications/NotificationBell';
+import { initialsOf } from '../../lib/format';
 import { Avatar } from '../ui/misc';
 import { brand } from '../../brand/brand.config';
 
@@ -17,7 +18,7 @@ const LINKS = [
 const BOTTOM_BAR_PATHS = LINKS.map((link) => link.to);
 
 function navClass({ isActive }: { isActive: boolean }) {
-  return `rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${isActive ? 'bg-white text-primary' : 'text-white hover:bg-white/15'}`;
+  return `whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${isActive ? 'bg-white text-primary' : 'text-white hover:bg-white/15'}`;
 }
 
 export function Header() {
@@ -34,6 +35,9 @@ export function Header() {
     ...(isStaff(user) ? [{ to: '/desk', label: 'Desk', end: false }] : []),
     ...(isAdmin(user) ? [{ to: '/admin', label: 'Admin', end: false }] : []),
   ];
+  // Desk and Admin links leave no room for "Report item" on a tablet: it shows only its "+" there.
+  const crowded = links.length > LINKS.length;
+  const fullName = `${user.firstName} ${user.lastName}`;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -67,7 +71,7 @@ export function Header() {
           <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-secondary-light bg-white p-1.5">
             <img src={brand.images.symbol} alt="" className="h-full w-full object-contain" />
           </span>
-          <span className="font-display text-lg font-bold text-white sm:text-xl">
+          <span className="whitespace-nowrap font-display text-lg font-bold text-white sm:text-xl">
             {brand.productName}
           </span>
         </Link>
@@ -84,20 +88,25 @@ export function Header() {
           <button
             type="button"
             onClick={() => setReporting(true)}
-            className="hidden items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary shadow-xs hover:bg-surface sm:inline-flex"
+            aria-label="Report item"
+            title="Report item"
+            className={`hidden items-center gap-1.5 whitespace-nowrap rounded-full bg-white py-2 text-sm font-semibold text-primary shadow-xs hover:bg-surface sm:inline-flex ${crowded ? 'px-4 md:px-2.5 lg:px-4' : 'px-4'}`}
           >
-            <Plus className="h-4 w-4" /> Report item
+            <Plus className="h-4 w-4" />
+            <span className={crowded ? 'md:hidden lg:inline' : undefined}>Report item</span>
           </button>
           <NotificationBell />
           <div className="relative hidden md:block" ref={account}>
             <button
               type="button"
               onClick={() => setAccountOpen((value) => !value)}
-              aria-label="Account menu"
+              // Names the person, and the initials shown when there's no picture, so what is
+              // seen is also what is heard (and can be said to voice control).
+              aria-label={`Account menu for ${fullName}${user.avatarUrl ? '' : `, ${initialsOf(fullName)}`}`}
               aria-expanded={accountOpen}
               className="rounded-full ring-2 ring-white/40 hover:ring-white"
             >
-              <Avatar name={`${user.firstName} ${user.lastName}`} url={user.avatarUrl} size="sm" />
+              <Avatar name={fullName} url={user.avatarUrl} size="sm" />
             </button>
             {accountOpen && (
               <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-2xl border bg-white shadow-xl animate-slide-down">

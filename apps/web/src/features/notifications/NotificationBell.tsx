@@ -69,7 +69,12 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-88 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border bg-white text-gray-800 shadow-xl animate-slide-down">
+        <section
+          aria-label="Notifications"
+          // On phones the bell isn't at the screen edge (the menu button is), so a panel hanging
+          // from it would start off-screen on the left: there it spans the screen instead.
+          className="fixed inset-x-4 top-18 z-50 overflow-hidden rounded-2xl border bg-white text-gray-800 shadow-xl animate-slide-down sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-88"
+        >
           <div className="flex items-center justify-between border-b px-4 py-3">
             <p className="font-semibold">Notifications</p>
             {unread > 0 && (
@@ -103,7 +108,7 @@ export function NotificationBell() {
                     <p className="mt-0.5 line-clamp-2 wrap-break-word text-sm text-gray-600">
                       {notification.body}
                     </p>
-                    <p className="mt-1 text-xs text-gray-400">{timeAgo(notification.createdAt)}</p>
+                    <p className="mt-1 text-xs text-gray-600">{timeAgo(notification.createdAt)}</p>
                   </button>
                 </li>
               ))
@@ -113,7 +118,7 @@ export function NotificationBell() {
               </li>
             )}
           </ul>
-        </div>
+        </section>
       )}
     </div>
   );

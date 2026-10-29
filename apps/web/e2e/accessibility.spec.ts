@@ -37,6 +37,20 @@ test('the main pages pass automated accessibility checks @mobile', async ({ page
   await expect(page.getByRole('link', { name: /Black bifold wallet/ })).toBeVisible();
   await expectNoViolations(page, 'Browse page');
 
+  // The sample data leaves Ravi unread notifications; unread ones have a tinted background.
+  await page.getByRole('button', { name: /^Notifications, \d+ unread$/ }).click();
+  await expect(page.getByRole('region', { name: 'Notifications', exact: true })).toBeVisible();
+  await expectNoViolations(page, 'Notifications, unread');
+  await page.getByRole('button', { name: /^Notifications/ }).click();
+
+  // A post held at the security desk says so in green, on the page background.
+  await page.getByLabel('Search items').fill('scientific calculator');
+  await page.getByRole('link', { name: /Blue scientific calculator/ }).click();
+  await expectItemPage(page, 'Blue scientific calculator');
+  await expect(page.getByText('Handed in at the security desk').first()).toBeVisible();
+  await expectNoViolations(page, 'Item page, held at the desk');
+  await page.goto('/');
+
   await page.getByRole('link', { name: /Black bifold wallet/ }).click();
   await expectItemPage(page, 'Black bifold wallet');
   await expectNoViolations(page, 'Item page');
@@ -56,6 +70,18 @@ test('the main pages pass automated accessibility checks @mobile', async ({ page
   await page.goto('/profile');
   await expect(page.getByRole('heading', { name: 'Your profile' })).toBeVisible();
   await expectNoViolations(page, 'Profile page');
+});
+
+test('someone without a profile picture, and a date-range error, pass the checks too @mobile', async ({
+  page,
+}) => {
+  // Most people have no picture: the header shows their initials instead.
+  await signUp(page, { email: uniqueEmail('a11y-initials'), first: 'Omar', last: 'Qureshi' });
+  await expectNoViolations(page, 'Browse page, no profile picture');
+
+  await page.goto('/?when=custom&from=2026-10-20&to=2026-10-10');
+  await expect(page.getByText('"To" must be on or after "From"')).toBeVisible();
+  await expectNoViolations(page, 'Browse page, dates the wrong way round');
 });
 
 test('the admin pages pass automated accessibility checks', async ({ page }) => {
