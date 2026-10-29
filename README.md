@@ -26,7 +26,7 @@ Claims that never get handed over expire, other claims on the item close automat
 ## Screenshots
 
 <p>
-  <img src="docs/screenshots/feed.jpg" alt="The feed of lost and found posts" width="49%" />
+  <img src="docs/screenshots/feed.jpg" alt="The feed of lost and found posts, filtered by category, campus place and date" width="49%" />
   <img src="docs/screenshots/matches.jpg" alt="A lost wallet with a strongly matching found post" width="49%" />
 </p>
 
