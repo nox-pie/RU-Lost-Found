@@ -102,12 +102,11 @@ Rows where **Latest** is a new major version (the first number) are candidates. 
 - All checks and the end-to-end tests must pass. For web libraries, compare the landing page's Lighthouse score before and after (see [frontend.md](architecture/frontend.md)).
 - Never in launch week or exam season, when students rely on the portal most.
 
-The October 2026 upgrade milestone is a worked example: pull requests #33 to #39 (Zod 4, Node 24, API libraries, React 19, tooling).
+The October 2026 upgrade milestone is a worked example: pull requests #33 to #39 (Zod 4, Node 24, API libraries, React 19, tooling); @hookform/resolvers 6 followed once its optional dependencies installed cleanly.
 
 **Waiting, as of October 2026:**
 
 - **TypeScript 7:** once typescript-eslint supports it (it supports up to 6.0 today; check its release notes).
-- **@hookform/resolvers 6:** once its optional dependencies install without conflicts. Version 5 supports everything the app uses.
 - **@types/node 26:** together with Node 26 (below), never ahead of the Node version that runs.
 
 ## Every year
