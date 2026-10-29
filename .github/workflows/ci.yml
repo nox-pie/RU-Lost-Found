@@ -101,6 +101,9 @@ jobs:
       - name: Build
         run: npm run build -w @ru-lost-found/web
 
+      - name: Nothing in the build that shouldn't ship (e.g. Sentry's session replay)
+        run: npm run check:bundle -w @ru-lost-found/web
+
   e2e:
     name: End-to-end · real browser, web app and API
     runs-on: ubuntu-22.04
