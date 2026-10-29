@@ -539,7 +539,7 @@ The classes and their relationships are drawn in [../design/class-diagrams.md](.
 On every push to `main` and every pull request:
 
 1. **API job** (with a Redis service container): known security advisories in production dependencies (`npm audit`, high or critical fails) → typecheck (shared, API and the load-test data script) → lint (including type-aware rules that forbid un-awaited promises) → formatting (code, docs, load test, YAML) → tests with coverage thresholds → production build → coverage report uploaded as an artifact.
-2. **Web job:** typecheck, lint and production build.
+2. **Web job:** typecheck, lint, production build, and a check that nothing which shouldn't ship is in it (`apps/web/scripts/check-bundle.mjs`, e.g. Sentry's session replay).
 3. **End-to-end job:** the Playwright tests on desktop and mobile, against the real API on an in-memory database.
 4. **Docker job:** builds the images and starts the whole product with `docker-compose.yml` (database, Redis, seed, API, web), then checks that the web app answers and reaches the API through nginx. This is the image any Docker host would run (see [deployment.md §7](../deployment.md#7-scaling-up)).
 

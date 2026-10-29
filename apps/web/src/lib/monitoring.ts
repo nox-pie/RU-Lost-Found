@@ -4,7 +4,7 @@
  * disabled and never competes with the first paint. Errors reported before then wait for it.
  * No personal data is collected: no user details, cookies, headers, bodies or query strings.
  */
-type Sentry = typeof import('@sentry/react');
+type Sentry = typeof import('./sentry');
 
 const dsn = import.meta.env.VITE_SENTRY_DSN;
 let sentry: Promise<Sentry | null> = Promise.resolve(null);
@@ -12,7 +12,7 @@ let sentry: Promise<Sentry | null> = Promise.resolve(null);
 export function startMonitoring(): void {
   if (!dsn) return;
   sentry = afterPageLoad()
-    .then(() => import('@sentry/react'))
+    .then(() => import('./sentry'))
     .then((Sentry) => {
       Sentry.init({
         dsn,
