@@ -2,7 +2,7 @@
 
 Everything to do before opening the portal to Rishihood University students, in order. Each step says where to do it and how to check it worked. Production setup and commands are in [deployment.md](deployment.md); the services and their dashboards in [services.md](services.md).
 
-**Today (24 October 2026):** the portal runs as a public demo while the university's permission is pending: `DEMO_MODE=true` with 21 sample posts at the 24 campus places, sign-up open to any email address, emails sent from a Gmail address. Every service is on its free plan, and the database (Atlas M0, MongoDB 8.0) has **no backups**. On 19 October two real accounts existed: one Rishihood student account and one Gmail account that is platform admin.
+**Today (1 November 2026):** the portal runs as a public demo while the university's permission is pending: `DEMO_MODE=true` with 21 sample posts at the 24 campus places, sign-up open to any email address, emails sent from a Gmail address. Every service is on its free plan, and the database (Atlas M0, MongoDB 8.0) has **no backups**. Besides the demo accounts, the only accounts are the owner's two test accounts.
 
 ## 1. A week before: decisions and people
 
@@ -74,7 +74,7 @@ Do these in order: the API recreates the sample data at start-up while `DEMO_MOD
 - [ ] On a phone: sign up with a fresh university address, receive the code, finish the profile.
 - [ ] With two real accounts: post a found item with a photo and a question, claim it, approve, hand over with the code. Do one more with the security desk confirming instead.
 - [ ] Matching: one account posts a lost item, the other a found item of the same category at the same campus place. The owner of the lost post sees it under possible matches and is notified.
-- [ ] `https://ru-lost-found-api.onrender.com/api/v1/health/ready` answers `"status":"ok"`; both UptimeRobot monitors are green; Sentry shows no new issues.
+- [ ] `https://ru-lost-found-api.onrender.com/api/v1/health/ready` answers `"status":"ok"`; both UptimeRobot monitors (up + keep awake, database + Redis) are green; Sentry shows no new issues.
 - [ ] `https://ru-lost-found.vercel.app/api/v1/health/client` shows your own public IP as `ip` (rate limits per person work).
 - [ ] On campus Wi-Fi, open the same address on two phones. If both show the same `ip`, the campus shares one address: rate limits then count the whole campus together. Session refreshes are exempt and the other limits are generous, but if students report "Too many requests", raise `WRITE_LIMIT_PER_MINUTE` on Render (for example to 600).
 
