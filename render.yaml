@@ -1,5 +1,8 @@
 # Render Blueprint for the API (https://render.com/docs/blueprint-spec).
-# The web app reaches it through the /api rewrite in apps/web/vercel.json. See docs/deployment.md.
+# The live service was created by hand in the Render dashboard with these same settings: the
+# dashboard is what Render uses, and this file records it (keep them in step) and can recreate
+# the service as a Blueprint. The web app reaches the API through the /api rewrite in
+# apps/web/vercel.json. See docs/deployment.md.
 services:
   - type: web
     name: ru-lost-found-api
@@ -10,6 +13,16 @@ services:
     region: singapore
     healthCheckPath: /api/v1/health/live
     autoDeploy: true
+    # Deploy only when something the API image uses changes, so web-only and docs-only pushes
+    # don't restart the API (on the free plan a deploy can leave it unreachable for minutes).
+    # On the live service this is set in the dashboard: Settings → Build Filters.
+    buildFilter:
+      paths:
+        - apps/api/**
+        - packages/shared/**
+        - package.json
+        - package-lock.json
+        - tsconfig.base.json
     envVars:
       - key: NODE_ENV
         value: production
