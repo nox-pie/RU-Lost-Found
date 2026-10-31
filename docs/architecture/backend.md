@@ -46,7 +46,7 @@ flowchart LR
     A --> B[Brevo<br/>transactional email]
     A --> S[Sentry<br/>error tracking]
     U -- "crashes" --> S
-    UR[UptimeRobot] -- "GET /api/v1/health/live every 5 min" --> A
+    UR[UptimeRobot] -- "GET /api/v1/health/live and /ready every 5 min" --> A
 ```
 
 Because Vercel rewrites `/api/*` to Render, the browser sees one origin. This lets the refresh token live in a secure `httpOnly` cookie without cross-site cookie problems, and no CORS preflight is needed. Photos are the exception: the browser loads them straight from Cloudinary's CDN.
@@ -422,8 +422,8 @@ Base path: `/api/v1`. Request and response bodies are JSON (except image uploads
 | GET                      | `/admin/items`                | admin                                    | Every post, removed ones included (`q`, `type`, `category`, `status` comma list), cursor                                                                                                       |
 | POST                     | `/admin/items/:id/remove`     | admin                                    | Remove any post (also the admin's own, also after handover) with a `reason` for the poster; its open reports are closed in the same transaction                                                |
 | **Health**               |                               |                                          |                                                                                                                                                                                                |
-| GET                      | `/health/live`                | –                                        | Process is up (UptimeRobot ping)                                                                                                                                                               |
-| GET                      | `/health/ready`               | –                                        | MongoDB and Redis reachable                                                                                                                                                                    |
+| GET                      | `/health/live`                | –                                        | Process is up (UptimeRobot: up + keep awake)                                                                                                                                                   |
+| GET                      | `/health/ready`               | –                                        | MongoDB and Redis reachable; 503 if not (UptimeRobot: database + Redis)                                                                                                                        |
 | GET                      | `/health/client`              | –                                        | How the API sees the caller: client IP and proxy chain (to check `TRUST_PROXY_HOPS`)                                                                                                           |
 | **Documentation**        |                               |                                          |                                                                                                                                                                                                |
 | GET                      | `/openapi.json`, `/docs`      | –                                        | OpenAPI 3.1 document and Swagger UI (`API_DOCS_ENABLED`)                                                                                                                                       |
@@ -509,7 +509,7 @@ The classes and their relationships are drawn in [../design/class-diagrams.md](.
 
 - **Logging:** pino JSON logs with a `requestId` on every line (also returned in the `X-Request-Id` header).
 - **Errors:** an `ErrorReporter` interface (Sentry adapter when `SENTRY_DSN` is set, otherwise nothing). Reported: unexpected 5xx errors in requests (tagged with request ID, route and user ID), event handlers once retrying stops, failed scheduled jobs, and startup or unhandled-promise failures. Expected errors (validation, 404, 409, rate limits, "server busy") are never reported. No personal data is sent: no cookies, headers, bodies, query strings or IPs. The web app reports render crashes from its error boundary; its Sentry SDK is loaded only when a DSN is configured.
-- **Health:** `/health/live` for UptimeRobot (keeps the free Render instance awake and alerts on downtime); `/health/ready` checks dependencies.
+- **Health:** each has an UptimeRobot monitor. `/health/live` alerts on downtime and keeps the free Render instance awake; `/health/ready` checks MongoDB and Redis and answers 503 if either is down, which alerts too.
 - **Graceful shutdown:** on `SIGTERM`, stop accepting requests, finish in-flight ones, stop the worker, close DB and Redis connections.
 - **Config:** all settings from environment variables, validated at startup; the app refuses to start with missing or invalid config.
 - **Containers:** `apps/api/Dockerfile` (multi-stage, production dependencies only, non-root, health check) and `apps/web/Dockerfile` (nginx with the same `/api` rewrite, security headers and text compression as Vercel); `docker-compose.yml` runs the whole product locally. Render deploys the same API image (`render.yaml`). Runbook: [../deployment.md](../deployment.md).
@@ -543,7 +543,7 @@ On every push to `main` and every pull request:
 3. **End-to-end job:** the Playwright tests on desktop and mobile, against the real API on an in-memory database.
 4. **Docker job:** builds the images and starts the whole product with `docker-compose.yml` (database, Redis, seed, API, web), then checks that the web app answers and reaches the API through nginx. This is the image any Docker host would run (see [deployment.md §7](../deployment.md#7-scaling-up)).
 
-A newer push cancels the older run on the same branch; the MongoDB test binary and npm packages are cached. **Dependabot** opens grouped weekly pull requests for dependency updates (and monthly for the workflow's own actions), so security fixes arrive as reviewable PRs that CI checks automatically.
+`main` is protected: a pull request can be merged only once all four jobs pass. A newer push cancels the older run on the same branch; the MongoDB test binary and npm packages are cached. **Dependabot** opens grouped weekly pull requests for dependency updates (and monthly for the workflow's own actions), so security fixes arrive as reviewable PRs that CI checks automatically.
 
 `npm run check` runs the same checks locally.
 

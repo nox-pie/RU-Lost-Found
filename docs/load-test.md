@@ -68,7 +68,7 @@ Only one class changed (`BcryptPasswordHasher`), because the rest of the code de
 
 - **Free tier:** Render's free instance has a fraction of a CPU, so expect several times less headroom than these numbers. That is still above the expected 80 requests/second at peak for reads, but sign-ins (about 0.4 s of CPU each) would be the first thing to queue. The first upgrade is Render Starter (a full instance, no sleeping).
 - **Scaling out:** the API keeps no state in memory between requests (sessions, codes, rate limits and job leases are in MongoDB and Redis), so more instances behind Render's load balancer add capacity directly. The background worker can move to its own process (`dist/worker.js`, `WORKER_ENABLED=false` on the API). Steps: [deployment.md §7](deployment.md#7-scaling-up).
-- **Don't run this against production on free tiers:** a 5-minute run makes tens of thousands of Redis commands, several times Upstash's free daily allowance, and would trip the real rate limits.
+- **Don't run this against production on free tiers:** a 5-minute run makes tens of thousands of Redis commands, a large share of Upstash's free 500,000 a month, and would trip the real rate limits.
 
 ## Running it
 

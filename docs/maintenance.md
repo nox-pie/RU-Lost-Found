@@ -22,8 +22,8 @@ Expect about 15 minutes a week and an hour a month.
 
 Dependabot (`.github/dependabot.yml`) opens pull requests every week for npm and every month for GitHub Actions. It groups minor and patch updates into one `production` and one `development` pull request, and never proposes major versions (those are done by hand, see [Major upgrades](#major-upgrades)). CI runs on each one.
 
-1. **CI green:** read the list of updated packages in the pull request. For minor and patch versions, a green CI is enough. Merge it (**Create a merge commit**). `main` deploys to Render and Vercel on its own.
-2. **CI red:** don't merge. Open the failed job's log:
+1. **CI green:** read the list of updated packages in the pull request. For minor and patch versions, a green CI is enough. Merge it (**Create a merge commit**). `main` deploys to Vercel on its own, and to Render too, because npm updates change `package-lock.json` (Render's build filter, [services.md](services.md#render)): the API is then unreachable for a few minutes while it restarts.
+2. **CI red:** GitHub won't let you merge (`main` requires the four CI jobs to pass). Open the failed job's log:
    - a test or type error means one update changed behaviour: find the package in the list, read its release notes, and fix the code on the Dependabot branch or in a new pull request;
    - a failed `npm audit` step means a new advisory, not the update itself: see [Security alerts](#security-alerts);
    - a network or Docker Hub error is temporary: re-run the job.
@@ -34,7 +34,7 @@ Dependabot (`.github/dependabot.yml`) opens pull requests every week for npm and
 
 **Checking the live site after any merge** (about two minutes):
 
-- https://ru-lost-found-api.onrender.com/api/v1/health/ready answers `"status":"ok"` once the deploy has finished (Render → Events shows "Deploy live").
+- https://ru-lost-found-api.onrender.com/api/v1/health/ready answers `"status":"ok"`. If the merge changed the API (Render → Events shows a new deploy), wait until it says "Deploy live"; until then the API doesn't answer. Web-only and docs-only merges don't deploy the API.
 - https://ru-lost-found.vercel.app loads, and signing in works.
 - Sentry shows no new issues in the next hour.
 
@@ -43,7 +43,7 @@ If the deploy broke something, roll back first and fix after (see [When somethin
 ### Quick health look
 
 - **Sentry:** new issues in `ru-lost-found-api` or `ru-lost-found-web`. Fix the cause, then mark the issue **Resolved**.
-- **UptimeRobot:** any downtime this week.
+- **UptimeRobot:** any downtime this week on either monitor (up + keep awake, database + Redis).
 - **Admin → Reports:** flagged posts waiting for a decision (the admin overview shows the count).
 
 ## Security alerts
