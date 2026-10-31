@@ -49,9 +49,9 @@ Each provider sits behind an interface in the code, so replacing one is a new ad
 
 - **Dashboard:** [dashboard.render.com](https://dashboard.render.com) → **ru-lost-found-api** (tabs: Logs, Events, Environment, Metrics).
 - **What:** runs the API as a Docker container built from `apps/api/Dockerfile`, with the background worker (notifications, emails, scheduled jobs) in the same process.
-- **Where:** web service **`ru-lost-found-api`** (region Singapore, free plan), created from `render.yaml`. URL: `https://ru-lost-found-api.onrender.com`. Visitors never call it directly; Vercel forwards `/api`.
+- **Where:** web service **`ru-lost-found-api`** (region Singapore, free plan), created by hand in the dashboard; `render.yaml` records the same settings. URL: `https://ru-lost-found-api.onrender.com`. Visitors never call it directly; Vercel forwards `/api`.
 - **Settings:** every API setting is under the service's **Environment** tab (the source of truth). Notable non-secret ones: `NODE_ENV=production`, `TRUST_PROXY_HOPS=4`, `APP_URL`, `CORS_ORIGINS`, `ADMIN_EMAILS`, `WORKER_ENABLED`.
-- **Deploys:** automatically on every push to `main`. The health check is `/api/v1/health/live`; a deploy that doesn't become healthy keeps the previous version running.
+- **Deploys:** automatically on pushes to `main` that change something the API image uses: the build filter (**Settings → Build Filters → Included Paths**) is `apps/api/**`, `packages/shared/**`, `package.json`, `package-lock.json`, `tsconfig.base.json`. Pushes that change only the web app or the docs don't deploy. On the free plan a deploy can leave the API unreachable for a few minutes (29 October 2026: 6 minutes, reported by UptimeRobot), which is what the filter avoids. The health check is `/api/v1/health/live`; a deploy that doesn't become healthy keeps the previous version running.
 - **Limits:** the free instance sleeps after 15 minutes without traffic (UptimeRobot prevents this) and has 512 MB of memory and a share of a CPU. Free instance hours (750 a month) cover exactly one always-on service.
 - **Watch:** Logs (JSON lines with a `requestId`), Events (deploys), Metrics.
 - **Upgrade:** Starter plan (no sleeping, full CPU), then more instances and the worker as its own service (a ready block in `render.yaml`). Steps in [deployment.md §7](deployment.md#7-scaling-up).
