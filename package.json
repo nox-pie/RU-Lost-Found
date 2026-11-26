@@ -25,7 +25,7 @@
     "e2e": "npm run e2e -w @ru-lost-found/web"
   },
   "devDependencies": {
-    "prettier": "^3.9.10"
+    "prettier": "^3.10.1"
   },
   "allowScripts": {
     "bcrypt": true,
